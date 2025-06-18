@@ -1,118 +1,121 @@
-<p align="center">
-  <a href="https://vuestic.dev" target="_blank">
-    <img alt="Vuestic UI Logo" width="220" src="./.github/assets/vuestic-admin-logo.png">
-  </a>
-</p>
+<div align="center">
+<img src="https://s2.loli.net/2023/10/27/WzQ4JLNV5epKh6X.png" style="width:150px"/>
+    <h1>Nova Admin</h1>
+</div>
 
-<p align="center">
-  Free and beautiful Admin Template utilizing Vue 3, Vite, Pinia, and Tailwind CSS. Designed for building efficient, responsive, and fast-loading admin interfaces.</br>
-  Developed by  <a href="https://epicmax.co">Epicmax</a>.</br>
-  Based on <a href="https://ui.vuestic.dev">Vuestic UI</a> library.
-</p>
+<div align="center">
+    <img src="https://img.shields.io/github/license/chansee97/nova-admin"/>
+    <img src="https://badgen.net/github/stars/chansee97/nova-admin?icon=github"/>
+    <img src="https://gitee.com/chansee97/nova-admin/badge/star.svg"/>
+    <img src="https://img.shields.io/github/forks/chansee97/nova-admin"/>
+</div>
 
-<p align="center">
-  <a href="https://admin-demo.vuestic.dev"> Live Demo </a> |
-  <a href="https://admin.vuestic.dev/"> About Vuestic Admin </a> |
-  <a href="https://ui.vuestic.dev/">Vuestic UI documentation</a>
-</p>
+<div align='center'>
 
-> Vuestic Admin is built with [Vuestic UI](https://ui.vuestic.dev). See our
-> <a href="https://github.com/epicmaxco/vuestic-ui/issues">issues</a>,
-> <a href="https://ui.vuestic.dev/en/contribution/guide">contributing guide</a> and join discussions on our
-> <a href="https://discord.gg/jTKTjj2weV">Discord server</a> to help us improve Vuestic Admin & Vuestic UI experience.
+  English |  [中文](./README.zh-CN.md)
+</div>
 
-<p align="center">
-  <a href="https://admin.vuestic.dev" target="_blank">
-    <img src="./public/vuestic-admin-image.png" align="center" width="888px"/>
-  </a>
-</p>
+## Introduction
 
-### Quick start
+[Nova-admin](https://github.com/chansee97/nova-admin) is a clean and concise back-end management template based on Vue3, Vite5, Typescript, and Naive UI. It implements complete functionality in a simple way, while also considering code standards, readability, and avoiding excessive encapsulation to facilitate secondary development.
 
-Use following command to quickly scaffold new [Vuestic Admin](https://admin-demo.vuestic.dev) or empty Vite or Nuxt project with [Vuestic UI](https://ui.vuestic.dev).
+- [Nova-Admin preview](https://nova-admin.pages.dev/)
+- [Nova-Admin docs](https://nova-admin-docs.pages.dev/)
+
+## Features
+
+- Developed based on the latest technology stack including Vue3, Vite6, TypeScript, NaiveUI, Unocss, etc.
+- Based on [alova](https://alova.js.org/) encapsulation and configuration, providing unified response handling and multi-scenario capabilities.
+- Comprehensive front-end and back-end permission management solution.
+- Supports local static routes and dynamically generated routes from the back end, with easy route configuration.
+- Secondary encapsulation of commonly used components to meet basic work requirements.
+- Dark theme adaptation, maintaining the Naive style for interface aesthetics.
+- Only performs eslint validation during submission without excessive restrictions for simpler development.
+- Flexible and configurable interface style layout.
+- Multilanguage (i18n) support.
+
+## Project preview
+
+![preview-1.png](https://s2.loli.net/2024/03/31/UZoajnEekMX9cLi.png)
+![preview-2.jpg](https://s2.loli.net/2024/03/31/8VwMSyXWtO6avKg.jpg)
+![preview-5.png](https://s2.loli.net/2024/03/31/TCtE2ZBU7MJ6HrY.png)
+![preview-6.png](https://s2.loli.net/2024/03/31/YM1OrxZCimzLcd6.png)
+![preview-4.png](https://s2.loli.net/2024/03/31/hgYHKjACqs7rcPV.png)
+![preview-3.png](https://s2.loli.net/2024/03/31/TuYajAH9LWsMPf5.png)
+
+## Repo
+
+- [Gitee](https://gitee.com/chansee97/nova-admin)
+- [Github](https://github.com/chansee97/nova-admin)
+
+## Interface document
+
+This project uses ApiFox for interface mock, check the online documentation for more interface details
+[online aipfox docs](https://nova-admin.apifox.cn)
+
+## Install and use
+
+The local development environment is recommended to use pnpm 10.x, Node.js version 21.x.
+
+It is recommended to directly download the compressed package from [Releases](https://github.com/chansee97/nova-admin/releases)
 
 ```bash
-npm create vuestic@latest
+# install dependencies
+pnpm i
+
+# Run
+pnpm dev
+
+# Build product
+pnpm build
+
 ```
 
-After [Vuestic Admin](https://admin.vuestic.dev) is installed, run `npm install` to install dependcies, then run `npm run dev` to start local development server.
+You can deploy **nova-admin** in a production environment using docker-compose.
+```bash
+# Build product
+docker compose -f docker-compose.product.yml up --build -d
+```
+> The nginx.conf provided is for reference only. You can adjust it according to your own needs.
 
-### Documentation
+## Related projects
 
-Documentation, guides, examples and tutorials are available on [ui.vuestic.dev](https://ui.vuestic.dev)
+- [Nova-admin-nest](https://github.com/chansee97/nove-admin-nest) (under development) Nova-Admin supporting background project based on TS, NestJs, typeorm
 
-### Official Discord Server
+## Learn to communicate
 
-Ask questions at the official community [discord server](https://discord.gg/jTKTjj2weV)
+Nova-Admin is a completely open-source and free project. It is still being optimized and iterated. It is designed to help developers more conveniently develop medium and large management systems. If you have any questions, please ask questions in the QQ exchange group.
 
-### Features
+| Q-Group | wechat-Group |
+| :--: |:--: |
+| <img src="https://cdn.jsdelivr.net/gh/chansee97/static/nova-admin/q-group.png" width=170> |<img src="https://cdn.jsdelivr.net/gh/chansee97/static/wechat.png" width=170>|
 
-- **Vue 3, Vite, Pinia, and Tailwind CSS -** Fast and efficient development
-- **Dark Theme -** Modern and eye-catching
-- **Global Configuration -** Effortless customization
-- **Accessibility -** Inclusive and user-friendly
-- **i18n Integration -** Easy localization for global reach
-- **Educational Resource -** Ideal for learning and improving skills
-- **Responsive Design -** Adapts seamlessly to all devices
-- **Professional Support -** Reliable help from the experts
-- **Highly Customizable -** Tailor to your project’s style
+> Please indicate the purpose of adding WeChat.
 
-### Contributing
+## Contribution
 
-Thanks for all your wonderful PRs, issues and ideas.
+If you find any issues or have suggestions for improvement, please create an [issue](nova-admin/issues/new) or submit a PR. We welcome your contributions!
 
-<a href="https://github.com/epicmaxco/vuestic-admin/graphs/contributors">
-<img src="https://opencollective.com/vuestic-admin/contributors.svg?width=890&button=false" />
+## Support
+
+If you feel that this project is helpful for your work or study, please help me order a ✨ Star, which will be a great encouragement and support for me, or you can buy me a cup of coffee below
+
+| wechat | alipay |
+| :--: |:--: |
+| <img src="https://cdn.jsdelivr.net/gh/chansee97/static/sponsor-wechat.png" width=170> | <img src="https://cdn.jsdelivr.net/gh/chansee97/static/sponsor-alipay.png" width=170>|
+
+## Contributors
+
+Thanks for all their contributions!
+
+<a href="https://github.com/chansee97/nova-admin/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=chansee97/nova-admin" alt="contributors" />
 </a>
-<br>
 
-You’re always welcome to join: check out
-our <a href="https://ui.vuestic.dev/en/contribution/guide">
-contribution guides</a>
-, [open issues](https://github.com/epicmaxco/vuestic-ui/issues)
-and [Discord server](https://discord.gg/jTKTjj2weV)
+## Star History
 
-### Partners & Sponsors ❤️
+[![Star History Chart](https://api.star-history.com/svg?repos=chansee97/nova-admin&type=Date)](https://star-history.com/#chansee97/nova-admin&Date)
 
-<img src="./.github/assets/sponsors.png" loading="lazy" alt="Epicmax, vuejobs, ag-grid, flatlogic, browserstack and jetbrains" width="400px">
+## License
 
-Become a partner: [hello@epicmax.co](mailto:hello@epicmax.co)
-
-### Can I hire you guys?
-
-[Epicmax](https://epicmax.co) is committed to Open Source from its beginning. Vuestic Admin was created and backed by Epicmax, and is supported through all the years.
-
-With 6+ years of dedicated work on both commercial and open-source projects, and more than 47 clients worldwide across various fields, Epicmax has deep expertise in frontend development, especially in Vue.js. We regularly conduct code audits for our projects and now excited to offer this service not only to our existing clients but to anyone looking to understand the state of their frontend code and ensure it's secure and up-to-date!
-
-You can request a consultation or order web development services by Epicmax via this [form](https://epicmax.co/contacts) 😎
-
-Say hi: <a href="mailto:hello@epicmax.co">hello@epicmax.co</a>. We will be happy to work with you!
-
-[Other work](https://epicmax.co) we’ve done 🤘
-
-[Meet the Team](https://ui.vuestic.dev/introduction/team)
-
-### Awards
-
-<a href="https://flatlogic.com/templates/vuestic-vue-free-admin" target="_blank">
-    <img src="https://i.imgur.com/ZeQPZ3Q.png" align="center" width="150px"/>
-</a>
-<p>
-  By <a href="https://flatlogic.com/templates/vuestic-vue-free-admin" target="_blank">@flatlogic</a> marketplace
-</p>
-
-### Premium Support and Consulting
-
-Get Premium Support & Consulting services through our official development partner, Epicmax. As the main contributor to Vuestic UI and Vuestic Admin, Epicmax brings a wealth of expertise and experience to help you achieve your project goals efficiently and effectively.
-
-[Get a quote](https://www.epicmax.co/?ref=vuestic-consulting)
-
-### Follow us
-
-Stay up to date with the latest Vuestic news! Follow us
-on [Twitter](https://twitter.com/vuestic_ui)
-or [Linkedin](https://www.linkedin.com/company/18509340)
-
-### License
-
-[MIT](https://github.com/epicmaxco/vuestic-admin/blob/master/LICENSE) license.
+[MIT](LICENSE)

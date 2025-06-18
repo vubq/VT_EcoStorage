@@ -1,103 +1,121 @@
-<p align="center">
-  <a href="https://vuestic.dev" target="_blank">
-    <img alt="Vuestic UI Logo" width="220" src="./.github/assets/vuestic-admin-logo.png">
-  </a>
-</p>
+<div align="center">
+<img src="https://s2.loli.net/2023/10/27/WzQ4JLNV5epKh6X.png" style="width:150px"/>
+    <h1>Nova Admin</h1>
+</div>
 
-<p align="center">
-  免费且美观的管理模板，使用Vue 3、Vite、Pinia和Tailwind CSS构建。设计用于构建高效、响应式和快速加载的管理界面。</br>
-  由<a href="https://epicmax.co">Epicmax</a>开发。</br>
-  基于<a href="https://ui.vuestic.dev">Vuestic UI</a>库。
-</p>
+<div align="center">
+    <img src="https://img.shields.io/github/license/chansee97/nova-admin"/>
+    <img src="https://badgen.net/github/stars/chansee97/nova-admin?icon=github"/>
+    <img src="https://gitee.com/chansee97/nova-admin/badge/star.svg"/>
+    <img src="https://img.shields.io/github/forks/chansee97/nova-admin"/>
+</div>
 
-<p align="center">
-  <a href="https://admin-demo.vuestic.dev"> 在线演示 </a> |
-  <a href="https://admin-landing.vuestic.dev/"> 关于Vuestic Admin </a> |
-  <a href="https://ui.vuestic.dev/">Vuestic UI文档</a>
-</p>
+<div align='center'>
 
-> Vuestic Admin是使用[Vuestic UI](https://ui.vuestic.dev)构建的。查看我们的
-> <a href="https://github.com/epicmaxco/vuestic-ui/issues">问题</a>，
-> <a href="https://ui.vuestic.dev/en/contribution/guide">贡献指南</a> 并参与我们的
-> <a href="https://discord.gg/jTKTjj2weV">Discord服务器</a>，帮助我们改进Vuestic Admin和Vuestic UI体验。
+  [English](./README.md) | 中文
+</div>
 
-<p align="center">
-  <a href="https://admin.vuestic.dev" target="_blank">
-    <img src="./public/vuestic-admin-image.png" align="center" width="888px"/>
-  </a>
-</p>
+## 介绍
 
-### 快速入门
+[Nova-admin](https://github.com/chansee97/nova-admin)是一个基于Vue3、Vite5、Typescript、Naive UI, 简洁干净后台管理模板，用简单的方式实现完整功能，并尽可能的考虑代码规范，易读易理解无过度封装，方便二次开发。
 
-使用以下命令快速搭建新的[Vuestic Admin](admin-demo.vuestic.ui)或使用[Vuestic UI](ui.vuestic.dev)的空白Vite或Nuxt项目。
+- [Nova-Admin 预览](https://nova-admin.pages.dev/)
+- [Nova-Admin 文档](https://nova-admin-docs.pages.dev/)
+
+## 特性
+
+- 基于Vue3、Vite6、TypeScript、NaiveUI、Unocss等最新技术栈开发
+- 基于[alova](https://alova.js.org/)封装和配置，提供统一的响应处理和多场景能力
+- 完善的前后端权限管理方案
+- 支持本地静态路由和后台返回动态路由，路由简单易配置
+- 对日常使用频率较高的组件二次封装,满足基础工作需求
+- 黑暗主题适配, 界面样式保持Naive风格
+- 仅在提交时进行eslint校验，没有过多限制，开发更简便
+- 界面样式布局灵活可配置
+- 多语言（i18n）支持
+
+## 项目预览
+
+![preview-1.png](https://s2.loli.net/2024/03/31/UZoajnEekMX9cLi.png)
+![preview-2.jpg](https://s2.loli.net/2024/03/31/8VwMSyXWtO6avKg.jpg)
+![preview-5.png](https://s2.loli.net/2024/03/31/TCtE2ZBU7MJ6HrY.png)
+![preview-6.png](https://s2.loli.net/2024/03/31/YM1OrxZCimzLcd6.png)
+![preview-4.png](https://s2.loli.net/2024/03/31/hgYHKjACqs7rcPV.png)
+![preview-3.png](https://s2.loli.net/2024/03/31/TuYajAH9LWsMPf5.png)
+
+## 代码仓库
+
+- [Gitee](https://gitee.com/chansee97/nova-admin)
+- [Github](https://github.com/chansee97/nova-admin)
+
+## 接口文档
+
+本项目使用ApiFox进行接口mock，查看在线文档以了解更多接口详情
+[在线apifox文档](https://nova-admin.apifox.cn)
+
+## 安装使用
+
+本地开发环境建议使用 pnpm 10.x 、Node.js 21.x
+
+推荐直接下载[Releases](https://github.com/chansee97/nova-admin/releases)压缩包
 
 ```bash
-npm create vuestic@latest
+# install dependencies
+pnpm i
+
+# Run
+pnpm dev
+
+# Build product
+pnpm build
+
 ```
 
-安装[Vuestic Admin](admin.vuestic.ui)后，运行 `npm install` 安装依赖，然后运行 `npm run dev` 启动本地开发服务器。
+在生产环境也可以使用 docker-compose 部署 **nova-admin**
+```bash
+# Build product
+docker compose -f docker-compose.product.yml up --build -d
+```
+> 关于 nginx.conf 只供参考，你可以根据自己的需求进行调整。
 
-### 文档
+## 相关项目
 
-文档、指南、示例和教程可在[ui.vuestic.dev](https://ui.vuestic.dev)上找到。
+- [Nova-admin-nest](https://github.com/chansee97/nove-admin-nest) (开发中)基于TS, NestJs, typeorm的Nova-Admin配套后台项目
 
-### 官方Discord服务器
+## 学习交流
 
-在官方社区的 [discord服务器](https://discord.gg/jTKTjj2weV)上提问。
+Nova-Admin 是完全开源免费的项目，目前仍然在优化迭代中，旨在帮助开发者更方便地进行中大型管理系统开发，有使用问题欢迎在交流群内提问。
 
-### 特性
+| Q群 | 微信群 |
+| :--: |:--: |
+| <img src="https://cdn.jsdelivr.net/gh/chansee97/static/nova-admin/q-group.png" width=170> |<img src="https://cdn.jsdelivr.net/gh/chansee97/static/wechat.png" width=170>|
 
-- **Vue 3、Vite、Pinia和Tailwind CSS -** 快速高效的开发
-- **深色主题 -** 现代且引人注目
-- **全局配置 -** 轻松定制
-- **可访问性 -** 包容且用户友好
-- **i18n集成 -** 便于全球本地化
-- **教育资源 -** 适用于学习和提高技能
-- **响应式设计 -** 无缝适应所有设备
-- **专业支持 -** 专家提供可靠帮助
-- **高度可定制 -** 可根据项目风格定制
+> 添加微信请注明来意
 
-### 贡献
+## 贡献
 
-感谢您所有出色的PR、问题和想法。
+如果您发现了任何问题或有改进建议，请创建一个[issue](nova-admin/issues/new)或提交一个PR。我们欢迎您的贡献！
 
-<a href="https://github.com/epicmaxco/vuestic-admin/graphs/contributors">
-<img src="https://opencollective.com/vuestic-admin/contributors.svg?width=890&button=false" />
+## 支持
+
+如果感觉本项目对你工作或学习有帮助，请帮我点一个✨Star,这将是对我极大的鼓励与支持, 也可以在下方请我喝一杯咖啡
+
+| 微信 | 支付宝 |
+| :--: |:--: |
+| <img src="https://cdn.jsdelivr.net/gh/chansee97/static/sponsor-wechat.png" width=170> | <img src="https://cdn.jsdelivr.net/gh/chansee97/static/sponsor-alipay.png" width=170>|
+
+## 贡献者
+
+感谢他们的所做的一切贡献！
+
+<a href="https://github.com/chansee97/nova-admin/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=chansee97/nova-admin" alt="contributors" />
 </a>
-<br>
 
-欢迎随时加入：查看我们的<a href="https://ui.vuestic.dev/en/contribution/guide">贡献指南</a>，[开放问题](https://github.com/epicmaxco/vuestic-ui/issues)和[Discord服务器](https://discord.gg/jTKTjj2weV)。
+## Star 历史
 
-### 合作伙伴与赞助商 ❤️
+[![Star History Chart](https://api.star-history.com/svg?repos=chansee97/nova-admin&type=Date)](https://star-history.com/#chansee97/nova-admin&Date)
 
-<img src="./.github/assets/sponsors.png" loading="lazy" alt="Epicmax, vuejobs, ag-grid, flatlogic, browserstack and jetbrains" width="400px">
+## 协议
 
-成为合作伙伴：[hello@epicmax.co](mailto:hello@epicmax.co)
-
-### 我能雇佣你们吗？
-
-[Epicmax](https://epicmax.co) 从一开始就致力于开源。Vuestic Admin是由Epicmax创建并支持的，经过多年的支持。
-
-在前端开发方面，Epicmax在商业和开源项目上已经有超过6年的专业经验，与全球各个领域的47个以上的客户合作。我们定期对我们的项目进行代码审核，现在很高兴不仅向我们现有的客户提供此服务，而且向任何希望了解其前端代码状态并确保其安全和最新的人提供此服务！
-
-您可以通过[Epicmax的这个表单](https://epicmax.co/contacts)请求咨询或订购Web开发服务 😎
-
-打个招呼：<a href="mailto:hello@epicmax.co">hello@epicmax.co</a>。我们将很高兴与您合作！
-
-[我们做过的其他工作](https://epicmax.co) 🤘
-
-[认识团队](https://ui.vuestic.dev/introduction/team)
-
-### 奖项
-
-<a href="https://flatlogic.com/templates/vuestic-vue-free-admin" target="_blank">
-    <img src="https://i.imgur.com/ZeQPZ3Q.png" align="center" width="150px"/>
-</a>
-<p>
-  由<a href="https://flatlogic.com/templates/vuestic-vue-free-admin" target="_blank">@flatlogic</a>市场提供
-</p>
-
-### 关注我们
-
-随时关注最新的Vuestic新闻！在[Twitter上](https://twitter.com/vuestic_ui)
-或[Linkedin上](
+[MIT](LICENSE)

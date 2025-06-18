@@ -1,30 +1,35 @@
-import './scss/main.scss'
+import type { App } from 'vue'
+import { installRouter } from '@/router'
+import { installPinia } from '@/store'
+import AppVue from './App.vue'
+import AppLoading from './components/common/AppLoading.vue'
 
-import { createApp } from 'vue'
-import App from './App.vue'
-import i18n from './i18n'
-import { createVuestic } from 'vuestic-ui'
-import { createGtm } from '@gtm-support/vue-gtm'
+async function setupApp() {
+  // 载入全局loading加载状态
+  const appLoading = createApp(AppLoading)
+  appLoading.mount('#appLoading')
 
-import stores from './stores'
-import router from './router'
-import vuesticGlobalConfig from './services/vuestic-ui/global-config'
+  // 创建vue实例
+  const app = createApp(AppVue)
 
-const app = createApp(App)
+  // 注册模块Pinia
+  await installPinia(app)
 
-app.use(stores)
-app.use(router)
-app.use(i18n)
-app.use(createVuestic({ config: vuesticGlobalConfig }))
+  // 注册模块 Vue-router
+  await installRouter(app)
 
-if (import.meta.env.VITE_APP_GTM_ENABLED) {
-  app.use(
-    createGtm({
-      id: import.meta.env.VITE_APP_GTM_KEY,
-      debug: false,
-      vueRouter: router,
+  /* 注册模块 指令/静态资源 */
+  Object.values(
+    import.meta.glob<{ install: (app: App) => void }>('./modules/*.ts', {
+      eager: true,
     }),
-  )
+  ).map(i => app.use(i))
+
+  // 卸载载入动画
+  appLoading.unmount()
+
+  // 挂载
+  app.mount('#app')
 }
 
-app.mount('#app')
+setupApp()
