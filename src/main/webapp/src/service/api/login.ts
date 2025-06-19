@@ -1,12 +1,12 @@
 import { request } from '../http'
 
 interface Ilogin {
-  userName: string
+  username: string
   password: string
 }
 
 export function fetchLogin(data: Ilogin) {
-  const methodInstance = request.Post<Service.ResponseResult<Api.Login.Info>>('/login', data)
+  const methodInstance = request.Post<Service.ResponseResult<Api.Login.Info>>('/api/auth/login', data)
   methodInstance.meta = {
     authRole: null,
   }

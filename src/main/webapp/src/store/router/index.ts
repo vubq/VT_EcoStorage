@@ -38,29 +38,31 @@ export const useRouteStore = defineStore('route-store', {
     },
 
     async initRouteInfo() {
-      if (import.meta.env.VITE_ROUTE_LOAD_MODE === 'dynamic') {
-        const userInfo = local.get('userInfo')
+      // if (import.meta.env.VITE_ROUTE_LOAD_MODE === 'dynamic') {
+      //   const userInfo = local.get('userInfo')
 
-        if (!userInfo || !userInfo.id) {
-          const authStore = useAuthStore()
-          authStore.logout()
-          return
-        }
+      //   if (!userInfo || !userInfo.id) {
+      //     const authStore = useAuthStore()
+      //     authStore.logout()
+      //     return
+      //   }
 
-        // Get user's route
-        const { data } = await fetchUserRoutes({
-          id: userInfo.id,
-        })
+      //   // Get user's route
+      //   const { data } = await fetchUserRoutes({
+      //     id: userInfo.id,
+      //   })
 
-        if (!data)
-          return
+      //   if (!data)
+      //     return
 
-        return data
-      }
-      else {
-        this.rowRoutes = staticRoutes
-        return staticRoutes
-      }
+      //   return data
+      // }
+      // else {
+      //   this.rowRoutes = staticRoutes
+      //   return staticRoutes
+      // }
+      this.rowRoutes = staticRoutes
+      return staticRoutes
     },
     async initAuthRoute() {
       this.isInitAuthRoute = false

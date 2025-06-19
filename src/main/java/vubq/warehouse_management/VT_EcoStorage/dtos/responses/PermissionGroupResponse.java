@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class PermissionGroupResponse {
-
     private String id;
     private String name;
 }

@@ -6,25 +6,25 @@ export function usePermission() {
   const authStore = useAuthStore()
 
   function hasPermission(
-    permission?: Entity.RoleType | Entity.RoleType[],
+    permission?: string[],
   ) {
     if (!permission)
       return true
 
     if (!authStore.userInfo)
       return false
-    const { role } = authStore.userInfo
+    const { permissions } = authStore.userInfo
 
     // 角色为super可直接通过
-    let has = role.includes('super')
+    let has = permissions.includes('SUPER_ADMIN')
     if (!has) {
       if (isArray(permission))
         // 角色为数组, 判断是否有交集
-        has = permission.some(i => role.includes(i))
+        has = permission.some(i => permissions.includes(i))
 
       if (isString(permission))
         // 角色为字符串, 判断是否包含
-        has = role.includes(permission)
+        has = permissions.includes(permission)
     }
     return has
   }

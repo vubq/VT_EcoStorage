@@ -24,7 +24,7 @@ const appName = import.meta.env.VITE_APP_NAME
     >
       <div class="w-full flex flex-col items-center">
         <SvgIconsLogo class="text-6em" />
-        <n-h3>{{ appName }} </n-h3>
+        <n-h3>VTEcoStorage - Admin</n-h3>
         <transition
           name="fade-slide"
           mode="out-in"
@@ -37,7 +37,5 @@ const appName = import.meta.env.VITE_APP_NAME
         </transition>
       </div>
     </n-el>
-
-    <div />
   </n-el>
 </template>

@@ -27,8 +27,8 @@ const rules = computed(() => {
   }
 })
 const formValue = ref({
-  account: 'super',
-  pwd: '123456',
+  account: '',
+  pwd: '',
 })
 const isRemember = ref(false)
 const isLoading = ref(false)
@@ -94,12 +94,12 @@ function checkUserAccount() {
         <n-button block type="primary" size="large" :loading="isLoading" :disabled="isLoading" @click="handleLogin">
           {{ $t('login.signIn') }}
         </n-button>
-        <n-flex>
+        <!-- <n-flex>
           <n-text>{{ $t('login.noAccountText') }}</n-text>
           <n-button type="primary" text @click="toOtherForm('register')">
             {{ $t('login.signUp') }}
           </n-button>
-        </n-flex>
+        </n-flex> -->
       </n-space>
     </n-form>
     <n-divider>
