@@ -2,7 +2,7 @@ import { request } from '../http'
 
 export const UserService = {
   getUser(userId: string) {
-    return request.Get<Service.ResponseResult<any>>('/api/user/' + userId)
+    return request.Get<Service.ResponseResult<any>>(`/api/user/${userId}`)
   },
   createOrUpdateUser(data: any) {
     return request.Post<Service.ResponseResult<any>>('/api/user/create-or-update', data)

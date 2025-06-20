@@ -459,7 +459,7 @@ export const staticRoutes: AppRoute.RowRoute[] = [
   {
     name: 'user-management.user',
     path: '/user-management/user',
-    title: 'User Management',
+    title: 'User',
     requiresAuth: true,
     icon: 'icon-park-outline:list-view',
     componentPath: '/user-management/user/index.vue',
@@ -469,7 +469,7 @@ export const staticRoutes: AppRoute.RowRoute[] = [
   {
     name: 'user-management.user-info',
     path: '/user-management/user/:userId',
-    title: 'User Info',
+    title: 'User',
     requiresAuth: true,
     hide: true,
     icon: 'icon-park-outline:list-view',
@@ -481,7 +481,7 @@ export const staticRoutes: AppRoute.RowRoute[] = [
   {
     name: 'user-management.permission',
     path: '/user-management/permission',
-    title: 'Permission Management',
+    title: 'Permission Group',
     requiresAuth: true,
     icon: 'icon-park-outline:list-view',
     componentPath: '/user-management/permission/index.vue',

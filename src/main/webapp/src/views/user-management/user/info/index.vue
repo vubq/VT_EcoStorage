@@ -5,8 +5,13 @@ import { Save } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { UserService } from '@/service/api/user'
 import { router } from '@/router'
+import { useBoolean } from '@/hooks'
+import { initRulesForm, validateFieldFromErrors } from '@/utils/error'
 
 const route = useRoute()
+
+const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
+
 const userId = route.params.userId
 const user = ref<User.Data>({
   id: '',
@@ -17,8 +22,17 @@ const user = ref<User.Data>({
   lastName: '',
   note: '',
   status: 'ACTIVE',
-  permissions: []
+  permissions: [],
 })
+
+const formUserRef = ref()
+const errors = ref<Error.ValidationError[]>([])
+
+const userRules = ref(
+  initRulesForm(user.value, (rule, value, callback, key) => {
+    validateFieldFromErrors(errors, key, callback)
+  }),
+)
 
 const listModule = ref<Module.Data[]>([])
 
@@ -39,17 +53,23 @@ async function getUser() {
 }
 
 async function createOrUpdateUser() {
+  loadingStart()
   await UserService.createOrUpdateUser(user.value)
     .then((res: any) => {
       if (res.isSuccess) {
-        router.push({name: 'user-management.user'})
+        router.push({ name: 'user-management.user' })
+      }
+      else {
+        errors.value = res.data
+        formUserRef.value.validate()
       }
     })
+    .finally(() => loadingEnd())
 }
 
 onMounted(async () => {
   await getListModule()
-  if (userId !== 'new' ) {
+  if (userId !== 'new') {
     await getUser()
   }
 })
@@ -59,17 +79,18 @@ onMounted(async () => {
   <NSpace vertical size="large">
     <n-card title="Info">
       <template #header-extra>
-        <n-button tertiary @click="createOrUpdateUser()">
-          <n-icon size="18" :component="Save" style="margin-right: 5px;" />
+        <NButton secondary type="primary" :loading="loading" @click="createOrUpdateUser()">
+          <NIcon size="18" :component="Save" style="margin-right: 5px;" />
           {{ user.id ? 'Edit' : 'Add' }}
-        </n-button>
+        </NButton>
       </template>
 
       <n-form
-        ref="formRef"
+        ref="formUserRef"
         inline
         :label-width="80"
         :model="user"
+        :rules="userRules"
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
@@ -141,9 +162,7 @@ onMounted(async () => {
     <n-divider dashed>
       Or
     </n-divider>
-    <n-card title="Permission Group">
-
-    </n-card>
+    <n-card title="Permission Group" />
   </NSpace>
 </template>
 

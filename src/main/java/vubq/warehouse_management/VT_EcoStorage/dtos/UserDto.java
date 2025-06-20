@@ -1,5 +1,6 @@
 package vubq.warehouse_management.VT_EcoStorage.dtos;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,6 +16,8 @@ import java.util.List;
 public class UserDto {
 
     private String id;
+
+    @NotBlank(message = "Not blank")
     private String username;
     private String password;
     private String phoneNumber;

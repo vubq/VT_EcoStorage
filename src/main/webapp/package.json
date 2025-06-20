@@ -1,5 +1,5 @@
 {
-  "name": "nova-admin",
+  "name": "webapp",
   "type": "module",
   "version": "0.9.15",
   "private": true,

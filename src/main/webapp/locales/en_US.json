@@ -133,7 +133,7 @@
     "user-management": {
       "index": "User Management",
       "user": "User",
-      "user-info": "User Info",
+      "user-info": "User",
       "permission": "Permission Group"
     }
   },

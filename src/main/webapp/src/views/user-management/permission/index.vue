@@ -3,11 +3,16 @@ import { useBoolean } from '@/hooks'
 import { PermissionGroupService } from '@/service/api/permission-group-service'
 import type { DataTableColumns } from 'naive-ui'
 import { NButton, NIcon } from 'naive-ui'
-import { Save, TrashSharp, Add } from '@vicons/ionicons5'
+import { Add, Save, TrashSharp } from '@vicons/ionicons5'
 
-const { bool: loading, setTrue: startLoading, setFalse: endLoading } = useBoolean(false)
-const { bool: pLoading, setTrue: startPLoading, setFalse: endPLoading } = useBoolean(false)
+const { bool: loading, setTrue: lS, setFalse: lE } = useBoolean(false)
+const { bool: loading2, setTrue: l2S, setFalse: l2E } = useBoolean(false)
 
+const permissionGroup = ref<PermissionGroup.Data>({
+  id: '',
+  name: '',
+})
+const listPermissionSelected = ref<string[]>([])
 const columns: DataTableColumns<PermissionGroup.Table> = [
   {
     title: 'Permission group name',
@@ -19,7 +24,9 @@ const columns: DataTableColumns<PermissionGroup.Table> = [
           <NButton
             style="width: 100%"
             type={!permissionGroup.value.id ? 'primary' : 'default'}
-            strong onClick={() => {
+            strong
+            secondary
+            onClick={() => {
               permissionGroup.value.id = ''
               permissionGroup.value.name = ''
               listPermissionSelected.value = []
@@ -38,6 +45,7 @@ const columns: DataTableColumns<PermissionGroup.Table> = [
             style="width: 100%"
             strong
             type={permissionGroup.value.id === row.id ? 'primary' : 'default'}
+            secondary
             onClick={() => {
               permissionGroup.value.id = row.id!
               getListPermissionByGroup(row.id!)
@@ -54,12 +62,7 @@ const columns: DataTableColumns<PermissionGroup.Table> = [
 ]
 
 const listModule = ref<Module.Data[]>([])
-const permissionGroup = ref<PermissionGroup.Data>({
-  id: '',
-  name: ''
-})
 const listPermissionGroup = ref<PermissionGroup.Table[]>([])
-const listPermissionSelected = ref<string[]>([])
 
 async function getListModule() {
   await PermissionGroupService.getListModule()
@@ -81,41 +84,40 @@ async function getListPermissionGroup() {
 }
 
 async function getListPermissionByGroup(permissionGroupId: string) {
-  startPLoading()
+  lS()
   await PermissionGroupService.getListPermissionByGroup(permissionGroupId)
     .then((res: any) => {
       permissionGroup.value.id = res.data.id
       permissionGroup.value.name = res.data.name
       listPermissionSelected.value = res.data.permissions
     })
-    .finally(() => endPLoading())
+    .finally(() => lE())
 }
 
 async function createOrUpdatePermissionGroup() {
-  endPLoading()
+  l2S()
   await PermissionGroupService.createOrUpdatePermissionGroup({
     id: permissionGroup.value.id,
     name: permissionGroup.value.name,
-    permissions: listPermissionSelected.value
+    permissions: listPermissionSelected.value,
   }).then(async (res: any) => {
     if (!permissionGroup.value.id) {
-      startLoading()
+      lS()
       listPermissionGroup.value.push({
         id: res.data.id,
-        name: res.data.name
+        name: res.data.name,
       })
-      endLoading()
+      lE()
     }
     permissionGroup.value.id = res.data.id
-  })
-  .finally(() => endPLoading())
+  }).finally(() => l2E())
 }
 
 onMounted(async () => {
-  startLoading()
+  lS()
   await getListModule()
   await getListPermissionGroup()
-  endLoading()
+  lE()
 })
 </script>
 
@@ -129,21 +131,27 @@ onMounted(async () => {
       </n-card>
     </NGi>
     <NGi :span="8">
-      <NSpace justify="center" size="large" v-if="pLoading">
+      <!-- <NSpace v-if="pLoading" justify="center" size="large">
         <n-spin size="medium" />
-      </NSpace>
-      <NSpace vertical size="large" v-else>
+      </NSpace> -->
+      <NSpace vertical size="large">
         <n-card>
           <n-form label-placement="left" :model="permissionGroup" label-align="left" :label-width="0">
             <n-form-item-grid-item label="" path="name">
               <n-input v-model:value="permissionGroup.name" placeholder="Name" />
-              <n-button style="margin-left: 20px;" tertiary @click="createOrUpdatePermissionGroup()">
-                <n-icon size="18" :component="Save" style="margin-right: 5px;" />
+              <NButton
+                style="margin-left: 20px;"
+                type="primary"
+                secondary
+                :loading="loading2"
+                @click="createOrUpdatePermissionGroup()"
+              >
+                <NIcon size="18" :component="Save" style="margin-right: 5px;" />
                 {{ permissionGroup.id ? 'Edit' : 'Add' }}
-              </n-button>
-              <n-button v-if="permissionGroup.id" style="margin-left: 10px;" tertiary @click="createOrUpdatePermissionGroup()">
-                <n-icon size="18" :component="TrashSharp" style="margin-right: 5px;" /> Delete
-              </n-button>
+              </NButton>
+              <NButton v-if="permissionGroup.id" style="margin-left: 10px;" tertiary @click="createOrUpdatePermissionGroup()">
+                <NIcon size="18" :component="TrashSharp" style="margin-right: 5px;" /> Delete
+              </NButton>
             </n-form-item-grid-item>
           </n-form>
         </n-card>

@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, DataTableSortState } from 'naive-ui'
 
 import { useBoolean } from '@/hooks'
 import { NButton, NSpace } from 'naive-ui'
@@ -13,19 +13,21 @@ const columns: DataTableColumns<User.Data> = [
     title: 'Username',
     align: 'center',
     key: 'username',
+    sorter: true,
     render: (row) => {
       return (
-          <NButton
-            style="width: 100%"
-            tertiary
-            type="primary"
-            strong onClick={() => getUser(row.id!)}
-          >
-            {{
-              default: () => row.username,
-            }}
-          </NButton>
-        )
+        <NButton
+          style="width: 100%"
+          secondary
+          type="primary"
+          strong
+          onClick={() => getUser(row.id!)}
+        >
+          {{
+            default: () => row.username,
+          }}
+        </NButton>
+      )
     },
   },
   {
@@ -38,7 +40,7 @@ const columns: DataTableColumns<User.Data> = [
     align: 'center',
     key: 'lastName',
   },
-    {
+  {
     title: 'Email',
     align: 'center',
     key: 'email',
@@ -57,7 +59,7 @@ const dataTableRequest = ref<DataTable.Request>({
   perPage: 10,
   filter: '',
   sortBy: 'id',
-  sortDesc: true
+  sortDesc: true,
 })
 
 async function changePage(page: number, size: number) {
@@ -88,7 +90,29 @@ async function reloadTable() {
 function getUser(userId: string) {
   router.push({
     name: 'user-management.user-info',
-    params: { userId: userId }
+    params: { userId },
+  })
+}
+
+function sorter(sorterInfo: DataTableSortState | null) {
+  if (!sorterInfo)
+    return
+  const { columnKey, order } = sorterInfo
+  console.log('Column Key:', columnKey)
+  console.log('Order:', order)
+
+  if (!order)
+    return
+
+  data.value.sort((a, b) => {
+    let result = 0
+    if (columnKey === 'name') {
+      result = a.name.localeCompare(b.name)
+    }
+    else if (columnKey === 'age') {
+      result = a.age - b.age
+    }
+    return order === 'ascend' ? result : -result
   })
 }
 
@@ -106,7 +130,7 @@ onMounted(() => {
             <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
           </n-form-item>
           <n-flex class="ml-auto">
-            <NButton type="primary" @click="reloadTableFirst()">
+            <NButton type="primary" secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
@@ -125,14 +149,14 @@ onMounted(() => {
     <n-card>
       <NSpace vertical size="large">
         <div class="flex gap-4">
-          <NButton strong type="primary" class="ml-a" @click="getUser('new')">
+          <NButton strong type="primary" secondary class="ml-a" @click="getUser('new')">
             <template #icon>
               <icon-park-outline-add-one />
             </template>
             Add
           </NButton>
         </div>
-        <n-data-table :columns="columns" :data="listUser" :loading="loading" />
+        <n-data-table :columns="columns" :data="listUser" :loading="loading" :sorter="sorter" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>

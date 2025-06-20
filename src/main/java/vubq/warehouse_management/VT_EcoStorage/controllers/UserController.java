@@ -1,8 +1,8 @@
 package vubq.warehouse_management.VT_EcoStorage.controllers;
 
+import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.UserDto;
@@ -17,7 +17,6 @@ import vubq.warehouse_management.VT_EcoStorage.utils.https.Response;
 @RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
     private final UserService userService;
 
     @GetMapping("/{userId}")
@@ -26,7 +25,7 @@ public class UserController {
     }
 
     @PostMapping("/create-or-update")
-    public Response createOrUpdateUser(@RequestBody UserDto userDto) {
+    public Response createOrUpdateUser(@Valid @RequestBody UserDto userDto) {
         return Response.success(userService.createOrUpdateUser(userDto));
     }
 
