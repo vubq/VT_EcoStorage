@@ -1,178 +1,122 @@
 <script setup lang="tsx">
-import type { DataTableColumns, FormInst } from 'naive-ui'
-import { Gender } from '@/constants'
+import type { DataTableColumns } from 'naive-ui'
+
 import { useBoolean } from '@/hooks'
-import { fetchUserPage } from '@/service'
-import { NButton, NPopconfirm, NSpace, NSwitch, NTag } from 'naive-ui'
-import TableModal from './components/TableModal.vue'
+import { NButton, NSpace } from 'naive-ui'
+import { UserService } from '@/service/api/user'
+import { router } from '@/router'
 
 const { bool: loading, setTrue: startLoading, setFalse: endLoading } = useBoolean(false)
-const { bool: visible, setTrue: openModal } = useBoolean(false)
 
-const initialModel = {
-  condition_1: '',
-  condition_2: '',
-  condition_3: '',
-  condition_4: '',
-}
-const model = ref({ ...initialModel })
-
-const formRef = ref<FormInst | null>()
-function sendMail(id?: number) {
-  window.$message.success(`删除用户id:${id}`)
-}
-const columns: DataTableColumns<Entity.User> = [
+const columns: DataTableColumns<User.Data> = [
   {
-    title: '姓名',
+    title: 'Username',
     align: 'center',
-    key: 'userName',
-  },
-  {
-    title: '年龄',
-    align: 'center',
-    key: 'age',
-  },
-  {
-    title: '性别',
-    align: 'center',
-    key: 'gender',
+    key: 'username',
     render: (row) => {
-      const tagType = {
-        0: 'primary',
-        1: 'success',
-      } as const
-      if (row.gender) {
-        return (
-          <NTag type={tagType[row.gender]}>
-            {Gender[row.gender]}
-          </NTag>
+      return (
+          <NButton
+            style="width: 100%"
+            tertiary
+            type="primary"
+            strong onClick={() => getUser(row.id!)}
+          >
+            {{
+              default: () => row.username,
+            }}
+          </NButton>
         )
-      }
     },
   },
   {
-    title: '邮箱',
+    title: 'First name',
+    align: 'center',
+    key: 'firstName',
+  },
+  {
+    title: 'Last name',
+    align: 'center',
+    key: 'lastName',
+  },
+    {
+    title: 'Email',
     align: 'center',
     key: 'email',
   },
   {
-    title: '状态',
+    title: 'Phone number',
     align: 'center',
-    key: 'status',
-    render: (row) => {
-      return (
-        <NSwitch
-          value={row.status}
-          checked-value={1}
-          unchecked-value={0}
-          onUpdateValue={(value: 0 | 1) =>
-            handleUpdateDisabled(value, row.id!)}
-        >
-          {{ checked: () => '启用', unchecked: () => '禁用' }}
-        </NSwitch>
-      )
-    },
-  },
-  {
-    title: '操作',
-    align: 'center',
-    key: 'actions',
-    render: (row) => {
-      return (
-        <NSpace justify="center">
-          <NButton
-            size="small"
-            onClick={() => handleEditTable(row)}
-          >
-            编辑
-          </NButton>
-          <NPopconfirm onPositiveClick={() => sendMail(row.id)}>
-            {{
-              default: () => '确认删除',
-              trigger: () => <NButton size="small">删除</NButton>,
-            }}
-          </NPopconfirm>
-        </NSpace>
-      )
-    },
+    key: 'phoneNumber',
   },
 ]
 
-const listData = ref<Entity.User[]>([])
-function handleUpdateDisabled(value: 0 | 1, id: number) {
-  const index = listData.value.findIndex(item => item.id === id)
-  if (index > -1)
-    listData.value[index].status = value
+const listUser = ref<User.Data[]>([])
+const totalRecords = ref<number>(0)
+const dataTableRequest = ref<DataTable.Request>({
+  currentPage: 1,
+  perPage: 10,
+  filter: '',
+  sortBy: 'id',
+  sortDesc: true
+})
+
+async function changePage(page: number, size: number) {
+  dataTableRequest.value.currentPage = page
+  dataTableRequest.value.perPage = size
+  await getListUser()
+}
+
+async function getListUser() {
+  startLoading()
+  await UserService.getListUser(dataTableRequest.value)
+    .then((res: any) => {
+      listUser.value = res.data.list
+      totalRecords.value = res.data.totalRecords
+    })
+    .finally(() => endLoading())
+}
+
+async function reloadTableFirst() {
+  dataTableRequest.value.currentPage = 1
+  await getListUser()
+}
+
+async function reloadTable() {
+  await getListUser()
+}
+
+function getUser(userId: string) {
+  router.push({
+    name: 'user-management.user-info',
+    params: { userId: userId }
+  })
 }
 
 onMounted(() => {
-  getUserList()
+  getListUser()
 })
-async function getUserList() {
-  startLoading()
-  await fetchUserPage().then((res: any) => {
-    listData.value = res.data.list
-    endLoading()
-  })
-}
-function changePage(page: number, size: number) {
-  window.$message.success(`分页器:${page},${size}`)
-}
-function handleResetSearch() {
-  model.value = { ...initialModel }
-}
-
-  type ModalType = 'add' | 'edit'
-const modalType = ref<ModalType>('add')
-function setModalType(type: ModalType) {
-  modalType.value = type
-}
-
-const editData = ref<Entity.User | null>(null)
-function setEditData(data: Entity.User | null) {
-  editData.value = data
-}
-
-function handleEditTable(row: Entity.User) {
-  setEditData(row)
-  setModalType('edit')
-  openModal()
-}
-function handleAddTable() {
-  openModal()
-  setModalType('add')
-}
 </script>
 
 <template>
   <NSpace vertical size="large">
     <n-card>
-      <n-form ref="formRef" :model="model" label-placement="left" inline :show-feedback="false">
+      <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
-          <n-form-item label="姓名" path="condition_1">
-            <n-input v-model:value="model.condition_1" placeholder="请输入" />
-          </n-form-item>
-          <n-form-item label="年龄" path="condition_2">
-            <n-input v-model:value="model.condition_2" placeholder="请输入" />
-          </n-form-item>
-          <n-form-item label="性别" path="condition_3">
-            <n-input v-model:value="model.condition_3" placeholder="请输入" />
-          </n-form-item>
-          <n-form-item label="地址" path="condition_4">
-            <n-input v-model:value="model.condition_4" placeholder="请输入" />
+          <n-form-item label="Search" path="filter">
+            <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
           </n-form-item>
           <n-flex class="ml-auto">
-            <NButton type="primary" @click="getUserList">
+            <NButton type="primary" @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
-              搜索
+              Search
             </NButton>
-            <NButton strong secondary @click="handleResetSearch">
+            <NButton strong secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
-              重置
+              Reload
             </NButton>
           </n-flex>
         </n-flex>
@@ -181,28 +125,15 @@ function handleAddTable() {
     <n-card>
       <NSpace vertical size="large">
         <div class="flex gap-4">
-          <NButton type="primary" @click="handleAddTable">
+          <NButton strong type="primary" class="ml-a" @click="getUser('new')">
             <template #icon>
               <icon-park-outline-add-one />
             </template>
-            新建
-          </NButton>
-          <NButton strong secondary>
-            <template #icon>
-              <icon-park-outline-afferent />
-            </template>
-            批量导入
-          </NButton>
-          <NButton strong secondary class="ml-a">
-            <template #icon>
-              <icon-park-outline-download />
-            </template>
-            下载
+            Add
           </NButton>
         </div>
-        <n-data-table :columns="columns" :data="listData" :loading="loading" />
-        <Pagination :count="100" @change="changePage" />
-        <TableModal v-model:visible="visible" :type="modalType" :modal-data="editData" />
+        <n-data-table :columns="columns" :data="listUser" :loading="loading" />
+        <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>
   </NSpace>

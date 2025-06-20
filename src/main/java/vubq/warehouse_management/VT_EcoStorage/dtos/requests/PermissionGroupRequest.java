@@ -1,4 +1,4 @@
-package vubq.warehouse_management.VT_EcoStorage.dtos.responses;
+package vubq.warehouse_management.VT_EcoStorage.dtos.requests;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PermissionGroupResponse {
+public class PermissionGroupRequest {
     private String id;
     private String name;
     private List<String> permissions;

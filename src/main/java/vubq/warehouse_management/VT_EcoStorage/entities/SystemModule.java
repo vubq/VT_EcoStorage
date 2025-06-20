@@ -1,9 +1,6 @@
 package vubq.warehouse_management.VT_EcoStorage.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -21,6 +18,14 @@ public class SystemModule {
 
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
     @OneToMany(mappedBy = "systemModule")
     private List<SystemPermission> systemPermissions;
+
+    public enum Status {
+        HIDE,
+        SHOW
+    }
 }

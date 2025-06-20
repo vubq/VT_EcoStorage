@@ -1,37 +1,50 @@
 package vubq.warehouse_management.VT_EcoStorage.controllers;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import vubq.warehouse_management.VT_EcoStorage.configs.securities.auths.CustomUserDetails;
-import vubq.warehouse_management.VT_EcoStorage.dtos.requests.AuthRequest;
-import vubq.warehouse_management.VT_EcoStorage.dtos.responses.AuthResponse;
-import vubq.warehouse_management.VT_EcoStorage.services.PermissionGroupManagementService;
+import vubq.warehouse_management.VT_EcoStorage.dtos.requests.PermissionGroupRequest;
+import vubq.warehouse_management.VT_EcoStorage.dtos.responses.PermissionGroupResponse;
+import vubq.warehouse_management.VT_EcoStorage.services.PermissionGroupService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.Response;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/permission-group")
 @RequiredArgsConstructor
 public class PermissionGroupController {
 
-    private final PermissionGroupManagementService permissionGroupManagementService;
+    private final PermissionGroupService permissionGroupService;
 
     @GetMapping("/get-list-module")
     public Response getListModule() {
         return Response.success(
-                this.permissionGroupManagementService.getListModule()
+                this.permissionGroupService.getListModule()
         );
     }
 
     @GetMapping("/get-list-permission-group")
     public Response getListPermissionGroup() {
         return Response.success(
-                this.permissionGroupManagementService.getListPermissionGroup()
+                this.permissionGroupService.getListPermissionGroup()
         );
+    }
+
+    @GetMapping("/get-list-permission-by-group/{permissionGroupId}")
+    public Response getListPermissionByGroup(@PathVariable String permissionGroupId) {
+        PermissionGroupResponse permissionGroupResponse = this.permissionGroupService
+                .getListPermissionByGroup(permissionGroupId);
+        if (StringUtils.isEmpty(permissionGroupResponse.getId())) {
+            return Response.badRequest("Permission group not found");
+        }
+        return Response.success(
+                permissionGroupResponse
+        );
+    }
+
+    @PostMapping("/create-or-update")
+    public Response createOrUpdatePermissionGroup(@RequestBody PermissionGroupRequest permissionGroupRequest) {
+        PermissionGroupResponse permissionGroupResponse = this.permissionGroupService
+                .createOrUpdatePermissionGroup(permissionGroupRequest);
+        return Response.success(permissionGroupResponse);
     }
 }

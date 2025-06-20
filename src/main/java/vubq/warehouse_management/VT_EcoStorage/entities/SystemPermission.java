@@ -16,8 +16,16 @@ public class SystemPermission {
 
     private String action;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "system_module_id")
     private SystemModule systemModule;
+
+    public enum Status {
+        HIDE,
+        SHOW
+    }
 }
 

@@ -1,6 +1,7 @@
 package vubq.warehouse_management.VT_EcoStorage.controllers;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final UserDetailsService userDetailsService;
@@ -42,6 +44,7 @@ public class AuthController {
             String token = jwtUtil.generateToken(request.getUsername());
             return Response.success(new AuthResponse(userDetails.getUser().getId(), permissions, token, ""));
         } catch (AuthenticationException e) {
+            log.error(e.getMessage());
             return Response.unauthorized("Invalid username or password");
         }
     }

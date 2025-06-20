@@ -132,8 +132,9 @@
     "dict": "Dictionary example",
     "user-management": {
       "index": "User Management",
-      "user": "User Management",
-      "permission": "Permission Management"
+      "user": "User",
+      "user-info": "User Info",
+      "permission": "Permission Group"
     }
   },
   "http": {

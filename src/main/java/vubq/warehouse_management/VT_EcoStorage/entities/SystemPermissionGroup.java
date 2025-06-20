@@ -13,14 +13,23 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SystemPermissionGroup {
+public class SystemPermissionGroup extends Base {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
     private String name;
 
     @OneToMany(mappedBy = "systemPermissionGroup", fetch = FetchType.EAGER)
     private List<SystemPermissionGroupDetail> groupDetails;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    public enum Status {
+        ACTIVE,
+        INACTIVE
+    }
 
     @Transient
     public List<SystemPermission> getPermissions() {
