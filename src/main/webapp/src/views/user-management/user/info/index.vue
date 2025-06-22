@@ -95,7 +95,7 @@ onMounted(async () => {
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
             <n-form-item label="Username" path="username">
-              <n-input v-model:value="user.username" placeholder="Input Username" />
+              <n-input v-model:value="user.username" placeholder="Input Username" :disabled="!!user.id" />
             </n-form-item>
           </NGi>
           <NGi :span="1">

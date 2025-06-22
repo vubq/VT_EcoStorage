@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
+import { ChevronForward } from '@vicons/ionicons5'
 
 import { useBoolean } from '@/hooks'
 import { NButton, NSpace } from 'naive-ui'
@@ -110,7 +111,7 @@ async function getUser(id: string) {
   loading1Start()
   await router.push({
     name: 'user-management.user-info',
-    params: { userId: id },
+    params: { id },
   })
   loading1End()
 }
@@ -138,6 +139,9 @@ function sortData(sorter: DataTableSortState) {
   }
   reloadTable()
 }
+
+const expanded = ref(false)
+const toggle = () => (expanded.value = !expanded.value)
 
 onMounted(() => {
   getListUser()
@@ -169,19 +173,68 @@ onMounted(() => {
         </n-flex>
       </n-form>
     </n-card>
-    <n-card>
+    <n-card title="Kho 1">
       <NSpace vertical size="large">
-        <div class="flex gap-4">
-          <NButton strong type="primary" secondary class="ml-a" @click="getUser('new')">
-            <template #icon>
-              <icon-park-outline-add-one />
-            </template>
-            Add
-          </NButton>
+        <div>
+          <div class="zone" style="" @click="toggle()">
+            <NIcon class="arrow" :class="{ expanded }" size="10" :component="ChevronForward" style="margin-right: 5px;" />
+            <span>Khu vực A</span>
+          </div>
+          <div>
+            <div class="shelf" style="" @click="toggle()">
+              <NIcon class="arrow" :class="{ expanded }" size="10" :component="ChevronForward" style="margin-right: 5px;" />
+              <span>Shelf A</span>
+              <div>
+                <div class="floor" style="" @click="toggle()">
+                  <NIcon class="arrow" :class="{ expanded }" size="10" :component="ChevronForward" style="margin-right: 5px;" />
+                  <span>Floor A</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listUser" :loading="loading" @update:sorter="sortTable" />
-        <Pagination :count="totalRecords" @change="changePage" />
+        <div>
+          <div class="zone" style="" @click="toggle()">
+            <NIcon class="arrow" :class="{ expanded }" size="10" :component="ChevronForward" style="margin-right: 5px;" />
+            <span>Khu vực A</span>
+          </div>
+          <div>
+            <div class="shelf" style="" @click="toggle()">
+              <NIcon class="arrow" :class="{ expanded }" size="10" :component="ChevronForward" style="margin-right: 5px;" />
+              <span>Shelf A</span>
+            </div>
+          </div>
+        </div>
+      </NSpace>
+    </n-card>
+    <n-card title="Kho 2">
+      <NSpace vertical size="large">
+        Kho 2
       </NSpace>
     </n-card>
   </NSpace>
 </template>
+
+<style scoped>
+.arrow {
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+.arrow.expanded {
+  transform: rotate(90deg);
+}
+.floor {
+  margin-left: 30px;
+}
+.shelf, .floor {
+  margin-left: 15px;
+  margin-top: 5px;
+}
+.zone, .shelf, .floor {
+  font-weight: 500;
+  cursor: pointer;
+}
+.zone:hover, .shelf:hover, .floor:hover {
+  text-decoration: underline;
+}
+</style>

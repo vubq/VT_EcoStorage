@@ -5,6 +5,7 @@ import { useBoolean } from '@/hooks'
 import { NButton, NSpace } from 'naive-ui'
 import { UserService } from '@/service/api/user'
 import { router } from '@/router'
+import { PurchaseOrderService } from '@/service/api/purchase-order-service'
 
 const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
 const { bool: loading1, setTrue: loading1Start, setFalse: loading1End } = useBoolean(false)
@@ -14,17 +15,17 @@ const dataTableRequest = ref<DataTable.Request>({
   currentPage: 1,
   perPage: 10,
   filter: '',
-  sortBy: 'username',
+  sortBy: 'id',
   sortDesc: true,
 })
 const userId = ref<string>('')
-const columns = ref<DataTableColumns<User.Data>>([
+const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
   {
-    title: 'Username',
+    title: 'Purchase Order Id',
     align: 'center',
-    key: 'username',
+    key: 'id',
     sorter: true,
-    sortOrder: sortDefault('username'),
+    sortOrder: sortDefault('id'),
     render: (row) => {
       return (
         <NButton
@@ -32,45 +33,63 @@ const columns = ref<DataTableColumns<User.Data>>([
           secondary
           type="primary"
           strong
-          loading={loading1.value && userId.value === row.id}
-          onClick={() => getUser(row.id!)}
+          onClick={() => {
+            router.push({
+              name: 'purchase-order-management.purchase-order',
+              params: { purchaseOrderId: row.id },
+            })
+          }}
         >
-          {row.username}
+          {row.id}
         </NButton>
       )
     },
   },
   {
-    title: 'First name',
+    title: 'Warehouse',
     align: 'center',
-    key: 'firstName',
+    key: 'warehouseName',
     sorter: true,
-    sortOrder: sortDefault('firstName'),
+    sortOrder: sortDefault('warehouseName'),
   },
   {
-    title: 'Last name',
+    title: 'Supplier',
     align: 'center',
-    key: 'lastName',
+    key: 'supplierName',
     sorter: true,
-    sortOrder: sortDefault('lastName'),
+    sortOrder: sortDefault('supplierName'),
   },
   {
-    title: 'Email',
+    title: 'Expected Date',
     align: 'center',
-    key: 'email',
+    key: 'expectedDate',
     sorter: true,
-    sortOrder: sortDefault('email'),
+    sortOrder: sortDefault('expectedDate'),
   },
   {
-    title: 'Phone number',
+    title: 'Received Date',
     align: 'center',
-    key: 'phoneNumber',
+    key: 'receivedDate',
     sorter: true,
-    sortOrder: sortDefault('phoneNumber'),
+    sortOrder: sortDefault('receivedDate'),
+  },
+  {
+    title: 'Total Amount',
+    align: 'center',
+    key: 'totalAmount',
+    sorter: true,
+    sortOrder: sortDefault('totalAmount'),
+  },
+  {
+    title: 'Status',
+    align: 'center',
+    key: 'status',
+    sorter: true,
+    sortOrder: sortDefault('status'),
   },
 ])
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listUser = ref<User.Data[]>([])
+const listPurchaseOrder = ref<PurchaseOrder.DataTable[]>([])
 const totalRecords = ref<number>(0)
 
 function sortDefault(columnKey: string) {
@@ -83,14 +102,14 @@ function sortDefault(columnKey: string) {
 async function changePage(page: number, size: number) {
   dataTableRequest.value.currentPage = page
   dataTableRequest.value.perPage = size
-  await getListUser()
+  await getListPurchaseOrder()
 }
 
-async function getListUser() {
+async function getListPurchaseOrder() {
   loadingStart()
-  await UserService.getListUser(dataTableRequest.value)
+  await PurchaseOrderService.getListPurchaseOrder(dataTableRequest.value)
     .then((res: any) => {
-      listUser.value = res.data.list
+      listPurchaseOrder.value = res.data.list
       totalRecords.value = res.data.totalRecords
     })
     .finally(() => loadingEnd())
@@ -98,22 +117,27 @@ async function getListUser() {
 
 async function reloadTableFirst() {
   dataTableRequest.value.currentPage = 1
-  await getListUser()
+  await getListPurchaseOrder()
 }
 
 async function reloadTable() {
-  await getListUser()
+  await getListPurchaseOrder()
 }
 
-async function getUser(id: string) {
-  userId.value = id
-  loading1Start()
-  await router.push({
-    name: 'user-management.user-info',
-    params: { userId: id },
-  })
-  loading1End()
+async function reloadSearch() {
+  dataTableRequest.value.filter = ''
+  await getListPurchaseOrder()
 }
+
+// async function getUser(id: string) {
+//   userId.value = id
+//   loading1Start()
+//   await router.push({
+//     name: 'user-management.user-info',
+//     params: { id },
+//   })
+//   loading1End()
+// }
 
 function sortTable(sorter: DataTableSortState) {
   columnsRef.value.forEach((column: any) => {
@@ -140,7 +164,7 @@ function sortData(sorter: DataTableSortState) {
 }
 
 onMounted(() => {
-  getListUser()
+  reloadTableFirst()
 })
 </script>
 
@@ -153,7 +177,7 @@ onMounted(() => {
             <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
           </n-form-item>
           <n-flex class="ml-auto">
-            <NButton type="primary" secondary @click="reloadTableFirst()">
+            <NButton type="primary" secondary @click="reloadSearch()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
@@ -172,14 +196,14 @@ onMounted(() => {
     <n-card>
       <NSpace vertical size="large">
         <div class="flex gap-4">
-          <NButton strong type="primary" secondary class="ml-a" @click="getUser('new')">
+          <NButton strong type="primary" secondary class="ml-a">
             <template #icon>
               <icon-park-outline-add-one />
             </template>
             Add
           </NButton>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listUser" :loading="loading" @update:sorter="sortTable" />
+        <n-data-table ref="tableRef" :columns="columns" :data="listPurchaseOrder" :loading="loading" @update:sorter="sortTable" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>

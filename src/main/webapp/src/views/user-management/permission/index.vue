@@ -5,8 +5,9 @@ import type { DataTableColumns } from 'naive-ui'
 import { NButton, NIcon } from 'naive-ui'
 import { Add, Save, TrashSharp } from '@vicons/ionicons5'
 
-const { bool: loading, setTrue: lS, setFalse: lE } = useBoolean(false)
-const { bool: loading2, setTrue: l2S, setFalse: l2E } = useBoolean(false)
+const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
+const { bool: loading1, setTrue: loading1Start, setFalse: loading1End } = useBoolean(false)
+const { bool: loading2, setTrue: loading2Start, setFalse: loading2End } = useBoolean(false)
 
 const permissionGroup = ref<PermissionGroup.Data>({
   id: '',
@@ -46,6 +47,7 @@ const columns: DataTableColumns<PermissionGroup.Table> = [
             strong
             type={permissionGroup.value.id === row.id ? 'primary' : 'default'}
             secondary
+            loading={loading2.value && permissionGroup.value.id === row.id}
             onClick={() => {
               permissionGroup.value.id = row.id!
               getListPermissionByGroup(row.id!)
@@ -84,40 +86,46 @@ async function getListPermissionGroup() {
 }
 
 async function getListPermissionByGroup(permissionGroupId: string) {
-  lS()
+  loading1Start()
+  loading2Start()
   await PermissionGroupService.getListPermissionByGroup(permissionGroupId)
     .then((res: any) => {
       permissionGroup.value.id = res.data.id
       permissionGroup.value.name = res.data.name
       listPermissionSelected.value = res.data.permissions
     })
-    .finally(() => lE())
+    .finally(() => {
+      loading1End()
+      loading2End()
+    })
 }
 
 async function createOrUpdatePermissionGroup() {
-  l2S()
+  loading1Start()
   await PermissionGroupService.createOrUpdatePermissionGroup({
     id: permissionGroup.value.id,
     name: permissionGroup.value.name,
     permissions: listPermissionSelected.value,
   }).then(async (res: any) => {
     if (!permissionGroup.value.id) {
-      lS()
+      loadingStart()
       listPermissionGroup.value.push({
         id: res.data.id,
         name: res.data.name,
       })
-      lE()
+      loadingEnd()
     }
     permissionGroup.value.id = res.data.id
-  }).finally(() => l2E())
+  }).finally(() => loading1End())
 }
 
 onMounted(async () => {
-  lS()
+  loadingStart()
+  loading1Start()
   await getListModule()
   await getListPermissionGroup()
-  lE()
+  loadingEnd()
+  loading1End()
 })
 </script>
 
@@ -143,7 +151,7 @@ onMounted(async () => {
                 style="margin-left: 20px;"
                 type="primary"
                 secondary
-                :loading="loading2"
+                :loading="loading1"
                 @click="createOrUpdatePermissionGroup()"
               >
                 <NIcon size="18" :component="Save" style="margin-right: 5px;" />

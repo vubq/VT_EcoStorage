@@ -26,7 +26,6 @@ public class User extends Base {
 
     private String firstName;
     private String lastName;
-    private String note;
 
     @Enumerated(EnumType.STRING)
     private Status status;

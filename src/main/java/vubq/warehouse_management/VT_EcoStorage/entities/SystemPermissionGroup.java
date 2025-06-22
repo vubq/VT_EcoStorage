@@ -18,8 +18,6 @@ public class SystemPermissionGroup extends Base {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
-    private String name;
-
     @OneToMany(mappedBy = "systemPermissionGroup", fetch = FetchType.EAGER)
     private List<SystemPermissionGroupDetail> groupDetails;
 

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 import vubq.warehouse_management.VT_EcoStorage.utils.dates.DateUtils;
 
 import java.util.Date;
@@ -17,16 +18,22 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldNameConstants
 public abstract class Base {
+
+    private String name;
+
+    private String description;
+
+    private String note;
 
     private String creator;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(updatable = false)
     private Date createdAt;
 
     private String updater;
 
-    @Column(name = "updated_at")
     private Date updatedAt;
 
     @PrePersist
