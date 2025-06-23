@@ -2,10 +2,11 @@
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
 
 import { useBoolean } from '@/hooks'
-import { NButton, NSpace } from 'naive-ui'
+import { NButton, NSpace, NTag } from 'naive-ui'
 import { UserService } from '@/service/api/user'
 import { router } from '@/router'
 import { PurchaseOrderService } from '@/service/api/purchase-order-service'
+import moment from 'moment'
 
 const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
 const { bool: loading1, setTrue: loading1Start, setFalse: loading1End } = useBoolean(false)
@@ -19,6 +20,12 @@ const dataTableRequest = ref<DataTable.Request>({
   sortDesc: true,
 })
 const userId = ref<string>('')
+const statusTypeMap: Record<string, any> = {
+  NEW: 'info',
+  CONFIRMED: 'info',
+  RECEIVED: 'success',
+  CANCELED: 'error'
+}
 const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
   {
     title: 'Purchase Order Id',
@@ -65,6 +72,11 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     key: 'expectedDate',
     sorter: true,
     sortOrder: sortDefault('expectedDate'),
+    render: (row) => {
+      return (
+        <span>{moment(row.expectedDate).format('YYYY-MM-DD')}</span>
+      )
+    }
   },
   {
     title: 'Received Date',
@@ -72,6 +84,11 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     key: 'receivedDate',
     sorter: true,
     sortOrder: sortDefault('receivedDate'),
+    render: (row) => {
+      return (
+        <span>{ row.receivedDate ? moment(row.receivedDate).format('YYYY-MM-DD') : ''}</span>
+      )
+    }
   },
   {
     title: 'Total Amount',
@@ -79,6 +96,11 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     key: 'totalAmount',
     sorter: true,
     sortOrder: sortDefault('totalAmount'),
+    render: (row) => {
+      return (
+        <span>{row.totalAmount!.toLocaleString('vi-VN')}</span>
+      )
+    },
   },
   {
     title: 'Status',
@@ -86,6 +108,13 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     key: 'status',
     sorter: true,
     sortOrder: sortDefault('status'),
+    render: (row) => {
+      return (
+        <NTag type={statusTypeMap[row.status!] || 'default'}>
+          {row.status}
+        </NTag>
+      )
+    },
   },
 ])
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
@@ -196,7 +225,18 @@ onMounted(() => {
     <n-card>
       <NSpace vertical size="large">
         <div class="flex gap-4">
-          <NButton strong type="primary" secondary class="ml-a">
+          <NButton
+            strong
+            type="primary"
+            secondary
+            class="ml-a"
+            @click="() => {
+              router.push({
+                name: 'purchase-order-management.purchase-order',
+                params: { purchaseOrderId: 'new' },
+              })
+            }"
+          >
             <template #icon>
               <icon-park-outline-add-one />
             </template>

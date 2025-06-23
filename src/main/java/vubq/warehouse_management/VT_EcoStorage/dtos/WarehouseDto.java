@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import vubq.warehouse_management.VT_EcoStorage.entities.Warehouse;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +20,8 @@ public class WarehouseDto {
     private String name;
     private String note;
     private String description;
+
+    private List<ZoneDto> zones;
 
     public static WarehouseDto toDto(Warehouse warehouse) {
         return WarehouseDto.builder()

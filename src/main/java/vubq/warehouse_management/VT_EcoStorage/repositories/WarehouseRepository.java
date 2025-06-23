@@ -10,4 +10,6 @@ import java.util.List;
 public interface WarehouseRepository extends JpaRepository<Warehouse, String> {
 
     List<Warehouse> findByStatus(Warehouse.Status status);
+
+    List<Warehouse> findByCompanyIdAndStatus(String companyId, Warehouse.Status status);
 }

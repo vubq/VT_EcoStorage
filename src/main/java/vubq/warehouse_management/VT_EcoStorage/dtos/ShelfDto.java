@@ -1,11 +1,12 @@
 package vubq.warehouse_management.VT_EcoStorage.dtos;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import vubq.warehouse_management.VT_EcoStorage.entities.Shelf;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,6 +19,8 @@ public class ShelfDto {
     private String name;
     private String description;
     private String note;
+
+    private List<FloorDto> floors;
 
     public static ShelfDto toDto(Shelf shelf) {
         return ShelfDto.builder()

@@ -13,8 +13,8 @@ namespace PurchaseOrder {
   interface Data {
     id?: string
     status?: string
-    expectedDate?: number
-    receivedDate?: number
+    expectedDate?: Date
+    receivedDate?: Date
     totalAmount?: number
     type?: string
     warehouseId?: string

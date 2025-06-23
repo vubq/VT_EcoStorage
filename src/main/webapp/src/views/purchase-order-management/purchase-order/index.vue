@@ -1,18 +1,23 @@
 <script setup lang="tsx">
 import type { DataTableColumns } from 'naive-ui'
 import { NButton, NIcon, NInputNumber } from 'naive-ui'
-import { Add, Save, TrashSharp } from '@vicons/ionicons5'
+import { Add, CheckboxOutline, LocationSharp, PawOutline, Save, TrashSharp } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { useBoolean } from '@/hooks'
 import { initRulesForm, validateFieldFromErrors } from '@/utils/error'
 import { PurchaseOrderService } from '@/service/api/purchase-order-service'
 import { ProductService } from '@/service/api/product-service'
 import { router } from '@/router'
+import moment from 'moment'
 
 const route = useRoute()
 
 const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
 const { bool: isModalProduct, setTrue: showModalProduct, setFalse: hidenModalProduct } = useBoolean(false)
+
+const renderExpandIcon = () => {
+  return h(NIcon, null, { default: () => h(LocationSharp) })
+}
 
 const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
   {
@@ -33,6 +38,19 @@ const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
     },
   },
   {
+    type: 'expand',
+    title: 'Location',
+    align: 'center',
+    width: 100,
+    renderExpand: (row) => {
+      return (
+        <div>
+          <n-select/>
+        </div>
+      )
+    }
+  },
+  {
     title: 'Product Name',
     align: 'center',
     key: 'productName',
@@ -48,7 +66,7 @@ const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
     key: 'quantity',
     width: 150,
     render: (row) => {
-      return h(NInputNumber, {
+      return purchaseOrder.value.status === 'NEW' ? h(NInputNumber, {
         value: row.quantity,
         min: 1,
         placeholder: '',
@@ -56,7 +74,7 @@ const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
           row.quantity = val != null && val >= 1 ? val : 1
           row.totalAmount = row.quantity * row.unitPrice!
         }
-      })
+      }) : (<span>{row.quantity}</span>)
     },
   },
   {
@@ -65,7 +83,7 @@ const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
     key: 'unitPrice',
     width: 180,
     render: (row) => {
-      return h(NInputNumber, {
+      return purchaseOrder.value.status === 'NEW' ? h(NInputNumber, {
         value: row.unitPrice,
         min: 1,
         placeholder: '',
@@ -73,7 +91,7 @@ const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
           row.unitPrice = val != null && val >= 1 ? val : 1
           row.totalAmount = row.quantity! * row.unitPrice
         }
-      })
+      }) : (<span>{row.unitPrice!.toLocaleString('vi-VN')}</span>)
     },
   },
   {
@@ -91,11 +109,17 @@ const columns = ref<DataTableColumns<PurchaseOrderDetail.Data>>([
     align: 'center',
     key: '',
     render: (row) => {
-      return (
-        <NButton secondary type="error" onClick={() => row.delete = true}>
-          <NIcon size="18" component={TrashSharp} />
+      return purchaseOrder.value.status === 'NEW' ? (
+        <NButton
+          secondary
+          type="error"
+          onClick={() => {
+            row.delete = true
+          }}
+        >
+          <NIcon size={18} component={TrashSharp} />
         </NButton>
-      )
+      ) : null
     },
   },
 ])
@@ -172,10 +196,11 @@ const columnsProduct = ref<DataTableColumns<PurchaseOrder.Product>>([
 ])
 
 const purchaseOrderId = route.params.purchaseOrderId
+const expectedDate = ref(new Date().getTime())
 const purchaseOrder = ref<PurchaseOrder.Data>({
   id: '',
   status: 'NEW',
-  expectedDate: new Date().getTime(),
+  expectedDate: undefined,
   receivedDate: undefined,
   totalAmount: 0,
   type: 'PURCHASE',
@@ -327,6 +352,7 @@ function addProduct(product: PurchaseOrder.Product) {
 }
 
 async function createOrUpdatePurchaseOrder() {
+  purchaseOrder.value.expectedDate = moment(expectedDate.value).toDate()
   purchaseOrder.value.details = purchaseOrder.value.details!.filter(
     (detail) => detail.productId && detail.delete !== true
   );
@@ -347,6 +373,7 @@ async function getPurchaseOrder() {
     await PurchaseOrderService.getPurchaseOrder(purchaseOrderId.toString())
       .then((res: any) => {
         purchaseOrder.value = res.data
+        expectedDate.value = moment(res.data.expectedDate).toDate().getTime()
       })
   }
 }
@@ -364,9 +391,54 @@ onMounted(async () => {
   <NSpace vertical size="large">
     <n-card title="Purchase Order">
       <template #header-extra>
-        <NButton secondary type="primary" @click="createOrUpdatePurchaseOrder()">
+        <NButton
+          v-if="purchaseOrder.id && purchaseOrder.status !== 'RECEIVED'"
+          style="margin-left: 10px;"
+          secondary
+          type="error"
+          @click="() => {
+            purchaseOrder.status = 'CANCELED'
+            createOrUpdatePurchaseOrder()
+          }"
+        >
+          <NIcon size="18" :component="TrashSharp" style="margin-right: 5px;" />
+          Cancel
+        </NButton>
+        <NButton
+          secondary
+          type="primary"
+          @click="createOrUpdatePurchaseOrder()"
+          style="margin-left: 10px;"
+          v-if="purchaseOrder.status === 'NEW'"
+        >
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
           {{ purchaseOrder.id ? 'Edit' : 'Add' }}
+        </NButton>
+        <NButton
+          v-if="purchaseOrder.id && purchaseOrder.status === 'NEW'"
+          style="margin-left: 10px;"
+          secondary
+          type="primary"
+          @click="() => {
+            purchaseOrder.status = 'CONFIRMED'
+            createOrUpdatePurchaseOrder()
+          }"
+        >
+          <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
+          Confirm
+        </NButton>
+        <NButton
+          v-if="purchaseOrder.id && purchaseOrder.status === 'CONFIRMED'"
+          style="margin-left: 10px;"
+          secondary
+          type="primary"
+          @click="() => {
+            purchaseOrder.status = 'RECEIVED'
+            createOrUpdatePurchaseOrder()
+          }"
+        >
+          <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
+          Receive
         </NButton>
       </template>
 
@@ -380,19 +452,34 @@ onMounted(async () => {
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
             <n-form-item label="Supplier" path="supplier">
-              <n-select v-model:value="purchaseOrder.supplierId" placeholder="" :options="optionSuppliers()" />
+              <n-select
+                v-model:value="purchaseOrder.supplierId"
+                placeholder=""
+                :options="optionSuppliers()"
+                :disabled="purchaseOrder.status !== 'NEW'"
+              />
             </n-form-item>
           </NGi>
 
           <NGi :span="1">
             <n-form-item label="Warehouse" path="warehouse">
-              <n-select v-model:value="purchaseOrder.warehouseId" placeholder="" :options="optionWarehouses()" />
+              <n-select 
+                v-model:value="purchaseOrder.warehouseId"
+                placeholder=""
+                :options="optionWarehouses()"
+                :disabled="purchaseOrder.status !== 'NEW'"
+              />
             </n-form-item>
           </NGi>
 
           <NGi :span="1">
             <n-form-item label="Expected Date" path="expectedDate">
-              <n-date-picker v-model:value="purchaseOrder.expectedDate!" type="date" />
+              <n-date-picker
+                v-model:value="expectedDate"
+                value-format="yyyy-MM-dd"
+                type="date"
+                :disabled="purchaseOrder.status !== 'NEW'"
+              />
             </n-form-item>
           </NGi>
 
@@ -406,6 +493,7 @@ onMounted(async () => {
                   minRows: 3,
                   maxRows: 5,
                 }"
+                :disabled="purchaseOrder.status !== 'NEW'"
               />
             </n-form-item>
           </NGi>
@@ -414,8 +502,8 @@ onMounted(async () => {
     </n-card>
     <n-card title="Purchase Order Detail">
       <template #header-extra>
-        <NButton secondary type="primary" @click="openModalProduct()">
-          <NIcon size="18" :component="Add" />
+        <NButton secondary type="primary" @click="openModalProduct()" v-if="purchaseOrder.status === 'NEW'">
+          <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
         </NButton>
       </template>
       <NSpace vertical size="large">
@@ -463,7 +551,7 @@ onMounted(async () => {
                 </NGi>
               </NGrid>
             </n-form>
-            <n-data-table ref="tableProductRef" :columns="columnsProduct" :data="listProduct" />
+            <n-data-table ref="tableProductRef" :columns="columnsProduct" :data="listProduct" :render-expand-icon="renderExpandIcon" />
             <Pagination :count="totalRecordsProduct" v-model:page="dataTableRequest.currentPage" @change="changePage" />
           </NSpace>
         </n-modal>
@@ -473,4 +561,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.__date-picker-trigger-qa68sz {
+  width: 100% !important;
+}
 </style>

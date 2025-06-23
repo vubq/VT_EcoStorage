@@ -10,4 +10,6 @@ import java.util.List;
 public interface ZoneRepository extends JpaRepository<Zone, String> {
 
     List<Zone> findByWarehouseIdAndStatus(String warehouseId, Zone.Status status);
+
+    List<Zone> findByWarehouseIdInAndStatus(List<String> warehouseIds, Zone.Status status);
 }

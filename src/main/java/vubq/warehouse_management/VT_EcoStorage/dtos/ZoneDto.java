@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import vubq.warehouse_management.VT_EcoStorage.entities.Zone;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +19,8 @@ public class ZoneDto {
     private String name;
     private String note;
     private String description;
+
+    private List<ShelfDto> shelves;
 
     public static ZoneDto toDto(Zone zone) {
         return ZoneDto.builder()

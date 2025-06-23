@@ -15,6 +15,7 @@ import lombok.experimental.FieldNameConstants;
 public class Warehouse extends Base {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
     private String address;

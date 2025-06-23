@@ -22,6 +22,7 @@ import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchOperat
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -89,9 +90,40 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     .orElseThrow(() -> new RuntimeException("Purchase order not found with id: " + purchaseOrderDto.getId()));
         }
 
-        purchaseOrder.setNote(purchaseOrderDto.getNote());
+        if (purchaseOrder.getStatus() == PurchaseOrder.Status.NEW && purchaseOrderDto.getStatus() == PurchaseOrder.Status.NEW) {
+            purchaseOrder.setSupplierId(purchaseOrderDto.getSupplierId());
+            purchaseOrder.setWarehouseId(purchaseOrderDto.getWarehouseId());
+            purchaseOrder.setExpectedDate(purchaseOrderDto.getExpectedDate());
+            purchaseOrder.setNote(purchaseOrderDto.getNote());
+
+            PurchaseOrder finalPurchaseOrder = purchaseOrder;
+            List<PurchaseOrderDetail> purchaseOrderDetails = purchaseOrderDto.getDetails().stream()
+                    .filter(detail -> !detail.isDelete())
+                    .map(purchaseOrderDetailDto -> PurchaseOrderDetailDto.toEntity(purchaseOrderDetailDto, finalPurchaseOrder.getId()))
+                    .toList();
+
+            purchaseOrder.setTotalAmount(
+                    purchaseOrderDetails.stream()
+                            .map(PurchaseOrderDetail::getTotalAmount)
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            );
+
+            purchaseOrderRepository.saveAndFlush(purchaseOrder);
+            purchaseOrderDetailRepository.saveAll(purchaseOrderDetails);
+
+            List<String> purchaseOrderDetailDeleteIds = purchaseOrderDto.getDetails().stream()
+                    .filter(PurchaseOrderDetailDto::isDelete)
+                    .map(PurchaseOrderDetailDto::getId)
+                    .filter(StringUtils::isNotBlank)
+                    .toList();
+            purchaseOrderDetailRepository.deleteByIdIn(purchaseOrderDetailDeleteIds);
+
+            return true;
+        }
 
         if (purchaseOrder.getStatus() == PurchaseOrder.Status.NEW && purchaseOrderDto.getStatus() == PurchaseOrder.Status.CANCELED) {
+            purchaseOrder.setNote(purchaseOrderDto.getNote());
             purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
             purchaseOrderRepository.saveAndFlush(purchaseOrder);
 
@@ -103,6 +135,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             purchaseOrder.setSupplierId(purchaseOrderDto.getSupplierId());
             purchaseOrder.setWarehouseId(purchaseOrderDto.getWarehouseId());
             purchaseOrder.setExpectedDate(purchaseOrderDto.getExpectedDate());
+            purchaseOrder.setNote(purchaseOrderDto.getNote());
 
             PurchaseOrder finalPurchaseOrder = purchaseOrder;
             List<PurchaseOrderDetail> purchaseOrderDetails = purchaseOrderDto.getDetails().stream()
