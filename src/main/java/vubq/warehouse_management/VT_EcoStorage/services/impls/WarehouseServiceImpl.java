@@ -114,4 +114,47 @@ public class WarehouseServiceImpl implements WarehouseService {
         floors = this.floorRepository.saveAllAndFlush(floors);
         return floors.stream().map(FloorDto::toDto).collect(Collectors.toList());
     }
+
+    @Override
+    public WarehouseDto getWarehouse(String warehouseId) {
+        Warehouse warehouse = warehouseRepository.findByIdAndStatus(warehouseId, Warehouse.Status.ACTIVE);
+        if (warehouse == null) {
+            return null;
+        }
+
+        List<Zone> zones = zoneRepository.findByWarehouseIdAndStatus(
+                warehouseId,
+                Zone.Status.ACTIVE
+        );
+
+        List<Shelf> shelves = shelfRepository.findByZoneIdInAndStatus(
+                zones.stream().map(Zone::getId).collect(Collectors.toList()),
+                Shelf.Status.ACTIVE
+        );
+
+        List<Floor> floors = floorRepository.findByShelfIdInAndStatus(
+                shelves.stream().map(Shelf::getId).collect(Collectors.toList()),
+                Floor.Status.ACTIVE
+        );
+
+        Map<String, List<FloorDto>> floorMap = floors.stream()
+                .map(FloorDto::toDto)
+                .collect(Collectors.groupingBy(FloorDto::getShelfId));
+
+        Map<String, List<ShelfDto>> shelfMap = shelves.stream().map(shelf -> {
+            ShelfDto shelfDto = ShelfDto.toDto(shelf);
+            shelfDto.setFloors(floorMap.getOrDefault(shelf.getId(), new ArrayList<>()));
+            return shelfDto;
+        }).collect(Collectors.groupingBy(ShelfDto::getZoneId));
+
+        List<ZoneDto> zoneDtos = zones.stream().map(zone -> {
+            ZoneDto zoneDto = ZoneDto.toDto(zone);
+            zoneDto.setShelves(shelfMap.getOrDefault(zone.getId(), new ArrayList<>()));
+            return zoneDto;
+        }).collect(Collectors.toList());
+
+        WarehouseDto warehouseDto = WarehouseDto.toDto(warehouse);
+        warehouseDto.setZones(zoneDtos);
+        return warehouseDto;
+    }
 }

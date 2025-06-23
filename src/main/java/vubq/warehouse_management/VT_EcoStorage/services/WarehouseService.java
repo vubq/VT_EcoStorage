@@ -16,4 +16,6 @@ public interface WarehouseService {
     ShelfDto createOrUpdateShelf(ShelfDto shelfDto);
 
     List<FloorDto> createOrUpdateFloor(FloorDto floorDto);
+
+    WarehouseDto getWarehouse(String warehouseId);
 }

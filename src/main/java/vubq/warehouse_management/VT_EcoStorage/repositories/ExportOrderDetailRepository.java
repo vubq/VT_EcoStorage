@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ExportOrderDetailRepository extends JpaRepository<ExportOrderDetail, String> {
     void deleteByIdIn(List<String> ids);
+
+    List<ExportOrderDetail> findByExportOrderId(String exportOrderId);
 }

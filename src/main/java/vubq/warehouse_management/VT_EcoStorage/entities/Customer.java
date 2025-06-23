@@ -12,7 +12,7 @@ import lombok.experimental.FieldNameConstants;
 @AllArgsConstructor
 @FieldNameConstants
 @Builder
-public class Customer {
+public class Customer extends Base {
     @Id
     private String id;
     private String code;

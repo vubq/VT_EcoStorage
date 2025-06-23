@@ -6,5 +6,8 @@ namespace ProductInventoryLocation {
     productId?: string
     locationId?: string
     purchaseOrderDetailId?: string
+
+    zoneId?: string
+    shelf?: string
   }
 }

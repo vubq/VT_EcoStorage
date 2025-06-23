@@ -34,7 +34,7 @@ public class PurchaseOrderDetailDto {
     private String productName;
 
     @Valid
-    private List<ProductInventoryLocation> locations;
+    private List<ProductInventoryLocationDto> locations;
 
     public static PurchaseOrderDetail toEntity(
             PurchaseOrderDetailDto purchaseOrderDetailDto,

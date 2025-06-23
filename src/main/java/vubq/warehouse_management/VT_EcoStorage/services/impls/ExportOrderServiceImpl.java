@@ -9,14 +9,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ExportOrderDetailDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ExportOrderDto;
-import vubq.warehouse_management.VT_EcoStorage.entities.ExportOrder;
-import vubq.warehouse_management.VT_EcoStorage.entities.ExportOrderDetail;
-import vubq.warehouse_management.VT_EcoStorage.entities.ProductInventory;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ExportOrderDetailRepository;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ExportOrderRepository;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ProductInventoryRepository;
+import vubq.warehouse_management.VT_EcoStorage.dtos.*;
+import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataExportOrderResponse;
+import vubq.warehouse_management.VT_EcoStorage.entities.*;
+import vubq.warehouse_management.VT_EcoStorage.repositories.*;
 import vubq.warehouse_management.VT_EcoStorage.services.ExportOrderService;
 import vubq.warehouse_management.VT_EcoStorage.utils.dates.DateUtils;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
@@ -26,9 +22,8 @@ import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchOperat
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +33,11 @@ public class ExportOrderServiceImpl implements ExportOrderService {
     final private ExportOrderRepository exportOrderRepository;
     final private ExportOrderDetailRepository exportOrderDetailRepository;
     final private ProductInventoryRepository productInventoryRepository;
+    final private ProductRepository productRepository;
+    final private WarehouseRepository warehouseRepository;
+    final private SupplierRepository supplierRepository;
+    final private ProductCategoryRepository productCategoryRepository;
+    final private CustomerRepository customerRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -59,6 +59,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setId(generateExportOrderId(exportOrderDto.getCustomerId()));
             exportOrder.setStatus(ExportOrder.Status.NEW);
             exportOrder.setCustomerId(exportOrderDto.getCustomerId());
+            exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
             exportOrder.setType(ExportOrder.Type.EXPORT);
 
@@ -94,6 +95,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
         if (exportOrder.getStatus() == ExportOrder.Status.NEW && exportOrderDto.getStatus() == ExportOrder.Status.CONFIRMED) {
             exportOrder.setStatus(ExportOrder.Status.CONFIRMED);
             exportOrder.setCustomerId(exportOrderDto.getCustomerId());
+            exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
 
             ExportOrder finalExportOrder = exportOrder;
@@ -126,6 +128,14 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setStatus(ExportOrder.Status.DELIVERED);
             exportOrder.setDeliveredDate(DateUtils.getCurrentTime());
 
+            List<String> productIds = exportOrderDto.getDetails().stream()
+                    .map(ExportOrderDetailDto::getProductId)
+                    .toList();
+            List<Product> products = productRepository.findByIdIn(productIds);
+            Map<String, Product> productMap = products.stream()
+                    .collect(Collectors.toMap(Product::getId, p -> p));
+            List<Product> productsUpdate = new ArrayList<>();
+
             List<ProductInventory> productInventories = exportOrderDto.getDetails().stream()
                     .map(exportOrderDetail -> {
                         ProductInventory productInventory = new ProductInventory();
@@ -134,13 +144,28 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                         productInventory.setQuantity(exportOrderDetail.getQuantity());
                         productInventory.setProductId(exportOrderDetail.getProductId());
                         productInventory.setExportOrderDetailId(exportOrderDetail.getId());
+
+                        Product productUpdate = productMap.get(exportOrderDetail.getProductId());
+                        productUpdate.setInventoryQuantity(productUpdate.getInventoryQuantity() - exportOrderDetail.getQuantity());
+                        productsUpdate.add(productUpdate);
+
                         return productInventory;
                     })
                     .toList();
             productInventoryRepository.saveAllAndFlush(productInventories);
+            productRepository.saveAllAndFlush(productsUpdate);
         }
 
         return false;
+    }
+
+    @Override
+    public ReferenceDataExportOrderResponse getReferenceDataExportOrder() {
+        ReferenceDataExportOrderResponse referenceDataExportOrderResponse = new ReferenceDataExportOrderResponse();
+        referenceDataExportOrderResponse.setWarehouses(warehouseRepository.findByStatus(Warehouse.Status.ACTIVE).stream().map(WarehouseDto::toDto).collect(Collectors.toList()));
+        referenceDataExportOrderResponse.setCustomers(customerRepository.findByStatus(Customer.Status.ACTIVE).stream().map(CustomerDto::toDto).collect(Collectors.toList()));
+        referenceDataExportOrderResponse.setCategories(productCategoryRepository.findByStatus(ProductCategory.Status.ACTIVE).stream().map(ProductCategoryDto::toDto).collect(Collectors.toList()));
+        return referenceDataExportOrderResponse;
     }
 
     private String generateExportOrderId(String customerId) {
@@ -161,5 +186,16 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                         .build()
         );
         return exportOrderRepository.findAll(Specification.where(specIdContains), pageable);
+    }
+
+    @Override
+    public ExportOrderDto getExportOrder(String exportOrderId) {
+        ExportOrderDto exportOrderDto = new ExportOrderDto();
+        ExportOrder exportOrder = exportOrderRepository.findById(exportOrderId).orElseThrow(() -> new RuntimeException("Export order not found with id: " + exportOrderId));
+
+        List<ExportOrderDetail> exportOrderDetails = exportOrderDetailRepository.findByExportOrderId(exportOrderId);
+        exportOrderDto = ExportOrderDto.toDto(exportOrder);
+        exportOrderDto.setDetails(exportOrderDetails.stream().map(ExportOrderDetailDto::toDto).collect(Collectors.toList()));
+        return exportOrderDto;
     }
 }

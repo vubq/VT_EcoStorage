@@ -2,9 +2,9 @@
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
 import { NButton, NSpace, NTag } from 'naive-ui'
 import { router } from '@/router'
-import { PurchaseOrderService } from '@/service/api/purchase-order-service'
 import moment from 'moment'
 import { Add } from '@vicons/ionicons5'
+import { ExportOrderService } from '@/service/api/export-order-service'
 
 const tableRef = ref()
 const dataTableRequest = ref<DataTable.Request>({
@@ -14,16 +14,15 @@ const dataTableRequest = ref<DataTable.Request>({
   sortBy: 'id',
   sortDesc: true,
 })
-const userId = ref<string>('')
 const statusTypeMap: Record<string, any> = {
   NEW: 'info',
   CONFIRMED: 'info',
-  RECEIVED: 'success',
+  DELIVERED: 'success',
   CANCELED: 'error',
 }
-const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
+const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
   {
-    title: 'Purchase Order Id',
+    title: 'Export Order Id',
     align: 'center',
     key: 'id',
     sorter: true,
@@ -37,8 +36,8 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
           strong
           onClick={() => {
             router.push({
-              name: 'purchase-order-management.purchase-order',
-              params: { purchaseOrderId: row.id },
+              name: 'export-order-management.export-order',
+              params: { exportOrderId: row.id },
             })
           }}
         >
@@ -55,11 +54,11 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     sortOrder: sortDefault('warehouseName'),
   },
   {
-    title: 'Supplier',
+    title: 'Customer',
     align: 'center',
-    key: 'supplierName',
+    key: 'customerName',
     sorter: true,
-    sortOrder: sortDefault('supplierName'),
+    sortOrder: sortDefault('customerName'),
   },
   {
     title: 'Expected Date',
@@ -74,14 +73,14 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     },
   },
   {
-    title: 'Received Date',
+    title: 'Delivered Date',
     align: 'center',
-    key: 'receivedDate',
+    key: 'deliveredDate',
     sorter: true,
-    sortOrder: sortDefault('receivedDate'),
+    sortOrder: sortDefault('deliveredDate'),
     render: (row) => {
       return (
-        <span>{ row.receivedDate ? moment(row.receivedDate).format('YYYY-MM-DD') : ''}</span>
+        <span>{ row.deliveredDate ? moment(row.deliveredDate).format('YYYY-MM-DD') : ''}</span>
       )
     },
   },
@@ -113,7 +112,7 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
   },
 ])
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listPurchaseOrder = ref<PurchaseOrder.DataTable[]>([])
+const listExportOrder = ref<ExportOrder.DataTable[]>([])
 const totalRecords = ref<number>(0)
 
 function sortDefault(columnKey: string) {
@@ -126,24 +125,24 @@ function sortDefault(columnKey: string) {
 async function changePage(page: number, size: number) {
   dataTableRequest.value.currentPage = page
   dataTableRequest.value.perPage = size
-  await getListPurchaseOrder()
+  await getListExportOrder()
 }
 
-async function getListPurchaseOrder() {
-  await PurchaseOrderService.getListPurchaseOrder(dataTableRequest.value)
+async function getListExportOrder() {
+  await ExportOrderService.getListExportOrder(dataTableRequest.value)
     .then((res: any) => {
-      listPurchaseOrder.value = res.data.list
+      listExportOrder.value = res.data.list
       totalRecords.value = res.data.totalRecords
     })
 }
 
 async function reloadTableFirst() {
   dataTableRequest.value.currentPage = 1
-  await getListPurchaseOrder()
+  await getListExportOrder()
 }
 
 async function reloadTable() {
-  await getListPurchaseOrder()
+  await getListExportOrder()
 }
 
 async function reloadSearch() {
@@ -225,8 +224,8 @@ onMounted(() => {
             class="ml-a"
             @click="() => {
               router.push({
-                name: 'purchase-order-management.purchase-order',
-                params: { purchaseOrderId: 'new' },
+                name: 'export-order-management.export-order',
+                params: { exportOrderId: 'new' },
               })
             }"
           >
@@ -236,7 +235,7 @@ onMounted(() => {
             Add
           </NButton>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listPurchaseOrder" @update:sorter="sortTable" />
+        <n-data-table ref="tableRef" :columns="columns" :data="listExportOrder" @update:sorter="sortTable" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>

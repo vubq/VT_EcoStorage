@@ -1,13 +1,9 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-
-import { useBoolean } from '@/hooks'
 import { NButton, NSpace } from 'naive-ui'
 import { UserService } from '@/service/api/user'
 import { router } from '@/router'
-
-const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
-const { bool: loading1, setTrue: loading1Start, setFalse: loading1End } = useBoolean(false)
+import { Add } from '@vicons/ionicons5'
 
 const tableRef = ref()
 const dataTableRequest = ref<DataTable.Request>({
@@ -32,7 +28,6 @@ const columns = ref<DataTableColumns<User.Data>>([
           secondary
           type="primary"
           strong
-          loading={loading1.value && userId.value === row.id}
           onClick={() => getUser(row.id!)}
         >
           {row.username}
@@ -87,13 +82,11 @@ async function changePage(page: number, size: number) {
 }
 
 async function getListUser() {
-  loadingStart()
   await UserService.getListUser(dataTableRequest.value)
     .then((res: any) => {
       listUser.value = res.data.list
       totalRecords.value = res.data.totalRecords
     })
-    .finally(() => loadingEnd())
 }
 
 async function reloadTableFirst() {
@@ -107,12 +100,10 @@ async function reloadTable() {
 
 async function getUser(id: string) {
   userId.value = id
-  loading1Start()
   await router.push({
     name: 'user-management.user-info',
     params: { userId: id },
   })
-  loading1End()
 }
 
 function sortTable(sorter: DataTableSortState) {
@@ -173,13 +164,10 @@ onMounted(() => {
       <NSpace vertical size="large">
         <div class="flex gap-4">
           <NButton strong type="primary" secondary class="ml-a" @click="getUser('new')">
-            <template #icon>
-              <icon-park-outline-add-one />
-            </template>
-            Add
+            <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
           </NButton>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listUser" :loading="loading" @update:sorter="sortTable" />
+        <n-data-table ref="tableRef" :columns="columns" :data="listUser" @update:sorter="sortTable" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>

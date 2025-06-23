@@ -44,7 +44,7 @@ public class PurchaseOrderController {
     }
 
     @GetMapping("/{purchaseOrderId}")
-    public Response getUser(@PathVariable("purchaseOrderId") String purchaseOrderId) {
+    public Response getPurchaseOrder(@PathVariable("purchaseOrderId") String purchaseOrderId) {
         return Response.success(purchaseOrderService.getPurchaseOrder(purchaseOrderId));
     }
 }

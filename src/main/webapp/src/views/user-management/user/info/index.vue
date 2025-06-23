@@ -5,12 +5,9 @@ import { Save } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { UserService } from '@/service/api/user'
 import { router } from '@/router'
-import { useBoolean } from '@/hooks'
 import { initRulesForm, validateFieldFromErrors } from '@/utils/error'
 
 const route = useRoute()
-
-const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
 
 const userId = route.params.userId
 const user = ref<User.Data>({
@@ -53,7 +50,6 @@ async function getUser() {
 }
 
 async function createOrUpdateUser() {
-  loadingStart()
   await UserService.createOrUpdateUser(user.value)
     .then((res: any) => {
       if (res.isSuccess) {
@@ -64,7 +60,6 @@ async function createOrUpdateUser() {
         formUserRef.value.validate()
       }
     })
-    .finally(() => loadingEnd())
 }
 
 onMounted(async () => {
@@ -79,7 +74,7 @@ onMounted(async () => {
   <NSpace vertical size="large">
     <n-card title="Info">
       <template #header-extra>
-        <NButton secondary type="primary" :loading="loading" @click="createOrUpdateUser()">
+        <NButton secondary type="primary" @click="createOrUpdateUser()">
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
           {{ user.id ? 'Edit' : 'Add' }}
         </NButton>

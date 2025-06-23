@@ -1,151 +1,13 @@
 <script setup lang="tsx">
-import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-import { Add, ChevronForward } from '@vicons/ionicons5'
+import { Add } from '@vicons/ionicons5'
 
 import { useBoolean } from '@/hooks'
 import { NButton, NSpace } from 'naive-ui'
-import { UserService } from '@/service/api/user'
-import { router } from '@/router'
 import { WarehouseService } from '@/service/api/warehouse-service'
 
-const { bool: loading, setTrue: loadingStart, setFalse: loadingEnd } = useBoolean(false)
-const { bool: loading1, setTrue: loading1Start, setFalse: loading1End } = useBoolean(false)
 const { bool: isModalAddZone, setTrue: showModalAddZone, setFalse: hidenModalAddZone } = useBoolean(false)
 const { bool: isModalAddShelf, setTrue: showModalAddShelf, setFalse: hidenModalAddShelf } = useBoolean(false)
 const { bool: isModalAddFloor, setTrue: showModalAddFloor, setFalse: hidenModalAddFloor } = useBoolean(false)
-
-const tableRef = ref()
-const dataTableRequest = ref<DataTable.Request>({
-  currentPage: 1,
-  perPage: 10,
-  filter: '',
-  sortBy: 'username',
-  sortDesc: true,
-})
-const userId = ref<string>('')
-const columns = ref<DataTableColumns<User.Data>>([
-  {
-    title: 'Username',
-    align: 'center',
-    key: 'username',
-    sorter: true,
-    sortOrder: sortDefault('username'),
-    render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          loading={loading1.value && userId.value === row.id}
-          onClick={() => getUser(row.id!)}
-        >
-          {row.username}
-        </NButton>
-      )
-    },
-  },
-  {
-    title: 'First name',
-    align: 'center',
-    key: 'firstName',
-    sorter: true,
-    sortOrder: sortDefault('firstName'),
-  },
-  {
-    title: 'Last name',
-    align: 'center',
-    key: 'lastName',
-    sorter: true,
-    sortOrder: sortDefault('lastName'),
-  },
-  {
-    title: 'Email',
-    align: 'center',
-    key: 'email',
-    sorter: true,
-    sortOrder: sortDefault('email'),
-  },
-  {
-    title: 'Phone number',
-    align: 'center',
-    key: 'phoneNumber',
-    sorter: true,
-    sortOrder: sortDefault('phoneNumber'),
-  },
-])
-const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listUser = ref<User.Data[]>([])
-const totalRecords = ref<number>(0)
-
-function sortDefault(columnKey: string) {
-  if (dataTableRequest.value.sortBy !== columnKey) {
-    return false
-  }
-  return dataTableRequest.value.sortDesc ? 'descend' : 'ascend'
-}
-
-async function changePage(page: number, size: number) {
-  dataTableRequest.value.currentPage = page
-  dataTableRequest.value.perPage = size
-  await getListUser()
-}
-
-async function getListUser() {
-  loadingStart()
-  await UserService.getListUser(dataTableRequest.value)
-    .then((res: any) => {
-      listUser.value = res.data.list
-      totalRecords.value = res.data.totalRecords
-    })
-    .finally(() => loadingEnd())
-}
-
-async function reloadTableFirst() {
-  dataTableRequest.value.currentPage = 1
-  await getListUser()
-}
-
-async function reloadTable() {
-  await getListUser()
-}
-
-async function getUser(id: string) {
-  userId.value = id
-  loading1Start()
-  await router.push({
-    name: 'user-management.user-info',
-    params: { id },
-  })
-  loading1End()
-}
-
-function sortTable(sorter: DataTableSortState) {
-  columnsRef.value.forEach((column: any) => {
-    if (column.key === sorter.columnKey) {
-      column.sortOrder = sorter.order
-    }
-    else {
-      column.sortOrder = false
-    }
-  })
-  sortData(sorter)
-}
-
-function sortData(sorter: DataTableSortState) {
-  if (!sorter.order) {
-    dataTableRequest.value.sortBy = ''
-    dataTableRequest.value.sortDesc = false
-  }
-  else {
-    dataTableRequest.value.sortBy = sorter.columnKey.toString()
-    dataTableRequest.value.sortDesc = sorter.order === 'descend'
-  }
-  reloadTable()
-}
-
-const expanded = ref(false)
-const toggle = () => (expanded.value = !expanded.value)
 
 const warehouseList = ref<Warehouse.Data[]>([])
 const zoneNew = ref<Zone.Data>({
@@ -168,7 +30,7 @@ async function getListWarehouse() {
 
 function findZone(
   warehouse: Warehouse.Data,
-  zoneId?: string
+  zoneId?: string,
 ): Zone.Data | undefined {
   return warehouse.zones?.find(z => z.id === zoneId)
 }
@@ -176,7 +38,7 @@ function findZone(
 function findShelf(
   warehouse: Warehouse.Data,
   zoneId?: string,
-  shelfId?: string
+  shelfId?: string,
 ): Shelf.Data | undefined {
   const zone = findZone(warehouse, zoneId)
   return zone?.shelves?.find(s => s.id === shelfId)
@@ -185,7 +47,7 @@ function findShelf(
 // Lấy danh sách shelves của zone
 function getShelves(
   warehouse: Warehouse.Data,
-  zoneId?: string
+  zoneId?: string,
 ): Shelf.Data[] {
   return findZone(warehouse, zoneId)?.shelves || []
 }
@@ -194,7 +56,7 @@ function getShelves(
 function getFloors(
   warehouse: Warehouse.Data,
   zoneId?: string,
-  shelfId?: string
+  shelfId?: string,
 ): Floor.Data[] {
   return findShelf(warehouse, zoneId, shelfId)?.floors || []
 }
@@ -209,7 +71,7 @@ function isSelectedShelf(warehouse: Warehouse.Data, zoneId: string, shelfId: str
 function isSelectedFloor(
   warehouse: Warehouse.Data,
   zoneId: string,
-  floorId: string
+  floorId: string,
 ): boolean {
   const zone = findZone(warehouse, zoneId)
   const shelf = zone?.shelves?.find(s => s.id === zone.shelfId)
@@ -226,14 +88,25 @@ function setShelfId(warehouse: Warehouse.Data, zoneId: string, shelfId: string) 
 function setFloorId(warehouse: Warehouse.Data, zoneId: string, floorId: string) {
   const zone = findZone(warehouse, zoneId)
   const shelf = zone?.shelves?.find(s => s.id === zone.shelfId)
-  if (shelf) shelf.floorId = floorId
+  if (shelf)
+    shelf.floorId = floorId
 }
 
 async function createOrUpdateZone() {
   await WarehouseService.createOrUpdateZone(zoneNew.value)
     .then((res: any) => {
       if (res.isSuccess) {
-        warehouseList.value.find(w => w.id = zoneNew.value.warehouseId)?.zones!.push(res.data)
+        const warehouse = warehouseList.value.find(
+          w => w.id === zoneNew.value.warehouseId,
+        )
+        if (warehouse) {
+          if (Array.isArray(warehouse.zones)) {
+            warehouse.zones.push(res.data)
+          }
+          else {
+            warehouse.zones = [res.data]
+          }
+        }
         hidenModalAddZone()
         zoneNew.value = {
           status: 'ACTIVE',
@@ -246,7 +119,19 @@ async function createOrUpdateShelf() {
   await WarehouseService.createOrUpdateShelf(shelfNew.value)
     .then((res: any) => {
       if (res.isSuccess) {
-        warehouseList.value.find(w => w.id = shelfNew.value.warehouseId)?.zones?.find(z => z.id === shelfNew.value.zoneId)?.shelves?.push(res.data)
+        const warehouse = warehouseList.value.find(
+          w => w.id === shelfNew.value.warehouseId,
+        )
+        const zone = warehouse?.zones?.find(z => z.id === shelfNew.value.zoneId)
+
+        if (zone) {
+          if (Array.isArray(zone.shelves)) {
+            zone.shelves.push(res.data)
+          }
+          else {
+            zone.shelves = [res.data]
+          }
+        }
         hidenModalAddShelf()
         shelfNew.value = {
           status: 'ACTIVE',
@@ -259,7 +144,20 @@ async function createOrUpdateFloor() {
   await WarehouseService.createOrUpdateFloor(floorNew.value)
     .then((res: any) => {
       if (res.isSuccess) {
-        warehouseList.value.find(w => w.id = floorNew.value.warehouseId)?.zones?.find(z => z.id === floorNew.value.zoneId)?.shelves?.find(s => s.id === floorNew.value.shelfId)?.floors!.push(...res.data)
+        const warehouse = warehouseList.value.find(
+          w => w.id === floorNew.value.warehouseId,
+        )
+        const zone = warehouse?.zones?.find(z => z.id === floorNew.value.zoneId)
+        const shelf = zone?.shelves?.find(s => s.id === floorNew.value.shelfId)
+
+        if (shelf) {
+          if (Array.isArray(shelf.floors)) {
+            shelf.floors.push(...res.data)
+          }
+          else {
+            shelf.floors = [...res.data]
+          }
+        }
         hidenModalAddFloor()
         floorNew.value = {
           status: 'ACTIVE',
@@ -270,7 +168,6 @@ async function createOrUpdateFloor() {
 }
 
 onMounted(async () => {
-  getListUser()
   await getListWarehouse()
 })
 </script>
@@ -278,7 +175,7 @@ onMounted(async () => {
 <template>
   <NSpace vertical size="large">
     <NGrid cols="2" y-gap="12" x-gap="12">
-      <NGi v-for="w in warehouseList" :span="1">
+      <NGi v-for="w in warehouseList" :key="w.id" :span="1">
         <n-card :title="`Warehouse: ${w.name}`">
           <NSpace vertical size="large">
             <n-divider />
@@ -289,16 +186,17 @@ onMounted(async () => {
                 <NButton
                   v-for="z in w.zones"
                   :key="z.id"
-                  @click="setZoneId(w, z.id!)"
                   :type="isSelectedZone(w, z.id!) ? 'primary' : 'default'"
-                  strong secondary
+                  strong
+                  secondary @click="setZoneId(w, z.id!)"
                 >
                   {{ z.name }}
                 </NButton>
                 <NButton
-                  :type="'default'"
+                  type="default"
                   strong secondary
                   @click="() => {
+                    console.log(w.id)
                     showModalAddZone()
                     zoneNew.warehouseId = w.id
                     zoneNew.warehouseName = w.name
@@ -316,14 +214,14 @@ onMounted(async () => {
                 <NButton
                   v-for="s in getShelves(w, w.zoneId)"
                   :key="s.id"
-                  @click="setShelfId(w, w.zoneId!, s.id!)"
                   :type="isSelectedShelf(w, w.zoneId!, s.id!) ? 'primary' : 'default'"
-                  strong secondary
+                  strong
+                  secondary @click="setShelfId(w, w.zoneId!, s.id!)"
                 >
                   {{ s.name }}
                 </NButton>
                 <NButton
-                  :type="'default'"
+                  type="default"
                   strong secondary
                   @click="() => {
                     showModalAddShelf()
@@ -345,14 +243,14 @@ onMounted(async () => {
                 <NButton
                   v-for="f in getFloors(w, w.zoneId, findZone(w, w.zoneId)?.shelfId)"
                   :key="f.id"
-                  @click="setFloorId(w, w.zoneId!, f.id!)"
                   :type="isSelectedFloor(w, w.zoneId!, f.id!) ? 'primary' : 'default'"
-                  strong secondary
+                  strong
+                  secondary @click="setFloorId(w, w.zoneId!, f.id!)"
                 >
                   {{ f.floor }}
                 </NButton>
                 <NButton
-                  :type="'default'"
+                  type="default"
                   strong secondary
                   @click="() => {
                     showModalAddFloor()
@@ -400,11 +298,11 @@ onMounted(async () => {
         </n-grid>
       </n-form>
       <template #action>
-        <n-space justify="end">
-          <n-button type="primary" secondary @click="createOrUpdateZone()">
+        <NSpace justify="end">
+          <NButton type="primary" secondary @click="createOrUpdateZone()">
             Add
-          </n-button>
-        </n-space>
+          </NButton>
+        </NSpace>
       </template>
     </n-modal>
     <!-- Modal add shelf -->
@@ -437,11 +335,11 @@ onMounted(async () => {
         </n-grid>
       </n-form>
       <template #action>
-        <n-space justify="end">
-          <n-button type="primary" secondary @click="createOrUpdateShelf()">
+        <NSpace justify="end">
+          <NButton type="primary" secondary @click="createOrUpdateShelf()">
             Add
-          </n-button>
-        </n-space>
+          </NButton>
+        </NSpace>
       </template>
     </n-modal>
     <!-- Modal floor -->
@@ -477,38 +375,17 @@ onMounted(async () => {
         </n-grid>
       </n-form>
       <template #action>
-        <n-space justify="end">
-          <n-button type="primary" secondary @click="createOrUpdateFloor()">
+        <NSpace justify="end">
+          <NButton type="primary" secondary @click="createOrUpdateFloor()">
             Add
-          </n-button>
-        </n-space>
+          </NButton>
+        </NSpace>
       </template>
     </n-modal>
   </NSpace>
 </template>
 
 <style scoped>
-.arrow {
-  transition: transform 0.3s ease;
-  display: inline-block;
-}
-.arrow.expanded {
-  transform: rotate(90deg);
-}
-.floor {
-  margin-left: 30px;
-}
-.shelf, .floor {
-  margin-left: 15px;
-  margin-top: 5px;
-}
-.zone, .shelf, .floor {
-  font-weight: 500;
-  cursor: pointer;
-}
-.zone:hover, .shelf:hover, .floor:hover {
-  text-decoration: underline;
-}
 .n-form-item.n-form-item--left-labelled .n-form-item-label .n-form-item-label__text {
   text-align: start;
 }

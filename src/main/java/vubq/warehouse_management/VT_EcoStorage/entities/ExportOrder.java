@@ -19,6 +19,8 @@ public class ExportOrder extends Base {
 
     @Id
     private String id;
+
+    @Enumerated(EnumType.STRING)
     private Status status;
     private Date expectedDate;
     private Date deliveredDate;
@@ -37,6 +39,17 @@ public class ExportOrder extends Base {
             updatable = false
     )
     private Customer customer;
+
+    @Column(name = "warehouse_id")
+    private String warehouseId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "warehouse_id",
+            insertable = false,
+            updatable = false
+    )
+    private Warehouse warehouse;
 
     public enum Status {
         NEW,

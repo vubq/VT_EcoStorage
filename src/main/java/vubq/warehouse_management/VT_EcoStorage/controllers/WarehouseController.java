@@ -20,6 +20,11 @@ public class WarehouseController {
         return Response.success(warehouseService.getWarehouses());
     }
 
+    @GetMapping("/{warehouseId}")
+    public Response getWarehouse(@PathVariable("warehouseId") String warehouseId) {
+        return Response.success(warehouseService.getWarehouse(warehouseId));
+    }
+
     @PostMapping("/create-or-update-zone")
     public Response createOrUpdateZone(@RequestBody ZoneDto zoneDto) {
         return Response.success(warehouseService.createOrUpdateZone(zoneDto));

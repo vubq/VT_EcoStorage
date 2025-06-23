@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 @Builder
 public class ExportOrderDetail extends Base {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     private Long quantity;
     private BigDecimal unitPrice;

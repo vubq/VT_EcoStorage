@@ -19,7 +19,7 @@ import java.util.List;
 @Builder
 public class PurchaseOrderDto {
 
-    private String Id;
+    private String id;
     private PurchaseOrder.Status status;
     private Date expectedDate;
     private Date receivedDate;
@@ -37,7 +37,7 @@ public class PurchaseOrderDto {
 
     public static PurchaseOrderDto toDataTable(PurchaseOrder purchaseOrder) {
         return PurchaseOrderDto.builder()
-                .Id(purchaseOrder.getId())
+                .id(purchaseOrder.getId())
                 .status(purchaseOrder.getStatus())
                 .expectedDate(purchaseOrder.getExpectedDate())
                 .receivedDate(purchaseOrder.getReceivedDate())
@@ -50,7 +50,7 @@ public class PurchaseOrderDto {
 
     public static PurchaseOrderDto toDto(PurchaseOrder purchaseOrder) {
         return PurchaseOrderDto.builder()
-                .Id(purchaseOrder.getId())
+                .id(purchaseOrder.getId())
                 .status(purchaseOrder.getStatus())
                 .expectedDate(purchaseOrder.getExpectedDate())
                 .receivedDate(purchaseOrder.getReceivedDate())
