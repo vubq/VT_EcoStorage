@@ -135,6 +135,22 @@
       "user": "User",
       "user-info": "User",
       "permission": "Permission Group"
+    },
+    "warehouse-management": "Warehouse Management",
+    "product-management": {
+      "index": "Product Management",
+      "product": "Product",
+      "list": "Product List"
+    },
+    "export-order-management": {
+      "index": "Export Order Management",
+      "export-order": "Export Order",
+      "list": "Export Order List"
+    },
+    "purchase-order-management": {
+      "index": "Purchase Order Management",
+      "purchase-order": "Purchase Order",
+      "list": "Purchase Order List"
     }
   },
   "http": {

@@ -28,6 +28,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public Response handleAllExceptions(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error occurred at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        if (ex.getMessage().equalsIgnoreCase("Access Denied")) {
+            return Response.badRequest("Access Denied");
+        }
         return Response.internalError();
     }
 

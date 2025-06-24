@@ -16,10 +16,7 @@ import vubq.warehouse_management.VT_EcoStorage.dtos.ProductUnitDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductFilterRequest;
 import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataProductResponse;
 import vubq.warehouse_management.VT_EcoStorage.entities.*;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ProductCategoryRepository;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ProductOriginRepository;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ProductRepository;
-import vubq.warehouse_management.VT_EcoStorage.repositories.ProductUnitRepository;
+import vubq.warehouse_management.VT_EcoStorage.repositories.*;
 import vubq.warehouse_management.VT_EcoStorage.services.ProductService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.BaseSpecification;
@@ -39,6 +36,7 @@ public class ProductServiceImpl implements ProductService {
     final private ProductOriginRepository productOriginRepository;
     final private ProductUnitRepository productUnitRepository;
     final private ProductRepository productRepository;
+    final private ProductInventoryRepository productInventoryRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -69,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDto createOrUpdateProduct(ProductDto productDto) {
+    public boolean createOrUpdateProduct(ProductDto productDto) {
         Product product;
         if (StringUtils.isEmpty(productDto.getId())) {
             product = new Product();
@@ -77,6 +75,7 @@ public class ProductServiceImpl implements ProductService {
             product.setSku("SKU-" + String.format("%08d", getProductSeq()));
             product.setBarcode(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + String.format("%06d", getNextProductSeq()));
             product.setStatus(Product.Status.ACTIVE);
+            product.setInventoryQuantity(0L);
         } else {
             product = productRepository.findById(productDto.getId())
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + productDto.getId()));
@@ -93,7 +92,7 @@ public class ProductServiceImpl implements ProductService {
         product.setProductOriginId(productDto.getProductOriginId());
         product.setProductUnitId(productDto.getProductUnitId());
         product = productRepository.saveAndFlush(product);
-        return ProductDto.toDto(product);
+        return true;
     }
 
     private Long getProductSeq() {
@@ -227,5 +226,17 @@ public class ProductServiceImpl implements ProductService {
         productOrigin.setName(productOriginDto.getName());
         productOrigin = productOriginRepository.saveAndFlush(productOrigin);
         return ProductOriginDto.toDto(productOrigin);
+    }
+
+    @Override
+    public ProductDto getProduct(String productId) {
+        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        return ProductDto.toDto(product);
+    }
+
+    @Override
+    public Page<ProductInventory> getListProductInventory(DataTableRequest dataTableRequest, String productId) {
+        PageRequest pageable = dataTableRequest.toPageable();
+        return productInventoryRepository.findByProductId(productId, pageable);
     }
 }

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ExportOrderDto;
 import vubq.warehouse_management.VT_EcoStorage.entities.ExportOrder;
@@ -19,6 +20,7 @@ public class ExportOrderController {
 
     final private ExportOrderService exportOrderService;
 
+//    @PreAuthorize("hasAuthority('NHAPHANG_THEM1') or hasAuthority('PURCHASE_ORDER.VIEW')")
     @GetMapping("/list")
     public Response getListUser(@NonNull DataTableRequest dataTableRequest) {
         Page<ExportOrder> results = exportOrderService.getExportOrders(dataTableRequest);

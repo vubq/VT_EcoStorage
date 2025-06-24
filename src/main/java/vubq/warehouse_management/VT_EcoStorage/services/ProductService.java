@@ -7,22 +7,21 @@ import vubq.warehouse_management.VT_EcoStorage.dtos.ProductOriginDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ProductUnitDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductFilterRequest;
 import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataProductResponse;
-import vubq.warehouse_management.VT_EcoStorage.entities.Product;
-import vubq.warehouse_management.VT_EcoStorage.entities.ProductCategory;
-import vubq.warehouse_management.VT_EcoStorage.entities.ProductOrigin;
-import vubq.warehouse_management.VT_EcoStorage.entities.ProductUnit;
+import vubq.warehouse_management.VT_EcoStorage.entities.*;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
 
 public interface ProductService {
 
     ReferenceDataProductResponse getReferenceDataProduct();
 
-    ProductDto createOrUpdateProduct(ProductDto productDto);
+    boolean createOrUpdateProduct(ProductDto productDto);
 
     Page<Product> getListProduct(
             DataTableRequest dataTableRequest,
             ProductFilterRequest productFilterRequest
     );
+
+    ProductDto getProduct(String productId);
 
     ProductCategoryDto createOrUpdateProductCategory(ProductCategoryDto productCategoryDto);
 
@@ -35,4 +34,6 @@ public interface ProductService {
     ProductOriginDto createOrUpdateProductOrigin(ProductOriginDto productOriginDto);
 
     Page<ProductOrigin> getListProductOrigin(DataTableRequest dataTableRequest);
+
+    Page<ProductInventory> getListProductInventory(DataTableRequest dataTableRequest, String productId);
 }

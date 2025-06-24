@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import vubq.warehouse_management.VT_EcoStorage.entities.Product;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -32,6 +33,8 @@ public class ProductDto {
     private String productUnitName;
     private String productCategoryName;
     private Long inventoryQuantity;
+
+    private List<ProductInventoryDto> historyInventories;
 
     public static ProductDto toDto(Product product) {
         return ProductDto.builder()

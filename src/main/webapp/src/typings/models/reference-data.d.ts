@@ -10,4 +10,10 @@ namespace ReferenceData {
     customers: Customer.Data[]
     categories: Category.Data[]
   }
+
+  interface Product {
+    productCategories: Category.Data[]
+    productUnits: Unit.Data[]
+    productOrigins: Origin.Data[]
+  }
 }
