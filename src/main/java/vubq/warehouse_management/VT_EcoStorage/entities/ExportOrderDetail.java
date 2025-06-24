@@ -3,6 +3,7 @@ package vubq.warehouse_management.VT_EcoStorage.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
+import vubq.warehouse_management.VT_EcoStorage.entities.views.ProductByLocation;
 
 import java.math.BigDecimal;
 
@@ -46,6 +47,13 @@ public class ExportOrderDetail extends Base {
             updatable = false
     )
     private ExportOrder exportOrder;
+
+    @Column(name = "location_id")
+    private String locationId;
+
+    @ManyToOne
+    @JoinColumn(name = "location_id", insertable = false, updatable = false)
+    private ProductByLocation productByLocation;
 
     public enum Status {
         ACTIVE,

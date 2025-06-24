@@ -41,6 +41,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     final private ShelfRepository shelfRepository;
     final private FloorRepository floorRepository;
     final private ProductRepository productRepository;
+    final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -126,57 +127,204 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             return true;
         }
 
+//        if (purchaseOrder.getStatus() == PurchaseOrder.Status.CONFIRMED && purchaseOrderDto.getStatus() == PurchaseOrder.Status.RECEIVED) {
+//
+//            // Validate location
+//            purchaseOrderDto.getDetails().forEach(p -> {
+//                if (p.getLocations() == null || p.getLocations().isEmpty()) {
+//                    throw new IllegalArgumentException("Please select the product location to complete the process");
+//                }
+//                p.getLocations().forEach(l -> {
+//                    if (StringUtils.isBlank(l.getLocationId())) {
+//                        throw new IllegalArgumentException("Please select the product location to complete the process");
+//                    }
+//                });
+//            });
+//
+//            purchaseOrder.setStatus(PurchaseOrder.Status.RECEIVED);
+//            purchaseOrder.setReceivedDate(DateUtils.getCurrentTime());
+//
+//            // === Update inventory quantity of products ===
+//            List<String> productIds = purchaseOrderDto.getDetails().stream()
+//                    .map(PurchaseOrderDetailDto::getProductId).toList();
+//            Map<String, Product> productMap = productRepository.findByIdIn(productIds)
+//                    .stream().collect(Collectors.toMap(Product::getId, p -> p));
+//            List<Product> productsToUpdate = new ArrayList<>();
+//
+//            // Save ProductInventory (history of transaction)
+//            List<ProductInventory> productInventories = purchaseOrderDto.getDetails().stream().map(detail -> {
+//                ProductInventory pi = new ProductInventory();
+//                pi.setType(ProductInventory.Type.PURCHASE_ORDER);
+//                pi.setTransactionType(ProductInventory.TransactionType.ADD);
+//                pi.setProductId(detail.getProductId());
+//                pi.setPurchaseOrderDetailId(detail.getId());
+//                pi.setQuantity(detail.getQuantity());
+//
+//                // update product's total quantity
+//                Product product = productMap.get(detail.getProductId());
+//                product.setInventoryQuantity(
+//                        product.getInventoryQuantity() + detail.getQuantity()
+//                );
+//                productsToUpdate.add(product);
+//
+//                return pi;
+//            }).toList();
+//            productInventoryRepository.saveAllAndFlush(productInventories);
+//            productRepository.saveAllAndFlush(productsToUpdate);
+//
+//            // === Upsert ProductInventoryLocation ===
+//            List<String> locationIds = purchaseOrderDto.getDetails().stream()
+//                    .flatMap(detail -> detail.getLocations().stream())
+//                    .map(ProductInventoryLocationDto::getLocationId)
+//                    .distinct().toList();
+//
+//            List<ProductInventoryLocation> existingLocations =
+//                    productInventoryLocationRepository.findByProductIdInAndLocationIdIn(productIds, locationIds);
+//
+//            Map<String, ProductInventoryLocation> existingLocationMap = existingLocations.stream()
+//                    .collect(Collectors.toMap(
+//                            pil -> pil.getProductId() + "_" + pil.getLocationId(),
+//                            pil -> pil
+//                    ));
+//
+//            for (PurchaseOrderDetailDto detail : purchaseOrderDto.getDetails()) {
+//                for (ProductInventoryLocationDto locationDto : detail.getLocations()) {
+//                    String key = detail.getProductId() + "_" + locationDto.getLocationId();
+//                    ProductInventoryLocation pil = existingLocationMap.get(key);
+//
+//                    if (pil != null) {
+//                        pil.setInventoryQuantity(pil.getInventoryQuantity() + locationDto.getQuantity());
+//                    } else {
+//                        pil = new ProductInventoryLocation();
+//                        pil.setProductId(detail.getProductId());
+//                        pil.setLocationId(locationDto.getLocationId());
+//                        pil.setInventoryQuantity(locationDto.getQuantity());
+//                        pil.setStatus(ProductInventoryLocation.Status.ACTIVE);
+//                        existingLocationMap.put(key, pil); // put into map
+//                    }
+//                }
+//            }
+//
+//            productInventoryLocationRepository.saveAllAndFlush(new ArrayList<>(existingLocationMap.values()));
+//        }
+
         if (purchaseOrder.getStatus() == PurchaseOrder.Status.CONFIRMED && purchaseOrderDto.getStatus() == PurchaseOrder.Status.RECEIVED) {
-            purchaseOrderDto.getDetails().forEach(p -> {
+
+            // Validate location
+            for (PurchaseOrderDetailDto p : purchaseOrderDto.getDetails()) {
                 if (p.getLocations() == null || p.getLocations().isEmpty()) {
                     throw new IllegalArgumentException("Please select the product location to complete the process");
                 }
-                p.getLocations().forEach(l -> {
+                for (ProductInventoryLocationDto l : p.getLocations()) {
                     if (StringUtils.isBlank(l.getLocationId())) {
                         throw new IllegalArgumentException("Please select the product location to complete the process");
                     }
-                });
-            });
+                }
+            }
 
             purchaseOrder.setStatus(PurchaseOrder.Status.RECEIVED);
             purchaseOrder.setReceivedDate(DateUtils.getCurrentTime());
 
+            // === Update Product inventory ===
             List<String> productIds = purchaseOrderDto.getDetails().stream()
                     .map(PurchaseOrderDetailDto::getProductId)
                     .toList();
-            List<Product> products = productRepository.findByIdIn(productIds);
-            Map<String, Product> productMap = products.stream()
-                    .collect(Collectors.toMap(Product::getId, p -> p));
-            List<Product> productsUpdate = new ArrayList<>();
+            Map<String, Product> productMap = productRepository.findByIdIn(productIds)
+                    .stream().collect(Collectors.toMap(Product::getId, p -> p));
+            List<Product> productsToUpdate = new ArrayList<>();
 
-            List<ProductInventory> productInventories = purchaseOrderDto.getDetails().stream().map(purchaseOrderDetail -> {
-                ProductInventory productInventory = new ProductInventory();
-                productInventory.setType(ProductInventory.Type.PURCHASE_ORDER);
-                productInventory.setTransactionType(ProductInventory.TransactionType.ADD);
-                productInventory.setQuantity(purchaseOrderDetail.getQuantity());
-                productInventory.setProductId(purchaseOrderDetail.getProductId());
-                productInventory.setPurchaseOrderDetailId(purchaseOrderDetail.getId());
+            List<ProductInventory> productInventories = new ArrayList<>();
+            for (PurchaseOrderDetailDto detail : purchaseOrderDto.getDetails()) {
+                ProductInventory pi = new ProductInventory();
+                pi.setType(ProductInventory.Type.PURCHASE_ORDER);
+                pi.setTransactionType(ProductInventory.TransactionType.ADD);
+                pi.setProductId(detail.getProductId());
+                pi.setPurchaseOrderDetailId(detail.getId());
+                pi.setQuantity(detail.getQuantity());
 
-                Product productUpdate = productMap.get(purchaseOrderDetail.getProductId());
-                productUpdate.setInventoryQuantity(productUpdate.getInventoryQuantity() + purchaseOrderDetail.getQuantity());
-                productsUpdate.add(productUpdate);
+                // update product's total quantity
+                Product product = productMap.get(detail.getProductId());
+                product.setInventoryQuantity(
+                        product.getInventoryQuantity() + detail.getQuantity()
+                );
+                productsToUpdate.add(product);
 
-                return productInventory;
-            }).toList();
+                productInventories.add(pi);
+            }
             productInventoryRepository.saveAllAndFlush(productInventories);
-            productRepository.saveAllAndFlush(productsUpdate);
+            productRepository.saveAllAndFlush(productsToUpdate);
 
-            List<ProductInventoryLocation> productInventoryLocations = purchaseOrderDto.getDetails().stream()
-                    .flatMap(detail -> detail.getLocations().stream().map(locationDto -> {
-                        ProductInventoryLocation pil = new ProductInventoryLocation();
+            // === Upsert ProductInventoryLocation ===
+            List<String> locationIds = purchaseOrderDto.getDetails().stream()
+                    .flatMap(detail -> detail.getLocations().stream())
+                    .map(ProductInventoryLocationDto::getLocationId)
+                    .distinct().toList();
+
+            List<ProductInventoryLocation> existingLocations =
+                    productInventoryLocationRepository.findByProductIdInAndLocationIdIn(productIds, locationIds);
+
+            Map<String, ProductInventoryLocation> existingLocationMap = existingLocations.stream()
+                    .collect(Collectors.toMap(
+                            pil -> pil.getProductId() + "_" + pil.getLocationId(),
+                            pil -> pil
+                    ));
+
+            // Prepare a list of histories but without PIL id initially
+            record HistoryData(String productId, String locationId, String purchaseOrderDetailId, Long quantity) {}
+            List<HistoryData> historyDataList = new ArrayList<>();
+
+            for (PurchaseOrderDetailDto detail : purchaseOrderDto.getDetails()) {
+                for (ProductInventoryLocationDto locationDto : detail.getLocations()) {
+                    String key = detail.getProductId() + "_" + locationDto.getLocationId();
+                    ProductInventoryLocation pil = existingLocationMap.get(key);
+
+                    if (pil != null) {
+                        pil.setInventoryQuantity(pil.getInventoryQuantity() + locationDto.getQuantity());
+                    } else {
+                        pil = new ProductInventoryLocation();
                         pil.setProductId(detail.getProductId());
-                        pil.setPurchaseOrderDetailId(detail.getId());
                         pil.setLocationId(locationDto.getLocationId());
+                        pil.setInventoryQuantity(locationDto.getQuantity());
                         pil.setStatus(ProductInventoryLocation.Status.ACTIVE);
-                        return pil;
-                    }))
-                    .toList();
-            productInventoryLocationRepository.saveAllAndFlush(productInventoryLocations);
+                        existingLocationMap.put(key, pil);
+                    }
+
+                    // Save history data to process after save PILs
+                    historyDataList.add(new HistoryData(
+                            detail.getProductId(),
+                            locationDto.getLocationId(),
+                            detail.getId(),
+                            locationDto.getQuantity()
+                    ));
+                }
+            }
+
+            // Save PILs
+            List<ProductInventoryLocation> savedPILs =
+                    productInventoryLocationRepository.saveAllAndFlush(
+                            new ArrayList<>(existingLocationMap.values())
+                    );
+
+            // Map PILs by productId + locationId for history
+            Map<String, ProductInventoryLocation> savedPILMap = savedPILs.stream().collect(
+                    Collectors.toMap(
+                            pil -> pil.getProductId() + "_" + pil.getLocationId(),
+                            pil -> pil
+                    )
+            );
+
+            // === Save history ===
+            List<ProductInventoryLocationHistory> histories = new ArrayList<>();
+            for (HistoryData hd : historyDataList) {
+                ProductInventoryLocation pil = savedPILMap.get(hd.productId() + "_" + hd.locationId());
+                ProductInventoryLocationHistory history = new ProductInventoryLocationHistory();
+                history.setProductInventoryLocationId(pil.getId());
+                history.setPurchaseOrderDetailId(hd.purchaseOrderDetailId());
+                history.setType(ProductInventoryLocationHistory.Type.PURCHASE);
+                history.setQuantity(hd.quantity());
+                histories.add(history);
+            }
+            productInventoryLocationHistoryRepository.saveAll(histories);
         }
 
         return false;

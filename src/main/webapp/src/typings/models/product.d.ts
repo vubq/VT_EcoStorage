@@ -27,7 +27,7 @@ namespace Product {
     taxRate?: number
     note?: string
     status?: string
-    
+
     productCategoryId?: string
     productOriginId?: string
     productUnitId?: string
@@ -35,5 +35,33 @@ namespace Product {
     inventoryQuantity?: number
 
     historyInventories?: ProductInventory.Data[]
+  }
+
+  interface FilterProductByLocation {
+    productCategoryId?: string
+    zoneId?: string
+    shelfId?: string
+    floorId?: string
+  }
+
+  interface ProductByLocation {
+    locationId?: string
+    productId?: string
+    productBarcode?: string
+    productName?: string
+    productCostPrice?: number
+    productSalePrice?: number
+    productStatus?: string
+    productCategoryId?: string
+    productCategoryName?: string
+    productUnitName?: string
+    zoneId?: string
+    zoneName?: string
+    shelfId?: string
+    shelfName?: string
+    floorId?: string
+    floor?: number
+    inventoryQuantity?: number
+    location?: string
   }
 }

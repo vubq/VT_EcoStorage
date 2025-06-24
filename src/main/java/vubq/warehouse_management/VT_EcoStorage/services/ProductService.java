@@ -1,14 +1,16 @@
 package vubq.warehouse_management.VT_EcoStorage.services;
 
 import org.springframework.data.domain.Page;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductCategoryDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductOriginDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductUnitDto;
+import vubq.warehouse_management.VT_EcoStorage.dtos.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductFilterRequest;
+import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductInventoryByLocationFilterRequest;
 import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataProductResponse;
 import vubq.warehouse_management.VT_EcoStorage.entities.*;
+import vubq.warehouse_management.VT_EcoStorage.entities.views.ProductByLocation;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
+
+import java.util.Date;
+import java.util.List;
 
 public interface ProductService {
 
@@ -36,4 +38,10 @@ public interface ProductService {
     Page<ProductOrigin> getListProductOrigin(DataTableRequest dataTableRequest);
 
     Page<ProductInventory> getListProductInventory(DataTableRequest dataTableRequest, String productId);
+
+    Page<ProductByLocation> getListProductInventoryByLocation(DataTableRequest dataTableRequest, ProductInventoryByLocationFilterRequest productInventoryByLocationFilterRequest);
+
+    List<ProductByLocation> getListProductInventoryByLocation(String locationId);
+
+    List<SummaryDto> statisticalProduct(Date from, Date to);
 }

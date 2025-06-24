@@ -12,5 +12,8 @@ namespace ExportOrderDetail {
     productUnit?: string
     delete?: boolean
     productName?: string
+
+    locationId?: string
+    location?: string
   }
 }

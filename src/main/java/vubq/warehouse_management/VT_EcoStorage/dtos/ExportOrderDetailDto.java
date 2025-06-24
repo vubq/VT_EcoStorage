@@ -28,6 +28,9 @@ public class ExportOrderDetailDto {
     private String productUnit;
     private String productName;
 
+    private String location;
+    private String locationId;
+
     public static ExportOrderDetail toEntity(
             ExportOrderDetailDto exportOrderDetailDto,
             String exportOrderId
@@ -43,6 +46,7 @@ public class ExportOrderDetailDto {
                         StringUtils.isNotBlank(exportOrderDetailDto.getExportOrderId()) ?
                                 exportOrderDetailDto.getExportOrderId() : exportOrderId
                 )
+                .locationId(exportOrderDetailDto.getLocationId())
                 .build();
     }
 
@@ -58,6 +62,8 @@ public class ExportOrderDetailDto {
                 .productBarcode(exportOrderDetail.getProduct().getBarcode())
                 .productUnit(exportOrderDetail.getProduct().getProductUnit().getName())
                 .productName(exportOrderDetail.getProduct().getName())
+                .location(exportOrderDetail.getProductByLocation().getLocation())
+                .locationId(exportOrderDetail.getProductByLocation().getLocationId())
                 .isDelete(false)
                 .build();
     }

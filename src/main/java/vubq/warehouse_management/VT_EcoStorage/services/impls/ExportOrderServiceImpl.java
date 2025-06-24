@@ -38,6 +38,8 @@ public class ExportOrderServiceImpl implements ExportOrderService {
     final private SupplierRepository supplierRepository;
     final private ProductCategoryRepository productCategoryRepository;
     final private CustomerRepository customerRepository;
+    final private ProductInventoryLocationRepository productInventoryLocationRepository;
+    final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -85,8 +87,41 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                     .orElseThrow(() -> new RuntimeException("Export order not found with id: " + exportOrderDto.getId()));
         }
 
+        if (exportOrder.getStatus() == ExportOrder.Status.NEW && exportOrderDto.getStatus() == ExportOrder.Status.NEW) {
+            exportOrder.setCustomerId(exportOrderDto.getCustomerId());
+            exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
+            exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
+            exportOrder.setNote(exportOrderDto.getNote());
+
+            ExportOrder finalExportOrder = exportOrder;
+            List<ExportOrderDetail> exportOrderDetails = exportOrderDto.getDetails().stream()
+                    .filter(detail -> !detail.isDelete())
+                    .map(exportOrderDetailDto -> ExportOrderDetailDto.toEntity(exportOrderDetailDto, finalExportOrder.getId()))
+                    .toList();
+
+            exportOrder.setTotalAmount(
+                    exportOrderDetails.stream()
+                            .map(ExportOrderDetail::getTotalAmount)
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            );
+
+            exportOrderRepository.saveAndFlush(exportOrder);
+            exportOrderDetailRepository.saveAll(exportOrderDetails);
+
+            List<String> purchaseOrderDetailDeleteIds = exportOrderDto.getDetails().stream()
+                    .filter(ExportOrderDetailDto::isDelete)
+                    .map(ExportOrderDetailDto::getId)
+                    .filter(StringUtils::isNotBlank)
+                    .toList();
+            exportOrderDetailRepository.deleteByIdIn(purchaseOrderDetailDeleteIds);
+
+            return true;
+        }
+
         if (exportOrder.getStatus() == ExportOrder.Status.NEW && exportOrderDto.getStatus() == ExportOrder.Status.CANCELED) {
             exportOrder.setStatus(ExportOrder.Status.CANCELED);
+            exportOrder.setNote(exportOrderDto.getNote());
             exportOrderRepository.saveAndFlush(exportOrder);
 
             return true;
@@ -97,6 +132,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setCustomerId(exportOrderDto.getCustomerId());
             exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
+            exportOrder.setNote(exportOrderDto.getNote());
 
             ExportOrder finalExportOrder = exportOrder;
             List<ExportOrderDetail> exportOrderDetails = exportOrderDto.getDetails().stream()
@@ -128,6 +164,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setStatus(ExportOrder.Status.DELIVERED);
             exportOrder.setDeliveredDate(DateUtils.getCurrentTime());
 
+            // 1. Lấy danh sách Product
             List<String> productIds = exportOrderDto.getDetails().stream()
                     .map(ExportOrderDetailDto::getProductId)
                     .toList();
@@ -136,22 +173,57 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                     .collect(Collectors.toMap(Product::getId, p -> p));
             List<Product> productsUpdate = new ArrayList<>();
 
-            List<ProductInventory> productInventories = exportOrderDto.getDetails().stream()
-                    .map(exportOrderDetail -> {
-                        ProductInventory productInventory = new ProductInventory();
-                        productInventory.setType(ProductInventory.Type.EXPORT_ORDER);
-                        productInventory.setTransactionType(ProductInventory.TransactionType.SUBTRACT);
-                        productInventory.setQuantity(exportOrderDetail.getQuantity());
-                        productInventory.setProductId(exportOrderDetail.getProductId());
-                        productInventory.setExportOrderDetailId(exportOrderDetail.getId());
-
-                        Product productUpdate = productMap.get(exportOrderDetail.getProductId());
-                        productUpdate.setInventoryQuantity(productUpdate.getInventoryQuantity() - exportOrderDetail.getQuantity());
-                        productsUpdate.add(productUpdate);
-
-                        return productInventory;
-                    })
+            // 2. Lấy danh sách Location
+            List<String> locationIds = exportOrderDto.getDetails().stream()
+                    .map(ExportOrderDetailDto::getLocationId)
                     .toList();
+            List<ProductInventoryLocation> productInventoryLocations = productInventoryLocationRepository.findByIdIn(locationIds);
+            Map<String, ProductInventoryLocation> locationMap = productInventoryLocations.stream()
+                    .collect(Collectors.toMap(ProductInventoryLocation::getId, l -> l));
+
+            // 3. Tạo danh sách ProductInventory để trừ tồn kho sản phẩm
+            List<ProductInventory> productInventories = new ArrayList<>();
+            List<ProductInventoryLocationHistory> locationHistories = new ArrayList<>();
+
+            for (ExportOrderDetailDto detail : exportOrderDto.getDetails()) {
+                // Cập nhật tồn kho tổng của Product
+                Product productUpdate = productMap.get(detail.getProductId());
+                productUpdate.setInventoryQuantity(
+                        productUpdate.getInventoryQuantity() - detail.getQuantity()
+                );
+                productsUpdate.add(productUpdate);
+
+                // Tạo record ProductInventory (history của xuất hàng)
+                ProductInventory productInventory = new ProductInventory();
+                productInventory.setType(ProductInventory.Type.EXPORT_ORDER);
+                productInventory.setTransactionType(ProductInventory.TransactionType.SUBTRACT);
+                productInventory.setQuantity(detail.getQuantity());
+                productInventory.setProductId(detail.getProductId());
+                productInventory.setExportOrderDetailId(detail.getId());
+                productInventories.add(productInventory);
+
+                // Cập nhật tồn kho của Location
+                ProductInventoryLocation loc = locationMap.get(detail.getLocationId());
+                if (loc != null) {
+                    loc.setInventoryQuantity(loc.getInventoryQuantity() - detail.getQuantity());
+
+                    // Tạo history cho location
+                    ProductInventoryLocationHistory history = new ProductInventoryLocationHistory();
+                    history.setProductInventoryLocationId(loc.getId());
+                    history.setExportOrderDetailId(detail.getId());
+                    history.setType(ProductInventoryLocationHistory.Type.EXPORT);
+                    history.setQuantity(detail.getQuantity());
+                    locationHistories.add(history);
+                } else {
+                    throw new IllegalArgumentException(
+                            "Location not found for id: " + detail.getLocationId()
+                    );
+                }
+            }
+
+            // 4. Save lại DB
+            productInventoryLocationRepository.saveAllAndFlush(locationMap.values());
+            productInventoryLocationHistoryRepository.saveAllAndFlush(locationHistories);
             productInventoryRepository.saveAllAndFlush(productInventories);
             productRepository.saveAllAndFlush(productsUpdate);
         }

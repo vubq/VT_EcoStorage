@@ -6,5 +6,7 @@ namespace Warehouse {
 
     zones?: Zone.Data[]
     zoneId?: string
+
+    products?: Product.ProductByLocation[]
   }
 }

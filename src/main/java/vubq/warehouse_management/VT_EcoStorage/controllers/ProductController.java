@@ -7,10 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ProductDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ProductInventoryDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.UserDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductFilterRequest;
+import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductInventoryByLocationFilterRequest;
 import vubq.warehouse_management.VT_EcoStorage.entities.Product;
 import vubq.warehouse_management.VT_EcoStorage.entities.ProductInventory;
+import vubq.warehouse_management.VT_EcoStorage.entities.views.ProductByLocation;
 import vubq.warehouse_management.VT_EcoStorage.services.ProductService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableResponse;
@@ -62,5 +63,21 @@ public class ProductController {
     @PostMapping("/create-or-update")
     public Response createOrUpdateProduct(@Valid @RequestBody ProductDto productDto) {
         return Response.success(productService.createOrUpdateProduct(productDto));
+    }
+
+    @PostMapping("/product-by-inventory-location")
+    public Response getListProductInventoryByLocation(@NonNull DataTableRequest dataTableRequest, @RequestBody ProductInventoryByLocationFilterRequest productInventoryByLocationFilterRequest) {
+        Page<ProductByLocation> results = productService.getListProductInventoryByLocation(dataTableRequest, productInventoryByLocationFilterRequest);
+        return Response.success(
+                DataTableResponse.builder()
+                        .list(results.getContent())
+                        .totalRecords(results.getTotalElements())
+                        .build()
+        );
+    }
+
+    @GetMapping("/product-by-inventory-location/{locationId}")
+    public Response getListProductInventoryByLocation(@PathVariable("locationId") String locationId) {
+        return Response.success(productService.getListProductInventoryByLocation(locationId));
     }
 }

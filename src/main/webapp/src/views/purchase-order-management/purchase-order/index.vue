@@ -121,10 +121,11 @@ const columns = computed(() => {
           <div>
             <NSpace vertical size="large">
               {(row.locations || []).map((l: any, index: number) => (
-                <NGrid key={index} cols={4} y-gap={12} x-gap={24}>
+                <NGrid key={index} cols={5} y-gap={12} x-gap={24}>
                   <NGi span={1}><NSelect options={optionZones()} placeholder="Zone" v-model:value={l.zoneId} /></NGi>
                   <NGi span={1}><NSelect options={optionShelf(l.zoneId)} placeholder="Shelf" v-model:value={l.shelfId} /></NGi>
                   <NGi span={1}><NSelect options={optionFloor(l.zoneId, l.shelfId, row.productId!)} placeholder="Floor" v-model:value={l.locationId} /></NGi>
+                  <NGi span={1}><NInputNumber v-model:value={l.quantity} placeholder="Quantity" /></NGi>
                   <NGi span={1}>
                     <NButton secondary type="error" onClick={() => removeLocation(row, index)}>
                       <NIcon size={18} component={TrashSharp} />
@@ -210,7 +211,7 @@ function addLocation(row: any) {
   if (!Array.isArray(row.locations)) {
     row.locations = []
   }
-  row.locations.push({ zoneId: null, shelfId: null, locationId: null, productId: row.productId, purchaseOrderDetailId: row.id })
+  row.locations.push({ zoneId: null, shelfId: null, locationId: null, productId: row.productId, purchaseOrderDetailId: row.id, quantity: 0 })
 }
 
 function removeLocation(row: any, index: number) {

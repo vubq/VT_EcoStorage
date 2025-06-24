@@ -2,12 +2,86 @@
 import { Add } from '@vicons/ionicons5'
 
 import { useBoolean } from '@/hooks'
+import type { DataTableColumns } from 'naive-ui'
 import { NButton, NSpace } from 'naive-ui'
 import { WarehouseService } from '@/service/api/warehouse-service'
+import { ProductService } from '@/service/api/product-service'
+import { router } from '@/router'
 
 const { bool: isModalAddZone, setTrue: showModalAddZone, setFalse: hidenModalAddZone } = useBoolean(false)
 const { bool: isModalAddShelf, setTrue: showModalAddShelf, setFalse: hidenModalAddShelf } = useBoolean(false)
 const { bool: isModalAddFloor, setTrue: showModalAddFloor, setFalse: hidenModalAddFloor } = useBoolean(false)
+
+const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
+  {
+    title: 'Product Barcode',
+    align: 'center',
+    key: 'barcode',
+    render: (row) => {
+      return (
+        <NButton
+          style="width: 100%"
+          secondary
+          type="primary"
+          strong
+          onClick={() => {
+            router.push({
+              name: 'product-management.product',
+              params: { productId: row.productId },
+            })
+          }}
+        >
+          {row.productBarcode}
+        </NButton>
+      )
+    },
+  },
+  {
+    title: 'Product Name',
+    align: 'center',
+    key: 'productName',
+  },
+  // {
+  //   title: 'Unit',
+  //   align: 'center',
+  //   key: 'productUnitName',
+  // },
+  // {
+  //   title: 'Category',
+  //   align: 'center',
+  //   key: 'productCategoryName',
+  // },
+  // {
+  //   title: 'Location',
+  //   align: 'center',
+  //   key: 'location',
+  // },
+  {
+    title: 'Inventory Quantity',
+    align: 'center',
+    key: 'inventoryQuantity',
+  },
+  // {
+  //   title: 'Cost Price',
+  //   align: 'center',
+  //   key: 'costPrice',
+  //   render: (row) => {
+  //     return (
+  //       <span>{row.productCostPrice!.toLocaleString('vi-VN')}</span>
+  //     )
+  //   },
+  // },
+  // {
+  //   title: 'Sale Price',
+  //   align: 'center',
+  //   key: 'salePrice',
+  //   render: (row) => {
+  //     return (
+  //       <span>{row.productSalePrice!.toLocaleString('vi-VN')}</span>
+  //     )
+  //   },
+  // },
+])
 
 const warehouseList = ref<Warehouse.Data[]>([])
 const zoneNew = ref<Zone.Data>({
@@ -81,15 +155,33 @@ function isSelectedFloor(
 // Set giá trị id
 function setZoneId(warehouse: Warehouse.Data, zoneId: string) {
   warehouse.zoneId = zoneId
+  const zone = findZone(warehouse, zoneId)
+  if (zone) {
+    zone.shelfId = undefined
+    warehouse.products = undefined
+  }
 }
 function setShelfId(warehouse: Warehouse.Data, zoneId: string, shelfId: string) {
-  findZone(warehouse, zoneId)!.shelfId = shelfId
+  const zone = findZone(warehouse, zoneId)
+  if (zone) {
+    zone.shelfId = shelfId
+    const shelf = findShelf(warehouse, zoneId, shelfId)
+    if (shelf) {
+      shelf.floorId = undefined
+      warehouse.products = undefined
+    }
+  }
 }
-function setFloorId(warehouse: Warehouse.Data, zoneId: string, floorId: string) {
+async function setFloorId(warehouse: Warehouse.Data, zoneId: string, floorId: string) {
   const zone = findZone(warehouse, zoneId)
   const shelf = zone?.shelves?.find(s => s.id === zone.shelfId)
-  if (shelf)
+  if (shelf) {
     shelf.floorId = floorId
+  }
+  await ProductService.getListProductInventoryByLocationId(floorId)
+    .then((res: any) => {
+      warehouse.products = res.data
+    })
 }
 
 async function createOrUpdateZone() {
@@ -267,6 +359,8 @@ onMounted(async () => {
                 </NButton>
               </NSpace>
             </div>
+            <n-divider v-if="w.products && w.products!.length > 0" />
+            <n-data-table v-if="w.products && w.products!.length > 0" ref="tableRef" :columns="columnsProduct" :data="w.products" />
           </NSpace>
         </n-card>
       </NGi>

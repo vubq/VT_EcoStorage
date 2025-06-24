@@ -15,4 +15,5 @@ public class ProductInventoryLocationDto {
     private ProductInventoryLocation.Status status;
     private String locationId;
     private String purchaseOrderDetailId;
+    private Long quantity;
 }

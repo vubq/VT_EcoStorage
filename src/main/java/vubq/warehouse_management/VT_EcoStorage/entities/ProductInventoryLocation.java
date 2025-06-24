@@ -42,16 +42,7 @@ public class ProductInventoryLocation extends Base {
     )
     private Floor floor;
 
-    @Column(name = "purchase_order_detail_id")
-    private String purchaseOrderDetailId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "purchase_order_detail_id",
-            insertable = false,
-            updatable = false
-    )
-    private PurchaseOrderDetail purchaseOrderDetail;
+    private Long inventoryQuantity;
 
     public enum Status {
         ACTIVE,

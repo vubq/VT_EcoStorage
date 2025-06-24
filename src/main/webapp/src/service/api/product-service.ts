@@ -8,12 +8,18 @@ export const ProductService = {
     return request.Get<Service.ResponseResult<any>>('/api/product/reference-data')
   },
   getListProductInventory(params: DataTable.Request, productId: string) {
-    return request.Get<Service.ResponseResult<any>>('/api/product/product-inventory/' + productId, { params })
+    return request.Get<Service.ResponseResult<any>>(`/api/product/product-inventory/${productId}`, { params })
   },
   getProduct(productId: string) {
-    return request.Get<Service.ResponseResult<any>>('/api/product/' + productId)
+    return request.Get<Service.ResponseResult<any>>(`/api/product/${productId}`)
   },
   createOrUpdateProduct(data: any) {
     return request.Post<Service.ResponseResult<any>>('/api/product/create-or-update', data)
+  },
+  getListProductInventoryByLocation(params: DataTable.Request, requestBody: any) {
+    return request.Post<Service.ResponseResult<any>>('/api/product/product-by-inventory-location', requestBody, { params })
+  },
+  getListProductInventoryByLocationId(locationId: string) {
+    return request.Get<Service.ResponseResult<any>>(`/api/product/product-by-inventory-location/${locationId}`)
   },
 }

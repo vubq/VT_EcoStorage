@@ -9,6 +9,7 @@ import { ExportOrderService } from '@/service/api/export-order-service'
 import { ProductService } from '@/service/api/product-service'
 import { router } from '@/router'
 import moment from 'moment'
+import { WarehouseService } from '@/service/api/warehouse-service'
 
 const route = useRoute()
 
@@ -50,6 +51,11 @@ const columns = computed(() => {
       title: 'Product Unit',
       align: 'center',
       key: 'productUnit',
+    },
+    {
+      title: 'Location',
+      align: 'center',
+      key: 'location',
     },
     {
       title: 'Quantity',
@@ -144,7 +150,7 @@ const columns = computed(() => {
   return baseColumns
 })
 
-const columnsProduct = ref<DataTableColumns<ExportOrder.Product>>([
+const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   {
     title: 'Product Barcode',
     align: 'center',
@@ -158,7 +164,7 @@ const columnsProduct = ref<DataTableColumns<ExportOrder.Product>>([
           strong
           onClick={() => addProduct(row)}
         >
-          {row.barcode}
+          {row.productBarcode}
         </NButton>
       )
     },
@@ -166,7 +172,7 @@ const columnsProduct = ref<DataTableColumns<ExportOrder.Product>>([
   {
     title: 'Product Name',
     align: 'center',
-    key: 'name',
+    key: 'productName',
   },
   {
     title: 'Unit',
@@ -179,6 +185,11 @@ const columnsProduct = ref<DataTableColumns<ExportOrder.Product>>([
     key: 'productCategoryName',
   },
   {
+    title: 'Location',
+    align: 'center',
+    key: 'location',
+  },
+  {
     title: 'Inventory Quantity',
     align: 'center',
     key: 'inventoryQuantity',
@@ -189,7 +200,7 @@ const columnsProduct = ref<DataTableColumns<ExportOrder.Product>>([
     key: 'costPrice',
     render: (row) => {
       return (
-        <span>{row.costPrice!.toLocaleString('vi-VN')}</span>
+        <span>{row.productCostPrice!.toLocaleString('vi-VN')}</span>
       )
     },
   },
@@ -199,7 +210,7 @@ const columnsProduct = ref<DataTableColumns<ExportOrder.Product>>([
     key: 'salePrice',
     render: (row) => {
       return (
-        <span>{row.salePrice!.toLocaleString('vi-VN')}</span>
+        <span>{row.productSalePrice!.toLocaleString('vi-VN')}</span>
       )
     },
   },
@@ -225,11 +236,74 @@ const exportOrderRules = ref(
   }),
 )
 
+const productWarehouse = ref<Warehouse.Data>({})
+
 const referenceData = ref<ReferenceData.ExportOrder>({
   warehouses: [],
   customers: [],
   categories: [],
 })
+
+function optionCategories() {
+  return [
+    {
+      label: 'All',
+      value: 'ALL',
+    },
+    ...referenceData.value.categories.map(item => ({
+      label: item.name,
+      value: item.id,
+    })),
+  ]
+}
+
+const dataRequestBody = ref<Product.FilterProductByLocation>({
+  productCategoryId: optionCategories()[0].value || 'ALL',
+  zoneId: 'ALL',
+  shelfId: 'ALL',
+  floorId: 'ALL',
+})
+
+function optionZones() {
+  return [
+    { label: 'All', value: 'ALL' },
+    ...(productWarehouse.value.zones ?? []).map(item => ({
+      label: item.name,
+      value: item.id,
+    })),
+  ]
+}
+
+function optionShelfs() {
+  const selectedZone = productWarehouse.value.zones?.find(
+    z => z.id === dataRequestBody.value.zoneId,
+  )
+
+  return [
+    { label: 'All', value: 'ALL' },
+    ...(selectedZone?.shelves ?? []).map(item => ({
+      label: item.name,
+      value: item.id,
+    })),
+  ]
+}
+
+function optionFloors() {
+  const selectedZone = productWarehouse.value.zones?.find(
+    z => z.id === dataRequestBody.value.zoneId,
+  )
+  const selectedShelf = selectedZone?.shelves?.find(
+    s => s.id === dataRequestBody.value.shelfId,
+  )
+
+  return [
+    { label: 'All', value: 'ALL' },
+    ...(selectedShelf?.floors ?? []).map(item => ({
+      label: item.floor,
+      value: item.id,
+    })),
+  ]
+}
 
 async function getReferenceData() {
   await ExportOrderService.getReferenceData()
@@ -274,19 +348,6 @@ function optionWarehouses() {
 //     ?.find(l => l.locationId === floorId)
 // }
 
-function optionCategories() {
-  return [
-    {
-      label: 'All',
-      value: 'ALL',
-    },
-    ...referenceData.value.categories.map(item => ({
-      label: item.name,
-      value: item.id,
-    })),
-  ]
-}
-
 function optionCustomers() {
   return referenceData.value.customers.map(item => ({
     label: item.name,
@@ -298,23 +359,15 @@ const dataTableRequest = ref<DataTable.Request>({
   currentPage: 1,
   perPage: 10,
   filter: '',
-  sortBy: 'id',
+  sortBy: 'productBarcode',
   sortDesc: true,
 })
-const dataRequestBody = ref<{
-  productCategoryId: string
-  productUnitId: string
-  productOrigin: string
-}>({
-  productCategoryId: optionCategories()[0].value || 'ALL',
-  productUnitId: '',
-  productOrigin: '',
-})
+
 const totalRecordsProduct = ref<number>(0)
 const listProduct = ref<ExportOrder.Product[]>([])
 
 async function getListProduct() {
-  await ProductService.getListProduct(dataTableRequest.value, dataRequestBody.value)
+  await ProductService.getListProductInventoryByLocation(dataTableRequest.value, dataRequestBody.value)
     .then((res: any) => {
       listProduct.value = res.data.list
       totalRecordsProduct.value = res.data.totalRecords
@@ -336,6 +389,9 @@ async function reloadFormSearch() {
   dataTableRequest.value.currentPage = 1
   dataTableRequest.value.filter = ''
   dataRequestBody.value.productCategoryId = 'ALL'
+  dataRequestBody.value.floorId = 'ALL'
+  dataRequestBody.value.zoneId = 'ALL'
+  dataRequestBody.value.shelfId = 'ALL'
   await getListProduct()
 }
 
@@ -349,13 +405,13 @@ function activeExportOrderDetails() {
   )
 }
 
-function addProduct(product: ExportOrder.Product) {
+function addProduct(product: Product.ProductByLocation) {
   if (!exportOrder.value.details) {
     exportOrder.value.details = []
   }
 
   const existing = exportOrder.value.details.find(
-    item => item.productId === product.id && !item.delete,
+    item => item.locationId === product.locationId && !item.delete,
   )
 
   if (existing) {
@@ -371,14 +427,16 @@ function addProduct(product: ExportOrder.Product) {
     exportOrder.value.details.push({
       id: '',
       quantity: 1,
-      unitPrice: product.salePrice,
-      totalAmount: product.salePrice,
+      unitPrice: product.productSalePrice,
+      totalAmount: product.productSalePrice,
       status: 'ACTIVE',
       exportOrderId: '',
-      productId: product.id,
-      productBarcode: product.barcode,
-      productName: product.name,
+      productId: product.productId,
+      productBarcode: product.productBarcode,
+      productName: product.productName,
       productUnit: product.productUnitName,
+      location: product.location,
+      locationId: product.locationId,
       delete: false,
     })
   }
@@ -416,12 +474,40 @@ async function getExportOrder() {
   }
 }
 
-// async function getWarehouse() {
-//   await WarehouseService.getWarehouse(purchaseOrder.value.warehouseId!)
-//     .then((res: any) => {
-//       warehouse.value = res.data
-//     })
-// }
+async function getWarehouse() {
+  await WarehouseService.getWarehouse(exportOrder.value.warehouseId!)
+    .then((res: any) => {
+      productWarehouse.value = res.data
+    })
+}
+
+watch(
+  () => exportOrder.value.warehouseId,
+  (newValue) => {
+    if (newValue) {
+      getWarehouse()
+    }
+  },
+)
+
+watch(
+  () => dataRequestBody.value.zoneId,
+  (newZoneId) => {
+    if (newZoneId) {
+      dataRequestBody.value.shelfId = 'ALL'
+      dataRequestBody.value.floorId = 'ALL'
+    }
+  },
+)
+
+watch(
+  () => dataRequestBody.value.shelfId,
+  (newZoneId) => {
+    if (newZoneId) {
+      dataRequestBody.value.floorId = 'ALL'
+    }
+  },
+)
 
 onMounted(async () => {
   await getReferenceData()
@@ -551,7 +637,7 @@ onMounted(async () => {
     </n-card>
     <n-card title="Export Order Detail">
       <template #header-extra>
-        <NButton v-if="exportOrder.status === 'NEW'" secondary type="primary" @click="openModalProduct()">
+        <NButton v-if="exportOrder.status === 'NEW'" secondary type="primary" @click="() => { if (exportOrder.warehouseId) openModalProduct() }">
           <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
         </NButton>
       </template>
@@ -563,14 +649,14 @@ onMounted(async () => {
           :mask-closable="false"
           preset="card"
           title="Product List"
-          class="w-1000px"
+          class="w-1200px"
           :segmented="{
             content: true,
             action: true,
           }"
         >
           <NSpace vertical size="large">
-            <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
+            <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false" label-width="80">
               <NGrid cols="3" y-gap="12" x-gap="24">
                 <NGi :span="1">
                   <n-form-item label="Search" path="filter">
@@ -580,6 +666,21 @@ onMounted(async () => {
                 <NGi :span="1">
                   <n-form-item label="Category" path="filter">
                     <NSelect v-model:value="dataRequestBody.productCategoryId" placeholder="" :options="optionCategories()" />
+                  </n-form-item>
+                </NGi>
+                <NGi :span="1">
+                  <n-form-item label="Zone" path="filter">
+                    <NSelect v-model:value="dataRequestBody.zoneId" placeholder="" :options="optionZones()" />
+                  </n-form-item>
+                </NGi>
+                <NGi :span="1">
+                  <n-form-item label="Shelf" path="filter">
+                    <NSelect v-model:value="dataRequestBody.shelfId" placeholder="" :options="optionShelfs()" />
+                  </n-form-item>
+                </NGi>
+                <NGi :span="1">
+                  <n-form-item label="Floor" path="filter">
+                    <NSelect v-model:value="dataRequestBody.floorId" placeholder="" :options="optionFloors()" />
                   </n-form-item>
                 </NGi>
                 <NGi :span="1">

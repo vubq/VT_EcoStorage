@@ -9,13 +9,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductCategoryDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductOriginDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.ProductUnitDto;
+import vubq.warehouse_management.VT_EcoStorage.dtos.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductFilterRequest;
+import vubq.warehouse_management.VT_EcoStorage.dtos.requests.ProductInventoryByLocationFilterRequest;
 import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataProductResponse;
 import vubq.warehouse_management.VT_EcoStorage.entities.*;
+import vubq.warehouse_management.VT_EcoStorage.entities.views.ProductByLocation;
 import vubq.warehouse_management.VT_EcoStorage.repositories.*;
 import vubq.warehouse_management.VT_EcoStorage.services.ProductService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
@@ -23,8 +22,10 @@ import vubq.warehouse_management.VT_EcoStorage.utils.specifications.BaseSpecific
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchCriteria;
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchOperation;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +38,7 @@ public class ProductServiceImpl implements ProductService {
     final private ProductUnitRepository productUnitRepository;
     final private ProductRepository productRepository;
     final private ProductInventoryRepository productInventoryRepository;
+    final private ProductByLocationRepository productByLocationRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -238,5 +240,111 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductInventory> getListProductInventory(DataTableRequest dataTableRequest, String productId) {
         PageRequest pageable = dataTableRequest.toPageable();
         return productInventoryRepository.findByProductId(productId, pageable);
+    }
+
+    @Override
+    public Page<ProductByLocation> getListProductInventoryByLocation(DataTableRequest dataTableRequest, ProductInventoryByLocationFilterRequest productInventoryByLocationFilterRequest) {
+        PageRequest pageable = dataTableRequest.toPageable();
+        BaseSpecification<ProductByLocation> specProductNameContains = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.productName})
+                        .operation(SearchOperation.CONTAINS)
+                        .value(dataTableRequest.getFilter().trim().toUpperCase())
+                        .build()
+        );
+        BaseSpecification<ProductByLocation> specProductBarcodeContains = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.productBarcode})
+                        .operation(SearchOperation.CONTAINS)
+                        .value(dataTableRequest.getFilter().trim().toUpperCase())
+                        .build()
+        );
+        BaseSpecification<ProductByLocation> specProductCategoryIdEquality = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.productCategoryId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(productInventoryByLocationFilterRequest.getProductCategoryId())
+                        .build()
+        );
+        BaseSpecification<ProductByLocation> specZoneIdEquality = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.zoneId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(productInventoryByLocationFilterRequest.getZoneId())
+                        .build()
+        );
+        BaseSpecification<ProductByLocation> specShelfIdEquality = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.shelfId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(productInventoryByLocationFilterRequest.getShelfId())
+                        .build()
+        );
+        BaseSpecification<ProductByLocation> specFloorIdEquality = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.floorId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(productInventoryByLocationFilterRequest.getFloorId())
+                        .build()
+        );
+        return productByLocationRepository.findAll(
+                Specification.where(specProductNameContains)
+                        .or(specProductBarcodeContains)
+                        .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getProductCategoryId()) && !productInventoryByLocationFilterRequest.getProductCategoryId().equals("ALL") ? specProductCategoryIdEquality : null)
+                        .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getZoneId()) && !productInventoryByLocationFilterRequest.getZoneId().equals("ALL") ? specZoneIdEquality : null)
+                        .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getShelfId()) && !productInventoryByLocationFilterRequest.getShelfId().equals("ALL") ? specShelfIdEquality : null)
+                        .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getFloorId()) && !productInventoryByLocationFilterRequest.getFloorId().equals("ALL") ? specFloorIdEquality : null)
+                ,
+                pageable);
+    }
+
+    @Override
+    public List<ProductByLocation> getListProductInventoryByLocation(String locationId) {
+        return productByLocationRepository.findByFloorId(locationId);
+    }
+
+    @Override
+    public List<SummaryDto> statisticalProduct(Date from, Date to) {
+        List<ProductStatistics> receivedStats = productRepository.findReceivedStats(PurchaseOrder.Status.RECEIVED, from, to);
+        List<ProductStatistics> deliveredStats = productRepository.findDeliveredStats(ExportOrder.Status.DELIVERED, from, to);
+
+        Map<String, SummaryDto> summaryMap = new HashMap<>();
+        for (ProductStatistics r : receivedStats) {
+            summaryMap.put(
+                    r.getProductId(),
+                    new SummaryDto(
+                            r.getProductId(),
+                            r.getQuantity(),
+                            r.getTotalAmount(),
+                            0L,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO
+                    )
+            );
+        }
+        for (ProductStatistics d : deliveredStats) {
+            summaryMap.merge(
+                    d.getProductId(),
+                    new SummaryDto(
+                            d.getProductId(),
+                            0L,
+                            BigDecimal.ZERO,
+                            d.getQuantity(),
+                            d.getTotalAmount(),
+                            BigDecimal.ZERO
+                    ),
+                    (oldVal, newVal) -> {
+                        oldVal.setExportQuantity(newVal.getExportQuantity());
+                        oldVal.setExportTotal(newVal.getExportTotal());
+                        return oldVal;
+                    }
+            );
+        }
+        summaryMap.values().forEach(dto -> {
+            BigDecimal importTotal = dto.getImportTotal() != null ? dto.getImportTotal() : BigDecimal.ZERO;
+            BigDecimal exportTotal = dto.getExportTotal() != null ? dto.getExportTotal() : BigDecimal.ZERO;
+            dto.setRevenue(exportTotal.subtract(importTotal));
+        });
+        return new ArrayList<>(summaryMap.values());
     }
 }
