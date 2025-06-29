@@ -262,6 +262,7 @@ const dataRequestBody = ref<Product.FilterProductByLocation>({
   zoneId: 'ALL',
   shelfId: 'ALL',
   floorId: 'ALL',
+  warehouseId: 'ALL',
 })
 
 function optionZones() {
@@ -637,7 +638,18 @@ onMounted(async () => {
     </n-card>
     <n-card title="Export Order Detail">
       <template #header-extra>
-        <NButton v-if="exportOrder.status === 'NEW'" secondary type="primary" @click="() => { if (exportOrder.warehouseId) openModalProduct() }">
+        <NButton
+          v-if="exportOrder.status === 'NEW'"
+          secondary
+          type="primary"
+          @click="async () => {
+            if (exportOrder.warehouseId) {
+              dataRequestBody.warehouseId = exportOrder.warehouseId
+              await getListProduct()
+              openModalProduct()
+            }
+          }"
+        >
           <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
         </NButton>
       </template>

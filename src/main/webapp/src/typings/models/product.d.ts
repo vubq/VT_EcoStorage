@@ -42,6 +42,7 @@ namespace Product {
     zoneId?: string
     shelfId?: string
     floorId?: string
+    warehouseId?: string
   }
 
   interface ProductByLocation {

@@ -15,4 +15,5 @@ public class ProductInventoryByLocationFilterRequest {
     private String zoneId;
     private String shelfId;
     private String floorId;
+    private String warehouseId;
 }

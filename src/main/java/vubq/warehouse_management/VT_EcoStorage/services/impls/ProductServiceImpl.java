@@ -287,9 +287,17 @@ public class ProductServiceImpl implements ProductService {
                         .value(productInventoryByLocationFilterRequest.getFloorId())
                         .build()
         );
+        BaseSpecification<ProductByLocation> specWarehouseIdEquality = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ProductByLocation.Fields.warehouseId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(productInventoryByLocationFilterRequest.getWarehouseId())
+                        .build()
+        );
         return productByLocationRepository.findAll(
                 Specification.where(specProductNameContains)
                         .or(specProductBarcodeContains)
+                        .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getWarehouseId()) && !productInventoryByLocationFilterRequest.getWarehouseId().equals("ALL") ? specWarehouseIdEquality : null)
                         .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getProductCategoryId()) && !productInventoryByLocationFilterRequest.getProductCategoryId().equals("ALL") ? specProductCategoryIdEquality : null)
                         .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getZoneId()) && !productInventoryByLocationFilterRequest.getZoneId().equals("ALL") ? specZoneIdEquality : null)
                         .and(StringUtils.isNotBlank(productInventoryByLocationFilterRequest.getShelfId()) && !productInventoryByLocationFilterRequest.getShelfId().equals("ALL") ? specShelfIdEquality : null)
