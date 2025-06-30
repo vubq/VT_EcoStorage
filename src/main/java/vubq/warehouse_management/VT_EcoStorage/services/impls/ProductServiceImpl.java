@@ -231,6 +231,33 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public ProductCategoryDto getProductCategoryById(String id) {
+        ProductCategory productCategory = productCategoryRepository.findById(id).orElse(null);
+        if (productCategory == null) {
+            throw new RuntimeException("Product category not found with id: " + id);
+        }
+        return ProductCategoryDto.toDto(productCategory);
+    }
+
+    @Override
+    public ProductUnitDto getProductUnitById(String id) {
+        ProductUnit productUnit = productUnitRepository.findById(id).orElse(null);
+        if (productUnit == null) {
+            throw new RuntimeException("Product unit not found with id: " + id);
+        }
+        return ProductUnitDto.toDto(productUnit);
+    }
+
+    @Override
+    public ProductOriginDto getProductOriginById(String id) {
+        ProductOrigin productOrigin = productOriginRepository.findById(id).orElse(null);
+        if (productOrigin == null) {
+            throw new RuntimeException("Product origin not found with id: " + id);
+        }
+        return ProductOriginDto.toDto(productOrigin);
+    }
+
+    @Override
     public ProductDto getProduct(String productId) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
         return ProductDto.toDto(product);

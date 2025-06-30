@@ -452,7 +452,7 @@ export const staticRoutes: AppRoute.RowRoute[] = [
     requiresAuth: true,
     icon: 'fa-solid:warehouse',
     componentPath: '/warehouse-management/index.vue',
-    id: 41,
+    id: 35,
     pid: null,
   },
   {
@@ -484,6 +484,16 @@ export const staticRoutes: AppRoute.RowRoute[] = [
     icon: 'ix:product',
     componentPath: '/product-management/product/index.vue',
     id: 38,
+    pid: 36,
+  },
+  {
+    name: 'product-management.category-list',
+    path: '/product-management/category/list',
+    title: 'Category List',
+    requiresAuth: true,
+    icon: 'lets-icons:order',
+    componentPath: '/product-management/category-list/index.vue',
+    id: 34,
     pid: 36,
   },
   {

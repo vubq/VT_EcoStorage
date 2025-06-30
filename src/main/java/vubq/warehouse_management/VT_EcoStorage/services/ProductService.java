@@ -44,4 +44,10 @@ public interface ProductService {
     List<ProductByLocation> getListProductInventoryByLocation(String locationId);
 
     List<SummaryDto> statisticalProduct(Date from, Date to);
+
+    ProductCategoryDto getProductCategoryById(String id);
+
+    ProductUnitDto getProductUnitById(String id);
+
+    ProductOriginDto getProductOriginById(String id);
 }
