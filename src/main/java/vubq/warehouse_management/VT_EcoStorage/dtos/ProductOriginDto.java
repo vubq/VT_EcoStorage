@@ -13,12 +13,16 @@ import vubq.warehouse_management.VT_EcoStorage.entities.ProductOrigin;
 public class ProductOriginDto {
     private String id;
     private String name;
+    private String description;
+    private String note;
     private ProductOrigin.Status status;
 
     public static ProductOriginDto toDto(ProductOrigin productOrigin) {
         return ProductOriginDto.builder()
                 .id(productOrigin.getId())
                 .name(productOrigin.getName())
+                .description(productOrigin.getDescription())
+                .note(productOrigin.getNote())
                 .status(productOrigin.getStatus())
                 .build();
     }

@@ -14,8 +14,8 @@ const dataTableRequest = ref<DataTable.Request>({
   sortBy: 'id',
   sortDesc: true,
 })
-const categoryId = ref<string>('')
-const columns = ref<DataTableColumns<Category.Data>>([
+const unitId = ref<string>('')
+const columns = ref<DataTableColumns<Unit.Data>>([
   {
     title: 'Id',
     align: 'center',
@@ -27,7 +27,7 @@ const columns = ref<DataTableColumns<Category.Data>>([
           secondary
           type="primary"
           strong
-          onClick={() => getCategory(row.id!)}
+          onClick={() => getUnit(row.id!)}
         >
           {row.id}
         </NButton>
@@ -52,8 +52,8 @@ const columns = ref<DataTableColumns<Category.Data>>([
   },
 ])
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listCategory = ref<Category.Data[]>([])
-const category = ref<Category.Data>({
+const listUnit = ref<Unit.Data[]>([])
+const unit = ref<Unit.Data>({
   name: '',
   status: 'ACTIVE',
 })
@@ -69,36 +69,36 @@ function sortDefault(columnKey: string) {
 async function changePage(page: number, size: number) {
   dataTableRequest.value.currentPage = page
   dataTableRequest.value.perPage = size
-  await getListCategory()
+  await getListUnit()
 }
 
-async function getListCategory() {
-  await ProductService.getListCategory(dataTableRequest.value)
+async function getListUnit() {
+  await ProductService.getListUnit(dataTableRequest.value)
     .then((res: any) => {
-      listCategory.value = res.data.list
+      listUnit.value = res.data.list
       totalRecords.value = res.data.totalRecords
     })
 }
 
 async function reloadTableFirst() {
   dataTableRequest.value.currentPage = 1
-  await getListCategory()
+  await getListUnit()
 }
 
 async function reloadTable() {
-  await getListCategory()
+  await getListUnit()
 }
 
-async function getCategory(id: string) {
-  await ProductService.getCategory(id)
+async function getUnit(id: string) {
+  await ProductService.getUnit(id)
     .then((res: any) => {
-      category.value = res.data
+      unit.value = res.data
       openModal()
     })
 }
 
-async function createOrUpdateCategory() {
-  await ProductService.createOrUpdateCategory(category.value)
+async function createOrUpdateUnit() {
+  await ProductService.createOrUpdateUnit(unit.value)
     .then((res: any) => {
       if (res.isSuccess) {
         hideModal()
@@ -132,7 +132,7 @@ function sortData(sorter: DataTableSortState) {
 }
 
 onMounted(() => {
-  getListCategory()
+  getListUnit()
 })
 </script>
 
@@ -170,16 +170,16 @@ onMounted(() => {
             secondary
             class="ml-a"
             @click="() => {
-              category.id = '',
-              category.name = '',
-              category.status = 'ACTIVE'
+              unit.id = '',
+              unit.name = '',
+              unit.status = 'ACTIVE'
               openModal()
             }"
           >
             <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
           </NButton>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listCategory" @update:sorter="sortTable" />
+        <n-data-table ref="tableRef" :columns="columns" :data="listUnit" @update:sorter="sortTable" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>
@@ -187,22 +187,22 @@ onMounted(() => {
       v-model:show="visible"
       :mask-closable="false"
       preset="card"
-      :title="category.id ? 'Edit' : 'Add'"
+      :title="unit.id ? 'Edit' : 'Add'"
       class="w-400px"
       :segmented="{
         content: true,
         action: true,
       }"
     >
-      <n-form label-placement="left" :model="category" label-align="left" :label-width="90">
+      <n-form label-placement="left" :model="unit" label-align="left" :label-width="80">
         <n-form-item label="Name" path="name">
-          <n-input v-model:value="category.name" />
+          <n-input v-model:value="unit.name" />
         </n-form-item>
         <n-form-item label="Description" path="description">
-          <n-input v-model:value="category.description" type="textarea" />
+          <n-input v-model:value="unit.description" type="textarea" />
         </n-form-item>
         <n-form-item label="Note" path="note">
-          <n-input v-model:value="category.note" type="textarea" />
+          <n-input v-model:value="unit.note" type="textarea" />
         </n-form-item>
       </n-form>
       <template #action>
@@ -210,8 +210,8 @@ onMounted(() => {
           <NButton @click="hideModal()">
             Cancel
           </NButton>
-          <NButton type="primary" @click="createOrUpdateCategory()">
-            {{ category.id ? 'Edit' : 'Add' }}
+          <NButton type="primary" @click="createOrUpdateUnit()">
+            {{ unit.id ? 'Edit' : 'Add' }}
           </NButton>
         </NSpace>
       </template>

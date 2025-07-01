@@ -14,8 +14,8 @@ const dataTableRequest = ref<DataTable.Request>({
   sortBy: 'id',
   sortDesc: true,
 })
-const categoryId = ref<string>('')
-const columns = ref<DataTableColumns<Category.Data>>([
+const originId = ref<string>('')
+const columns = ref<DataTableColumns<Origin.Data>>([
   {
     title: 'Id',
     align: 'center',
@@ -27,7 +27,7 @@ const columns = ref<DataTableColumns<Category.Data>>([
           secondary
           type="primary"
           strong
-          onClick={() => getCategory(row.id!)}
+          onClick={() => getOrigin(row.id!)}
         >
           {row.id}
         </NButton>
@@ -52,8 +52,8 @@ const columns = ref<DataTableColumns<Category.Data>>([
   },
 ])
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listCategory = ref<Category.Data[]>([])
-const category = ref<Category.Data>({
+const listOrigin = ref<Origin.Data[]>([])
+const origin = ref<Origin.Data>({
   name: '',
   status: 'ACTIVE',
 })
@@ -69,36 +69,36 @@ function sortDefault(columnKey: string) {
 async function changePage(page: number, size: number) {
   dataTableRequest.value.currentPage = page
   dataTableRequest.value.perPage = size
-  await getListCategory()
+  await getListOrigin()
 }
 
-async function getListCategory() {
-  await ProductService.getListCategory(dataTableRequest.value)
+async function getListOrigin() {
+  await ProductService.getListOrigin(dataTableRequest.value)
     .then((res: any) => {
-      listCategory.value = res.data.list
+      listOrigin.value = res.data.list
       totalRecords.value = res.data.totalRecords
     })
 }
 
 async function reloadTableFirst() {
   dataTableRequest.value.currentPage = 1
-  await getListCategory()
+  await getListOrigin()
 }
 
 async function reloadTable() {
-  await getListCategory()
+  await getListOrigin()
 }
 
-async function getCategory(id: string) {
-  await ProductService.getCategory(id)
+async function getOrigin(id: string) {
+  await ProductService.getOrigin(id)
     .then((res: any) => {
-      category.value = res.data
+      origin.value = res.data
       openModal()
     })
 }
 
-async function createOrUpdateCategory() {
-  await ProductService.createOrUpdateCategory(category.value)
+async function createOrUpdateOrigin() {
+  await ProductService.createOrUpdateOrigin(origin.value)
     .then((res: any) => {
       if (res.isSuccess) {
         hideModal()
@@ -132,7 +132,7 @@ function sortData(sorter: DataTableSortState) {
 }
 
 onMounted(() => {
-  getListCategory()
+  getListOrigin()
 })
 </script>
 
@@ -170,16 +170,16 @@ onMounted(() => {
             secondary
             class="ml-a"
             @click="() => {
-              category.id = '',
-              category.name = '',
-              category.status = 'ACTIVE'
+              origin.id = '',
+              origin.name = '',
+              origin.status = 'ACTIVE'
               openModal()
             }"
           >
             <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
           </NButton>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listCategory" @update:sorter="sortTable" />
+        <n-data-table ref="tableRef" :columns="columns" :data="listOrigin" @update:sorter="sortTable" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>
@@ -187,22 +187,22 @@ onMounted(() => {
       v-model:show="visible"
       :mask-closable="false"
       preset="card"
-      :title="category.id ? 'Edit' : 'Add'"
+      :title="origin.id ? 'Edit' : 'Add'"
       class="w-400px"
       :segmented="{
         content: true,
         action: true,
       }"
     >
-      <n-form label-placement="left" :model="category" label-align="left" :label-width="90">
+      <n-form label-placement="left" :model="origin" label-align="left" :label-width="80">
         <n-form-item label="Name" path="name">
-          <n-input v-model:value="category.name" />
+          <n-input v-model:value="origin.name" />
         </n-form-item>
         <n-form-item label="Description" path="description">
-          <n-input v-model:value="category.description" type="textarea" />
+          <n-input v-model:value="origin.description" type="textarea" />
         </n-form-item>
         <n-form-item label="Note" path="note">
-          <n-input v-model:value="category.note" type="textarea" />
+          <n-input v-model:value="origin.note" type="textarea" />
         </n-form-item>
       </n-form>
       <template #action>
@@ -210,8 +210,8 @@ onMounted(() => {
           <NButton @click="hideModal()">
             Cancel
           </NButton>
-          <NButton type="primary" @click="createOrUpdateCategory()">
-            {{ category.id ? 'Edit' : 'Add' }}
+          <NButton type="primary" @click="createOrUpdateOrigin()">
+            {{ origin.id ? 'Edit' : 'Add' }}
           </NButton>
         </NSpace>
       </template>
