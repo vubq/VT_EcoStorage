@@ -58,4 +58,47 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             @Param("toDate") Date toDate
     );
 
+    @Query(value = """
+            SELECT 
+                wh.id AS warehouse_id,
+                wh.name AS warehouse_name,
+                p.id AS product_id,
+                p.name AS product_name,
+                p.barcode AS product_barcode,
+                p.sku AS product_sku,
+
+                COALESCE(SUM(CASE 
+                    WHEN po.status = 'RECEIVED' 
+                     AND po.received_date BETWEEN :startDate AND :endDate 
+                    THEN pod.quantity ELSE 0 END), 0) AS total_import_quantity,
+
+                COALESCE(SUM(CASE 
+                    WHEN po.status = 'RECEIVED' 
+                     AND po.received_date BETWEEN :startDate AND :endDate 
+                    THEN pod.total_amount ELSE 0 END), 0) AS total_import_amount,
+
+                COALESCE(SUM(CASE 
+                    WHEN eo.status = 'DELIVERED' 
+                     AND eo.delivered_date BETWEEN :startDate AND :endDate 
+                    THEN eod.quantity ELSE 0 END), 0) AS total_export_quantity,
+
+                COALESCE(SUM(CASE 
+                    WHEN eo.status = 'DELIVERED' 
+                     AND eo.delivered_date BETWEEN :startDate AND :endDate 
+                    THEN eod.total_amount ELSE 0 END), 0) AS total_export_amount
+
+            FROM tb_products p
+
+            LEFT JOIN tb_purchase_order_details pod ON pod.product_id = p.id
+            LEFT JOIN tb_purchase_orders po ON pod.purchase_order_id = po.id
+
+            LEFT JOIN tb_export_order_details eod ON eod.product_id = p.id
+            LEFT JOIN tb_export_orders eo ON eod.export_order_id = eo.id
+
+            LEFT JOIN tb_warehouses wh ON wh.id = COALESCE(po.warehouse_id, eo.warehouse_id)
+
+            GROUP BY wh.id, wh.name, p.id, p.name, p.barcode, p.sku
+            ORDER BY wh.name, p.name
+            """, nativeQuery = true)
+    List<Object[]> getWarehouseProductStats(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 }
