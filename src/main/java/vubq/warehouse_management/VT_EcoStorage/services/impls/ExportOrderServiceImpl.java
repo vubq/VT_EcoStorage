@@ -270,4 +270,17 @@ public class ExportOrderServiceImpl implements ExportOrderService {
         exportOrderDto.setDetails(exportOrderDetails.stream().map(ExportOrderDetailDto::toDto).collect(Collectors.toList()));
         return exportOrderDto;
     }
+
+    @Override
+    public Page<ExportOrder> getExportOrders(DataTableRequest dataTableRequest, String customerId) {
+        PageRequest pageable = dataTableRequest.toPageable();
+        BaseSpecification<ExportOrder> specCustomerIdEqual = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ExportOrder.Fields.customerId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(customerId)
+                        .build()
+        );
+        return exportOrderRepository.findAll(Specification.where(specCustomerIdEqual), pageable);
+    }
 }

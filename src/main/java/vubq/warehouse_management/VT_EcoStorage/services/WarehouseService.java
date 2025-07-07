@@ -18,4 +18,6 @@ public interface WarehouseService {
     List<FloorDto> createOrUpdateFloor(FloorDto floorDto);
 
     WarehouseDto getWarehouse(String warehouseId);
+
+    WarehouseDto createOrUpdateWarehouse(WarehouseDto warehouseDto);
 }

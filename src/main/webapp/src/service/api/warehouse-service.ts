@@ -16,4 +16,7 @@ export const WarehouseService = {
   createOrUpdateFloor(data: any) {
     return request.Post<Service.ResponseResult<any>>('/api/warehouse/create-or-update-floor', data)
   },
+  createOrUpdateWarehouse(data: any) {
+    return request.Post<Service.ResponseResult<any>>('/api/warehouse/create-or-update-warehouse', data)
+  },
 }

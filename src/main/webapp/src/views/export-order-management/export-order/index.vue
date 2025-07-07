@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
 import { NButton, NGi, NGrid, NIcon, NInputNumber, NSelect, NSpace } from 'naive-ui'
 import { Add, CheckboxOutline, Save, TrashSharp } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
@@ -30,10 +30,35 @@ const exportOrder = ref<ExportOrder.Data>({
   details: [],
   note: '',
 })
+const formRef = ref<FormInst | null>(null)
+const rules: FormRules = {
+  customerId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  warehouseId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  expectedDate: [
+    {
+      required: true,
+      validator: (_rule, value) => {
+        const selectedDate = moment(expectedDate.value).startOf('day')
+        const today = moment().startOf('day')
+
+        if (selectedDate.isBefore(today)) {
+          return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+        }
+
+        return Promise.resolve()
+      },
+      trigger: 'blur'
+    }
+  ],
+}
 const columns = computed(() => {
   const baseColumns: DataTableColumns<ExportOrderDetail.Data> = [
     {
-      title: 'Product Barcode',
+      title: 'Barcode',
       align: 'center',
       key: 'productBarcode',
       render: row => (
@@ -43,22 +68,22 @@ const columns = computed(() => {
       ),
     },
     {
-      title: 'Product Name',
+      title: 'Tên sản phẩm',
       align: 'center',
       key: 'productName',
     },
     {
-      title: 'Product Unit',
+      title: 'Đơn vị tính',
       align: 'center',
       key: 'productUnit',
     },
     {
-      title: 'Location',
+      title: 'Vị trí',
       align: 'center',
       key: 'location',
     },
     {
-      title: 'Quantity',
+      title: 'Số lượng',
       align: 'center',
       key: 'quantity',
       width: 150,
@@ -75,7 +100,7 @@ const columns = computed(() => {
           : <span>{row.quantity}</span>,
     },
     {
-      title: 'Unit Price',
+      title: 'Đơn giá',
       align: 'center',
       key: 'unitPrice',
       width: 180,
@@ -92,7 +117,7 @@ const columns = computed(() => {
           : <span>{row.unitPrice!.toLocaleString('vi-VN')}</span>,
     },
     {
-      title: 'Total Amount',
+      title: 'Tổng tiền',
       align: 'center',
       key: 'totalAmount',
       render: row => <span>{row.totalAmount!.toLocaleString('vi-VN')}</span>,
@@ -152,7 +177,7 @@ const columns = computed(() => {
 
 const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   {
-    title: 'Product Barcode',
+    title: 'Barcode',
     align: 'center',
     key: 'barcode',
     render: (row) => {
@@ -170,32 +195,32 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
     },
   },
   {
-    title: 'Product Name',
+    title: 'Tên sản phẩm',
     align: 'center',
     key: 'productName',
   },
   {
-    title: 'Unit',
+    title: 'Đơn vị tính',
     align: 'center',
     key: 'productUnitName',
   },
   {
-    title: 'Category',
+    title: 'Danh mục',
     align: 'center',
     key: 'productCategoryName',
   },
   {
-    title: 'Location',
+    title: 'Vị trí',
     align: 'center',
     key: 'location',
   },
   {
-    title: 'Inventory Quantity',
+    title: 'Tồn kho',
     align: 'center',
     key: 'inventoryQuantity',
   },
   {
-    title: 'Cost Price',
+    title: 'Giá nhập',
     align: 'center',
     key: 'costPrice',
     render: (row) => {
@@ -205,7 +230,7 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
     },
   },
   {
-    title: 'Sale Price',
+    title: 'Giá xuất',
     align: 'center',
     key: 'salePrice',
     render: (row) => {
@@ -247,7 +272,7 @@ const referenceData = ref<ReferenceData.ExportOrder>({
 function optionCategories() {
   return [
     {
-      label: 'All',
+      label: 'Tất cả',
       value: 'ALL',
     },
     ...referenceData.value.categories.map(item => ({
@@ -267,7 +292,7 @@ const dataRequestBody = ref<Product.FilterProductByLocation>({
 
 function optionZones() {
   return [
-    { label: 'All', value: 'ALL' },
+    { label: 'Tất cả', value: 'ALL' },
     ...(productWarehouse.value.zones ?? []).map(item => ({
       label: item.name,
       value: item.id,
@@ -281,7 +306,7 @@ function optionShelfs() {
   )
 
   return [
-    { label: 'All', value: 'ALL' },
+    { label: 'Tất cả', value: 'ALL' },
     ...(selectedZone?.shelves ?? []).map(item => ({
       label: item.name,
       value: item.id,
@@ -298,7 +323,7 @@ function optionFloors() {
   )
 
   return [
-    { label: 'All', value: 'ALL' },
+    { label: 'Tất cả', value: 'ALL' },
     ...(selectedShelf?.floors ?? []).map(item => ({
       label: item.floor,
       value: item.id,
@@ -446,23 +471,31 @@ function addProduct(product: Product.ProductByLocation) {
 }
 
 async function createOrUpdateExportOrder(status: string) {
-  exportOrder.value.expectedDate = moment(expectedDate.value).toDate()
-  exportOrder.value.details = exportOrder.value.details!.filter(
-    detail => detail.productId && detail.delete !== true,
-  )
-  await ExportOrderService.createOrUpdateExportOrder({
-    ...exportOrder.value,
-    status,
+  formRef.value?.validate(async (errors) => {
+    if (!errors) {
+      if (!exportOrder.value.details || exportOrder.value.details.length < 1) {
+        window.$message.error('Vui lòng chọn sản phẩm cần xuất')
+        return
+      }
+      exportOrder.value.expectedDate = moment(expectedDate.value).toDate()
+      exportOrder.value.details = exportOrder.value.details!.filter(
+        detail => detail.productId && detail.delete !== true,
+      )
+      await ExportOrderService.createOrUpdateExportOrder({
+        ...exportOrder.value,
+        status,
+      })
+        .then((res: any) => {
+          if (res.isSuccess) {
+            router.push({ name: 'export-order-management.list' })
+          }
+          else {
+            // errors.value = res.data
+            // formUserRef.value.validate()
+          }
+        })
+    }
   })
-    .then((res: any) => {
-      if (res.isSuccess) {
-        router.push({ name: 'export-order-management.list' })
-      }
-      else {
-        // errors.value = res.data
-        // formUserRef.value.validate()
-      }
-    })
 }
 
 async function getExportOrder() {
@@ -510,6 +543,16 @@ watch(
   },
 )
 
+async function showListProduct() {
+  if (exportOrder.value.warehouseId) {
+    dataRequestBody.value.warehouseId = exportOrder.value.warehouseId
+    await getListProduct()
+    openModalProduct()
+  } else {
+    window.$message.error('Vui lòng chọn kho cần xuất')
+  }
+}
+
 onMounted(async () => {
   await getReferenceData()
   await getListProduct()
@@ -522,7 +565,7 @@ onMounted(async () => {
 
 <template>
   <NSpace vertical size="large">
-    <n-card title="Export Order">
+    <n-card title="Phiếu xuất hàng">
       <template #header-extra>
         <n-tag v-if="exportOrder.status === 'CANCELED'" type="error">
           Canceled
@@ -540,7 +583,7 @@ onMounted(async () => {
           }"
         >
           <NIcon size="18" :component="TrashSharp" style="margin-right: 5px;" />
-          Cancel
+          Hủy
         </NButton>
         <NButton
           v-if="exportOrder.status === 'NEW'"
@@ -550,7 +593,7 @@ onMounted(async () => {
           @click="createOrUpdateExportOrder('NEW')"
         >
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
-          {{ exportOrder.id ? 'Edit' : 'Add' }}
+          Lưu
         </NButton>
         <NButton
           v-if="exportOrder.id && exportOrder.status === 'NEW'"
@@ -562,7 +605,7 @@ onMounted(async () => {
           }"
         >
           <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
-          Confirm
+          Xác nhận
         </NButton>
         <NButton
           v-if="exportOrder.id && exportOrder.status === 'CONFIRMED'"
@@ -574,20 +617,20 @@ onMounted(async () => {
           }"
         >
           <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
-          Delivered
+          Đã giao hàng
         </NButton>
       </template>
 
       <n-form
-        ref="formUserRef"
+        ref="formRef"
         inline
         :label-width="80"
         :model="exportOrder"
-        :rules="exportOrderRules"
+        :rules="rules"
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
-            <n-form-item label="Customer" path="supplier">
+            <n-form-item label="Khách hàng" path="customerId">
               <NSelect
                 v-model:value="exportOrder.customerId"
                 placeholder=""
@@ -598,18 +641,19 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Warehouse" path="warehouse">
+            <n-form-item label="Kho" path="warehouseId">
               <NSelect
                 v-model:value="exportOrder.warehouseId"
                 placeholder=""
                 :options="optionWarehouses()"
                 :disabled="exportOrder.status !== 'NEW'"
+                @change="() => exportOrder.details = []"
               />
             </n-form-item>
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Expected Date" path="expectedDate">
+            <n-form-item label="Ngày dự kiến" path="expectedDate">
               <n-date-picker
                 v-model:value="expectedDate"
                 value-format="yyyy-MM-dd"
@@ -620,10 +664,10 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="3">
-            <n-form-item label="Note" path="note">
+            <n-form-item label="Ghi chú" path="note">
               <n-input
                 v-model:value="exportOrder.note"
-                placeholder="Input Note"
+                placeholder=""
                 type="textarea"
                 :autosize="{
                   minRows: 3,
@@ -636,21 +680,17 @@ onMounted(async () => {
         </NGrid>
       </n-form>
     </n-card>
-    <n-card title="Export Order Detail">
+    <n-card title="Sản phẩm xuất">
       <template #header-extra>
         <NButton
           v-if="exportOrder.status === 'NEW'"
           secondary
           type="primary"
           @click="async () => {
-            if (exportOrder.warehouseId) {
-              dataRequestBody.warehouseId = exportOrder.warehouseId
-              await getListProduct()
-              openModalProduct()
-            }
+            showListProduct()
           }"
         >
-          <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
+          <NIcon size="18" :component="Add" style="margin-right: 5px;" />Thêm
         </NButton>
       </template>
       <NSpace vertical size="large">
@@ -660,7 +700,7 @@ onMounted(async () => {
           v-model:show="isModalProduct"
           :mask-closable="false"
           preset="card"
-          title="Product List"
+          title="Danh sách sản phẩm"
           class="w-1200px"
           :segmented="{
             content: true,
@@ -668,30 +708,30 @@ onMounted(async () => {
           }"
         >
           <NSpace vertical size="large">
-            <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false" label-width="80">
+            <n-form :model="dataTableRequest" label-placement="left" inline :show-feedback="false" label-width="80">
               <NGrid cols="3" y-gap="12" x-gap="24">
                 <NGi :span="1">
-                  <n-form-item label="Search" path="filter">
-                    <n-input v-model:value="dataTableRequest.filter" placeholder="Product Name or Product Barcode" />
+                  <n-form-item label="Tìm kiếm" path="filter">
+                    <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
                   </n-form-item>
                 </NGi>
                 <NGi :span="1">
-                  <n-form-item label="Category" path="filter">
+                  <n-form-item label="Danh mục" path="filter">
                     <NSelect v-model:value="dataRequestBody.productCategoryId" placeholder="" :options="optionCategories()" />
                   </n-form-item>
                 </NGi>
                 <NGi :span="1">
-                  <n-form-item label="Zone" path="filter">
+                  <n-form-item label="Khu vực" path="filter">
                     <NSelect v-model:value="dataRequestBody.zoneId" placeholder="" :options="optionZones()" />
                   </n-form-item>
                 </NGi>
                 <NGi :span="1">
-                  <n-form-item label="Shelf" path="filter">
+                  <n-form-item label="Kệ" path="filter">
                     <NSelect v-model:value="dataRequestBody.shelfId" placeholder="" :options="optionShelfs()" />
                   </n-form-item>
                 </NGi>
                 <NGi :span="1">
-                  <n-form-item label="Floor" path="filter">
+                  <n-form-item label="Tầng" path="filter">
                     <NSelect v-model:value="dataRequestBody.floorId" placeholder="" :options="optionFloors()" />
                   </n-form-item>
                 </NGi>
@@ -701,13 +741,12 @@ onMounted(async () => {
                       <template #icon>
                         <icon-park-outline-search />
                       </template>
-                      Search
+                      Tìm kiếm
                     </NButton>
                     <NButton strong secondary @click="reloadFormSearch()">
                       <template #icon>
                         <icon-park-outline-redo />
                       </template>
-                      Reload
                     </NButton>
                   </n-flex>
                 </NGi>

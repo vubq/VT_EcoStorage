@@ -30,7 +30,7 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" label-placement="left" inline :show-feedback="false">
         <n-flex>
-          <n-form-item label="Date" path="date">
+          <n-form-item label="Thời gian" path="date">
             <n-date-picker v-model:value="range" type="daterange" @change="getStatistical()" />
           </n-form-item>
         </n-flex>
@@ -42,7 +42,7 @@ onMounted(() => {
           <thead>
             <tr>
               <th>Kho</th>
-              <th>Product Name</th>
+              <th>Sản phẩm</th>
               <th>Barcode</th>
               <th>SKU</th>
               <th>Tổng nhập (SL)</th>

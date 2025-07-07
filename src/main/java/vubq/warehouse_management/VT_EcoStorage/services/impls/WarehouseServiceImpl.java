@@ -157,4 +157,19 @@ public class WarehouseServiceImpl implements WarehouseService {
         warehouseDto.setZones(zoneDtos);
         return warehouseDto;
     }
+
+    @Override
+    public WarehouseDto createOrUpdateWarehouse(WarehouseDto warehouseDto) {
+        List<Company> companies = companyRepository.findByStatus(Company.Status.ACTIVE);
+        if (companies.isEmpty()) {
+            throw new RuntimeException("Chua co thong tin cong ty");
+        }
+        Warehouse warehouse = new Warehouse();
+        warehouse.setName(warehouseDto.getName());
+        warehouse.setAddress(warehouseDto.getAddress());
+        warehouse.setStatus(warehouseDto.getStatus());
+        warehouse.setCompanyId(companies.get(0).getId());
+        warehouseRepository.save(warehouse);
+        return WarehouseDto.toDto(warehouse);
+    }
 }

@@ -38,9 +38,9 @@ const product = ref<Product.Data>({
 
 const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
   {
-    title: 'Product Barcode',
+    title: 'Đơn hàng',
     align: 'center',
-    key: 'barcode',
+    key: 'id',
     render: (row) => {
       return (
         <NButton
@@ -76,12 +76,12 @@ const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
     },
   },
   {
-    title: 'Quantity',
+    title: 'Số lượng',
     align: 'center',
     key: 'quantity',
   },
   {
-    title: 'Type',
+    title: 'Loại',
     align: 'center',
     key: 'type',
     render: (row) => {
@@ -100,7 +100,7 @@ const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
     }
   },
   {
-    title: 'Date',
+    title: 'Ngày',
     align: 'center',
     key: 'createdAt',
     render: (row) => {
@@ -206,7 +206,7 @@ onMounted(async () => {
 
 <template>
   <NSpace vertical size="large">
-    <n-card title="Export Order">
+    <n-card title="Sản phẩm">
       <template #header-extra>
         <NButton
           secondary
@@ -215,7 +215,7 @@ onMounted(async () => {
           @click="createOrUpdateProduct('ACTIVE')"
         >
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
-          {{ product.id ? 'Edit' : 'Add' }}
+          Lưu
         </NButton>
       </template>
 
@@ -228,7 +228,7 @@ onMounted(async () => {
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi NGi :span="1">
-            <n-form-item label="Name" path="name">
+            <n-form-item label="Tên" path="name">
               <n-input
                 v-model:value="product.name"
                 placeholder=""
@@ -237,7 +237,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi NGi :span="1">
-            <n-form-item label="Cost Price" path="costPrice">
+            <n-form-item label="Giá nhập" path="costPrice">
               <n-input-number
                 style="width: 100%;"
                 v-model:value="product.costPrice"
@@ -247,7 +247,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi NGi :span="1">
-            <n-form-item label="Sale Price" path="salePrice">
+            <n-form-item label="Giá bán" path="salePrice">
               <n-input-number
                 style="width: 100%;"
                 v-model:value="product.salePrice"
@@ -257,7 +257,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Category" path="productCategoryId">
+            <n-form-item label="Danh mục" path="productCategoryId">
               <NSelect
                 v-model:value="product.productCategoryId"
                 placeholder=""
@@ -267,7 +267,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Unit" path="productUnitId">
+            <n-form-item label="Đơn vị tính" path="productUnitId">
               <NSelect
                 v-model:value="product.productUnitId"
                 placeholder=""
@@ -277,7 +277,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Origin" path="productOriginId">
+            <n-form-item label="Suất xứ" path="productOriginId">
               <NSelect
                 v-model:value="product.productOriginId"
                 placeholder=""
@@ -287,7 +287,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="3">
-            <n-form-item label="Description" path="description">
+            <n-form-item label="Mô tả" path="description">
               <n-input
                 v-model:value="product.description"
                 placeholder="Input Description"
@@ -301,7 +301,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="3">
-            <n-form-item label="Note" path="note">
+            <n-form-item label="Ghi chú" path="note">
               <n-input
                 v-model:value="product.note"
                 placeholder="Input Note"
@@ -316,10 +316,10 @@ onMounted(async () => {
         </NGrid>
       </n-form>
     </n-card>
-    <n-card title="History Inventories" v-if="listProductInventory.length > 0">
+    <n-card title="Lịch sử tồn kho" v-if="listProductInventory.length > 0">
       <template #header-extra>
         <NButton v-if="listProductInventory.length > 0" secondary type="primary" strong>
-          Inventory quantity: {{ product.inventoryQuantity }}
+          Tồn kho: {{ product.inventoryQuantity }}
         </NButton>
       </template>
       <NSpace vertical size="large">

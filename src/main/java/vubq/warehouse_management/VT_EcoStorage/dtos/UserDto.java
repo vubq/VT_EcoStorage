@@ -29,6 +29,8 @@ public class UserDto {
 
     private List<String> permissions;
 
+    private List<String> permissionGroups;
+
     public static UserDto toDto(User user) {
         return UserDto.builder()
                 .id(user.getId())

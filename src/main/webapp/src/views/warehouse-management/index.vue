@@ -2,7 +2,7 @@
 import { Add } from '@vicons/ionicons5'
 
 import { useBoolean } from '@/hooks'
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
 import { NButton, NSpace } from 'naive-ui'
 import { WarehouseService } from '@/service/api/warehouse-service'
 import { ProductService } from '@/service/api/product-service'
@@ -11,10 +11,11 @@ import { router } from '@/router'
 const { bool: isModalAddZone, setTrue: showModalAddZone, setFalse: hidenModalAddZone } = useBoolean(false)
 const { bool: isModalAddShelf, setTrue: showModalAddShelf, setFalse: hidenModalAddShelf } = useBoolean(false)
 const { bool: isModalAddFloor, setTrue: showModalAddFloor, setFalse: hidenModalAddFloor } = useBoolean(false)
+const { bool: isModalAddWarehouse, setTrue: showModalAddWarehouse, setFalse: hidenModalAddWarehouse } = useBoolean(false)
 
 const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   {
-    title: 'Product Barcode',
+    title: 'Barcode',
     align: 'center',
     key: 'barcode',
     render: (row) => {
@@ -37,7 +38,7 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
     },
   },
   {
-    title: 'Product Name',
+    title: 'Tên',
     align: 'center',
     key: 'productName',
   },
@@ -57,7 +58,7 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   //   key: 'location',
   // },
   {
-    title: 'Inventory Quantity',
+    title: 'Tồn kho',
     align: 'center',
     key: 'inventoryQuantity',
   },
@@ -83,6 +84,28 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   // },
 ])
 
+const formWarehouseRef = ref<FormInst | null>(null)
+const formZoneRef = ref<FormInst | null>(null)
+const formShelfRef = ref<FormInst | null>(null)
+const formFloorRef = ref<FormInst | null>(null)
+
+const rules: FormRules = {
+  name: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  address: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  quantity: [
+    {
+      type: 'number',
+      min: 1,
+      message: 'Số lượng phải từ 1 trở lên',
+      trigger: 'blur'
+    }
+  ],
+}
+
 const warehouseList = ref<Warehouse.Data[]>([])
 const zoneNew = ref<Zone.Data>({
   status: 'ACTIVE',
@@ -93,6 +116,9 @@ const shelfNew = ref<Shelf.Data>({
 const floorNew = ref<Floor.Data>({
   status: 'ACTIVE',
   quantity: 1,
+})
+const warehouseNew = ref<Warehouse.Data>({
+  status: 'ACTIVE',
 })
 
 async function getListWarehouse() {
@@ -185,78 +211,107 @@ async function setFloorId(warehouse: Warehouse.Data, zoneId: string, floorId: st
 }
 
 async function createOrUpdateZone() {
-  await WarehouseService.createOrUpdateZone(zoneNew.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        const warehouse = warehouseList.value.find(
-          w => w.id === zoneNew.value.warehouseId,
-        )
-        if (warehouse) {
-          if (Array.isArray(warehouse.zones)) {
-            warehouse.zones.push(res.data)
+  formZoneRef.value?.validate(async (errors) => {
+    if (!errors) {
+      await WarehouseService.createOrUpdateZone(zoneNew.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            const warehouse = warehouseList.value.find(
+              w => w.id === zoneNew.value.warehouseId,
+            )
+            if (warehouse) {
+              if (Array.isArray(warehouse.zones)) {
+                warehouse.zones.push(res.data)
+              }
+              else {
+                warehouse.zones = [res.data]
+              }
+            }
+            hidenModalAddZone()
+            zoneNew.value = {
+              status: 'ACTIVE',
+            }
           }
-          else {
-            warehouse.zones = [res.data]
-          }
-        }
-        hidenModalAddZone()
-        zoneNew.value = {
-          status: 'ACTIVE',
-        }
-      }
-    })
+        })
+    }
+  })
 }
 
 async function createOrUpdateShelf() {
-  await WarehouseService.createOrUpdateShelf(shelfNew.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        const warehouse = warehouseList.value.find(
-          w => w.id === shelfNew.value.warehouseId,
-        )
-        const zone = warehouse?.zones?.find(z => z.id === shelfNew.value.zoneId)
+  formShelfRef.value?.validate(async (errors) => {
+    if (!errors) {
+      await WarehouseService.createOrUpdateShelf(shelfNew.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            const warehouse = warehouseList.value.find(
+              w => w.id === shelfNew.value.warehouseId,
+            )
+            const zone = warehouse?.zones?.find(z => z.id === shelfNew.value.zoneId)
 
-        if (zone) {
-          if (Array.isArray(zone.shelves)) {
-            zone.shelves.push(res.data)
+            if (zone) {
+              if (Array.isArray(zone.shelves)) {
+                zone.shelves.push(res.data)
+              }
+              else {
+                zone.shelves = [res.data]
+              }
+            }
+            hidenModalAddShelf()
+            shelfNew.value = {
+              status: 'ACTIVE',
+            }
           }
-          else {
-            zone.shelves = [res.data]
-          }
-        }
-        hidenModalAddShelf()
-        shelfNew.value = {
-          status: 'ACTIVE',
-        }
-      }
-    })
+        })
+    }
+  })
 }
 
 async function createOrUpdateFloor() {
-  await WarehouseService.createOrUpdateFloor(floorNew.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        const warehouse = warehouseList.value.find(
-          w => w.id === floorNew.value.warehouseId,
-        )
-        const zone = warehouse?.zones?.find(z => z.id === floorNew.value.zoneId)
-        const shelf = zone?.shelves?.find(s => s.id === floorNew.value.shelfId)
+  formFloorRef.value?.validate(async (errors) => {
+    if (!errors) {
+      await WarehouseService.createOrUpdateFloor(floorNew.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            const warehouse = warehouseList.value.find(
+              w => w.id === floorNew.value.warehouseId,
+            )
+            const zone = warehouse?.zones?.find(z => z.id === floorNew.value.zoneId)
+            const shelf = zone?.shelves?.find(s => s.id === floorNew.value.shelfId)
 
-        if (shelf) {
-          if (Array.isArray(shelf.floors)) {
-            shelf.floors.push(...res.data)
+            if (shelf) {
+              if (Array.isArray(shelf.floors)) {
+                shelf.floors.push(...res.data)
+              }
+              else {
+                shelf.floors = [...res.data]
+              }
+            }
+            hidenModalAddFloor()
+            floorNew.value = {
+              status: 'ACTIVE',
+              quantity: 1,
+            }
           }
-          else {
-            shelf.floors = [...res.data]
+        })
+    }
+  })
+}
+
+async function createOrUpdateWarehouse() {
+  formWarehouseRef.value?.validate(async (errors) => {
+    if (!errors) {
+      await WarehouseService.createOrUpdateWarehouse(warehouseNew.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            warehouseList.value.push(res.data)
+            hidenModalAddWarehouse()
+            warehouseNew.value = {
+              status: 'ACTIVE',
+            }
           }
-        }
-        hidenModalAddFloor()
-        floorNew.value = {
-          status: 'ACTIVE',
-          quantity: 1,
-        }
-      }
-    })
+        })
+    }
+  })
 }
 
 onMounted(async () => {
@@ -268,12 +323,12 @@ onMounted(async () => {
   <NSpace vertical size="large">
     <NGrid cols="2" y-gap="12" x-gap="12">
       <NGi v-for="w in warehouseList" :key="w.id" :span="1">
-        <n-card :title="`Warehouse: ${w.name}`">
+        <n-card :title="`Kho: ${w.name} [${w.address}]`">
           <NSpace vertical size="large">
             <n-divider />
             <!-- Zone list -->
             <div style="display: flex; align-items: center;">
-              <span style="margin-right: 20px;">Zone</span>
+              <span style="margin-right: 20px;">Khu vực</span>
               <NSpace size="large" style="max-width: 82%;">
                 <NButton
                   v-for="z in w.zones"
@@ -301,7 +356,7 @@ onMounted(async () => {
             <n-divider v-if="w.zoneId" />
             <!-- Shelf list -->
             <div v-if="w.zoneId" style="display: flex; align-items: center;">
-              <span style="margin-right: 20px;">Shelf</span>
+              <span style="margin-right: 20px;">Kệ</span>
               <NSpace size="large" style="max-width: 82%;">
                 <NButton
                   v-for="s in getShelves(w, w.zoneId)"
@@ -330,7 +385,7 @@ onMounted(async () => {
             <n-divider v-if="w.zoneId && findZone(w, w.zoneId)?.shelfId" />
             <!-- Floor list -->
             <div v-if="w.zoneId && findZone(w, w.zoneId)?.shelfId" style="display: flex; align-items: center;">
-              <span style="margin-right: 20px;">Floor</span>
+              <span style="margin-right: 20px;">Tầng</span>
               <NSpace size="large" style="max-width: 82%;">
                 <NButton
                   v-for="f in getFloors(w, w.zoneId, findZone(w, w.zoneId)?.shelfId)"
@@ -364,13 +419,28 @@ onMounted(async () => {
           </NSpace>
         </n-card>
       </NGi>
+      <NGi :span="1">
+        <n-card>
+          <NSpace vertical size="large">
+            <NButton
+              type="default"
+              strong secondary
+              @click="() => {
+                showModalAddWarehouse()
+              }"
+            >
+              <NIcon size="18" :component="Add" />Thêm kho
+            </NButton>
+          </NSpace>
+        </n-card>
+      </NGi>
     </NGrid>
     <!-- Modal add zone -->
     <n-modal
       v-model:show="isModalAddZone"
       :mask-closable="false"
       preset="card"
-      title="Add Zone"
+      title="Thêm khu vực"
       class="w-400px"
       :segmented="{
         content: true,
@@ -378,23 +448,24 @@ onMounted(async () => {
       }"
     >
       <n-form
-        ref=""
+        ref="formZoneRef"
         inline
         :model="zoneNew"
+        :rules="rules"
       >
         <n-grid :cols="24">
-          <n-form-item-grid-item :span="24" label="Warehouse:" style="width: 100%;">
+          <n-form-item-grid-item :span="24" label="Kho:" style="width: 100%;">
             <n-input v-model:value="zoneNew.warehouseName" placeholder="" disabled />
           </n-form-item-grid-item>
-          <n-form-item-grid-item :span="24" label="Zone name:" path="name" style="width: 100%;">
-            <n-input v-model:value="zoneNew.name" placeholder="Input Zone name" />
+          <n-form-item-grid-item :span="24" label="Tên khu vực:" path="name" style="width: 100%;">
+            <n-input v-model:value="zoneNew.name" placeholder="" />
           </n-form-item-grid-item>
         </n-grid>
       </n-form>
       <template #action>
         <NSpace justify="end">
           <NButton type="primary" secondary @click="createOrUpdateZone()">
-            Add
+            Lưu
           </NButton>
         </NSpace>
       </template>
@@ -404,7 +475,7 @@ onMounted(async () => {
       v-model:show="isModalAddShelf"
       :mask-closable="false"
       preset="card"
-      title="Add Shelf"
+      title="Thêm kệ"
       class="w-400px"
       :segmented="{
         content: true,
@@ -412,26 +483,27 @@ onMounted(async () => {
       }"
     >
       <n-form
-        ref=""
+        ref="formShelfRef"
         inline
         :model="shelfNew"
+        :rules="rules"
       >
         <n-grid :cols="24">
-          <n-form-item-grid-item :span="24" label="Warehouse:" style="width: 100%;">
+          <n-form-item-grid-item :span="24" label="Kho:" style="width: 100%;">
             <n-input v-model:value="shelfNew.warehouseName" placeholder="" disabled />
           </n-form-item-grid-item>
-          <n-form-item-grid-item :span="24" label="Zone:" style="width: 100%;">
+          <n-form-item-grid-item :span="24" label="Khu vực:" style="width: 100%;">
             <n-input v-model:value="shelfNew.zoneName" placeholder="" disabled />
           </n-form-item-grid-item>
-          <n-form-item-grid-item :span="24" label="Shelf name:" path="name" style="width: 100%;">
-            <n-input v-model:value="shelfNew.name" placeholder="Input Shelf name" style="width: 100%;" />
+          <n-form-item-grid-item :span="24" label="Tên kệ:" path="name" style="width: 100%;">
+            <n-input v-model:value="shelfNew.name" placeholder="" style="width: 100%;" />
           </n-form-item-grid-item>
         </n-grid>
       </n-form>
       <template #action>
         <NSpace justify="end">
           <NButton type="primary" secondary @click="createOrUpdateShelf()">
-            Add
+            Lưu
           </NButton>
         </NSpace>
       </template>
@@ -441,7 +513,7 @@ onMounted(async () => {
       v-model:show="isModalAddFloor"
       :mask-closable="false"
       preset="card"
-      title="Add Floor"
+      title="Thêm tầng"
       class="w-400px"
       :segmented="{
         content: true,
@@ -449,29 +521,65 @@ onMounted(async () => {
       }"
     >
       <n-form
-        ref=""
+        ref="formFloorRef"
         inline
         :model="floorNew"
+        :rules="rules"
       >
         <n-grid :cols="24">
-          <n-form-item-grid-item :span="24" label="Warehouse:" style="width: 100%;">
+          <n-form-item-grid-item :span="24" label="Kho:" style="width: 100%;">
             <n-input v-model:value="floorNew.warehouseName" placeholder="" disabled />
           </n-form-item-grid-item>
-          <n-form-item-grid-item :span="24" label="Zone:" style="width: 100%;">
+          <n-form-item-grid-item :span="24" label="Khu vực:" style="width: 100%;">
             <n-input v-model:value="floorNew.zoneName" placeholder="" disabled />
           </n-form-item-grid-item>
-          <n-form-item-grid-item :span="24" label="Shelf:" style="width: 100%;">
+          <n-form-item-grid-item :span="24" label="Kệ:" style="width: 100%;">
             <n-input v-model:value="floorNew.shelfName" placeholder="" disabled />
           </n-form-item-grid-item>
-          <n-form-item-grid-item :span="24" label="Number of floors:" path="name" style="width: 100% !important;">
-            <n-input-number v-model:value="floorNew.quantity" :min="1" placeholder="Input Number of floors" />
+          <n-form-item-grid-item :span="24" label="Số tầng:" path="quantity" style="width: 100% !important;">
+            <n-input-number v-model:value="floorNew.quantity" :min="1" placeholder="" />
           </n-form-item-grid-item>
         </n-grid>
       </n-form>
       <template #action>
         <NSpace justify="end">
           <NButton type="primary" secondary @click="createOrUpdateFloor()">
-            Add
+            Lưu
+          </NButton>
+        </NSpace>
+      </template>
+    </n-modal>
+    <!-- Modal warehouse -->
+    <n-modal
+      v-model:show="isModalAddWarehouse"
+      :mask-closable="false"
+      preset="card"
+      title="Thêm kho"
+      class="w-400px"
+      :segmented="{
+        content: true,
+        action: true,
+      }"
+    >
+      <n-form
+        ref="formWarehouseRef"
+        inline
+        :model="warehouseNew"
+        :rules="rules"
+      >
+        <n-grid :cols="24">
+          <n-form-item-grid-item :span="24" label="Tên kho:" path="name" style="width: 100%;">
+            <n-input v-model:value="warehouseNew.name" placeholder="" />
+          </n-form-item-grid-item>
+          <n-form-item-grid-item :span="24" label="Địa chỉ:" path="address" style="width: 100%;">
+            <n-input v-model:value="warehouseNew.address" placeholder="" type="textarea" />
+          </n-form-item-grid-item>
+        </n-grid>
+      </n-form>
+      <template #action>
+        <NSpace justify="end">
+          <NButton type="primary" secondary @click="createOrUpdateWarehouse()">
+            Lưu
           </NButton>
         </NSpace>
       </template>

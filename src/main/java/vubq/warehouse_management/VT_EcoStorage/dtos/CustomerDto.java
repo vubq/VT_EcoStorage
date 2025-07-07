@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import vubq.warehouse_management.VT_EcoStorage.entities.Customer;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

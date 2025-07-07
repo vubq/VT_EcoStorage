@@ -106,6 +106,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             return true;
         }
 
+        if (purchaseOrder.getStatus() == PurchaseOrder.Status.CONFIRMED && purchaseOrderDto.getStatus() == PurchaseOrder.Status.CANCELED) {
+            purchaseOrder.setNote(purchaseOrderDto.getNote());
+            purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
+            purchaseOrderRepository.saveAndFlush(purchaseOrder);
+
+            return true;
+        }
+
         if (purchaseOrder.getStatus() == PurchaseOrder.Status.NEW && purchaseOrderDto.getStatus() == PurchaseOrder.Status.CONFIRMED) {
             purchaseOrder.setStatus(PurchaseOrder.Status.CONFIRMED);
             purchaseOrder.setSupplierId(purchaseOrderDto.getSupplierId());
@@ -213,11 +221,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             // Validate location
             for (PurchaseOrderDetailDto p : purchaseOrderDto.getDetails()) {
                 if (p.getLocations() == null || p.getLocations().isEmpty()) {
-                    throw new IllegalArgumentException("Please select the product location to complete the process");
+                    throw new IllegalArgumentException("Vui lòng chọn vị trí để " + p.getProductName() + " [Barcode: " + p.getProductBarcode() + "]");
                 }
                 for (ProductInventoryLocationDto l : p.getLocations()) {
                     if (StringUtils.isBlank(l.getLocationId())) {
-                        throw new IllegalArgumentException("Please select the product location to complete the process");
+                        throw new IllegalArgumentException("Vui lòng chọn vị trí để " + p.getProductName() + " [Barcode: " + p.getProductBarcode() + "]");
                     }
                 }
             }
@@ -270,7 +278,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     ));
 
             // Prepare a list of histories but without PIL id initially
-            record HistoryData(String productId, String locationId, String purchaseOrderDetailId, Long quantity) {}
+            record HistoryData(String productId, String locationId, String purchaseOrderDetailId, Long quantity) {
+            }
             List<HistoryData> historyDataList = new ArrayList<>();
 
             for (PurchaseOrderDetailDto detail : purchaseOrderDto.getDetails()) {
@@ -362,5 +371,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         referenceDataPurchaseOrderResponse.setSuppliers(supplierRepository.findByStatus(Supplier.Status.ACTIVE).stream().map(SupplierDto::toDto).collect(Collectors.toList()));
         referenceDataPurchaseOrderResponse.setCategories(productCategoryRepository.findByStatus(ProductCategory.Status.ACTIVE).stream().map(ProductCategoryDto::toDto).collect(Collectors.toList()));
         return referenceDataPurchaseOrderResponse;
+    }
+
+    @Override
+    public Page<PurchaseOrder> getPurchaseOrders(DataTableRequest dataTableRequest, String supplierId) {
+        PageRequest pageable = dataTableRequest.toPageable();
+        BaseSpecification<PurchaseOrder> specCustomerIdEqual = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{PurchaseOrder.Fields.supplierId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(supplierId)
+                        .build()
+        );
+        return purchaseOrderRepository.findAll(Specification.where(specCustomerIdEqual), pageable);
     }
 }

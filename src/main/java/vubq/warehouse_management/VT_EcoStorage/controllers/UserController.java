@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.UserDto;
 import vubq.warehouse_management.VT_EcoStorage.entities.User;
+import vubq.warehouse_management.VT_EcoStorage.services.PermissionGroupService;
 import vubq.warehouse_management.VT_EcoStorage.services.UserService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableResponse;
@@ -18,6 +19,7 @@ import vubq.warehouse_management.VT_EcoStorage.utils.https.Response;
 public class UserController {
 
     private final UserService userService;
+    private final PermissionGroupService permissionGroupService;
 
     @GetMapping("/{userId}")
     public Response getUser(@PathVariable("userId") String userId) {

@@ -22,7 +22,7 @@ const statusTypeMap: Record<string, any> = {
 }
 const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
   {
-    title: 'Export Order Id',
+    title: 'ID',
     align: 'center',
     key: 'id',
     sorter: true,
@@ -47,21 +47,21 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     },
   },
   {
-    title: 'Warehouse',
+    title: 'Kho',
     align: 'center',
     key: 'warehouseName',
     sorter: true,
     sortOrder: sortDefault('warehouseName'),
   },
   {
-    title: 'Customer',
+    title: 'Khách hàng',
     align: 'center',
     key: 'customerName',
     sorter: true,
     sortOrder: sortDefault('customerName'),
   },
   {
-    title: 'Expected Date',
+    title: 'Ngày dự kiến',
     align: 'center',
     key: 'expectedDate',
     sorter: true,
@@ -73,7 +73,7 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     },
   },
   {
-    title: 'Delivered Date',
+    title: 'Ngày giao hàng',
     align: 'center',
     key: 'deliveredDate',
     sorter: true,
@@ -85,7 +85,7 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     },
   },
   {
-    title: 'Total Amount',
+    title: 'Tổng tiền',
     align: 'center',
     key: 'totalAmount',
     sorter: true,
@@ -97,7 +97,7 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     },
   },
   {
-    title: 'Status',
+    title: 'Trạng thái',
     align: 'center',
     key: 'status',
     sorter: true,
@@ -194,21 +194,20 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
-          <n-form-item label="Search" path="filter">
-            <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
+          <n-form-item label="Tìm kiếm" path="filter">
+            <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
           </n-form-item>
           <n-flex class="ml-auto">
             <NButton type="primary" secondary @click="reloadTable()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
-              Search
+              Tìm kiếm
             </NButton>
             <NButton strong secondary @click="reloadSearch()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
-              Reload
             </NButton>
           </n-flex>
         </n-flex>
@@ -232,7 +231,7 @@ onMounted(() => {
             <template #icon>
               <NIcon size="18" :component="Add" />
             </template>
-            Add
+            Thêm
           </NButton>
         </div>
         <n-data-table ref="tableRef" :columns="columns" :data="listExportOrder" @update:sorter="sortTable" />

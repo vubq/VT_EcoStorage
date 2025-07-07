@@ -16,7 +16,7 @@ const dataTableRequest = ref<DataTable.Request>({
 const userId = ref<string>('')
 const columns = ref<DataTableColumns<User.Data>>([
   {
-    title: 'Username',
+    title: 'Tài khoản',
     align: 'center',
     key: 'username',
     sorter: true,
@@ -36,14 +36,14 @@ const columns = ref<DataTableColumns<User.Data>>([
     },
   },
   {
-    title: 'First name',
+    title: 'Họ',
     align: 'center',
     key: 'firstName',
     sorter: true,
     sortOrder: sortDefault('firstName'),
   },
   {
-    title: 'Last name',
+    title: 'Tên',
     align: 'center',
     key: 'lastName',
     sorter: true,
@@ -57,11 +57,16 @@ const columns = ref<DataTableColumns<User.Data>>([
     sortOrder: sortDefault('email'),
   },
   {
-    title: 'Phone number',
+    title: 'Số điện thoại',
     align: 'center',
     key: 'phoneNumber',
     sorter: true,
     sortOrder: sortDefault('phoneNumber'),
+  },
+  {
+    title: 'Ghi chú',
+    align: 'center',
+    key: 'note',
   },
 ])
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
@@ -140,21 +145,20 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
-          <n-form-item label="Search" path="filter">
-            <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
+          <n-form-item label="Tìm kiếm" path="filter">
+            <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
           </n-form-item>
           <n-flex class="ml-auto">
             <NButton type="primary" secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
-              Search
+              Tìm kiếm
             </NButton>
             <NButton strong secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
-              Reload
             </NButton>
           </n-flex>
         </n-flex>
@@ -164,7 +168,7 @@ onMounted(() => {
       <NSpace vertical size="large">
         <div class="flex gap-4">
           <NButton strong type="primary" secondary class="ml-a" @click="getUser('new')">
-            <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
+            <NIcon size="18" :component="Add" style="margin-right: 5px;" />Thêm
           </NButton>
         </div>
         <n-data-table ref="tableRef" :columns="columns" :data="listUser" @update:sorter="sortTable" />

@@ -50,14 +50,14 @@ const columns = ref<DataTableColumns<Product.DataTable>>([
     },
   },
   {
-    title: 'Name',
+    title: 'Tên',
     align: 'center',
     key: 'name',
     sorter: true,
     sortOrder: sortDefault('name'),
   },
   {
-    title: 'Category',
+    title: 'Danh mục',
     align: 'center',
     key: 'productCategoryName',
   },
@@ -69,7 +69,7 @@ const columns = ref<DataTableColumns<Product.DataTable>>([
     sortOrder: sortDefault('sku'),
   },
   {
-    title: 'Inventory',
+    title: 'Tồn kho',
     align: 'center',
     key: 'inventoryQuantity',
     sorter: true,
@@ -154,7 +154,7 @@ function sortData(sorter: DataTableSortState) {
 function optionCategories() {
   return [
     {
-      label: 'All',
+      label: 'Tất cả',
       value: 'ALL',
     },
     ...referenceData.value.productCategories.map(item => ({
@@ -177,12 +177,12 @@ onMounted(async () => {
         <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
           <NGrid cols="5" y-gap="12" x-gap="24">
             <NGi :span="1">
-              <n-form-item label="Search" path="filter">
-                <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
+              <n-form-item label="Tìm kiếm" path="filter">
+                <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
               </n-form-item>
             </NGi>
             <NGi :span="1">
-              <n-form-item label="Category" path="filter">
+              <n-form-item label="Danh mục" path="filter">
                 <NSelect v-model:value="dataRequestBody.productCategoryId" placeholder="" :options="optionCategories()" />
               </n-form-item>
             </NGi>
@@ -192,13 +192,12 @@ onMounted(async () => {
                   <template #icon>
                     <icon-park-outline-search />
                   </template>
-                  Search
+                  Tìm kiếm
                 </NButton>
                 <NButton strong secondary @click="reloadSearch()">
                   <template #icon>
                     <icon-park-outline-redo />
                   </template>
-                  Reload
                 </NButton>
               </n-flex>
             </NGi>
@@ -224,7 +223,7 @@ onMounted(async () => {
             <template #icon>
               <NIcon size="18" :component="Add" />
             </template>
-            Add
+            Thêm
           </NButton>
         </div>
         <n-data-table ref="tableRef" :columns="columns" :data="listProduct" @update:sorter="sortTable" />

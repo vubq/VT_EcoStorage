@@ -2,10 +2,9 @@
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
 import { NButton, NSpace } from 'naive-ui'
 import { Add } from '@vicons/ionicons5'
-import { ProductService } from '@/service/api/product-service'
-import { useBoolean } from '@/hooks'
+import { router } from '@/router'
+import { SupplierService } from '@/service/api/supplier-service'
 
-const { bool: visible, setTrue: openModal, setFalse: hideModal } = useBoolean(false)
 const tableRef = ref()
 const dataTableRequest = ref<DataTable.Request>({
   currentPage: 1,
@@ -14,20 +13,25 @@ const dataTableRequest = ref<DataTable.Request>({
   sortBy: 'id',
   sortDesc: true,
 })
-const unitId = ref<string>('')
-const columns = ref<DataTableColumns<Unit.Data>>([
+const supplierId = ref<string>('')
+const columns = ref<DataTableColumns<Supplier.Data>>([
   {
     title: 'ID',
     align: 'center',
     key: 'id',
-    width: '300',
     render: (row) => {
       return (
         <NButton
           secondary
           type="primary"
           strong
-          onClick={() => getUnit(row.id!)}
+          style={{ width: '100%' }}
+          onClick={() => {
+            router.push({
+              name: 'supplier-and-customer-management.supplier.detail',
+              params: { supplierId: row.id },
+            })
+          }}
         >
           {row.id}
         </NButton>
@@ -35,28 +39,48 @@ const columns = ref<DataTableColumns<Unit.Data>>([
     },
   },
   {
+    title: 'Code',
+    align: 'center',
+    key: 'code',
+  },
+  {
     title: 'Tên',
     align: 'center',
     key: 'name',
-    width: '300',
   },
   {
-    title: 'Mô tả',
+    title: 'Mã số thuế',
     align: 'center',
-    key: 'description',
+    key: 'taxNumber',
   },
   {
-    title: 'Ghi chú',
+    title: 'Số điện thoại',
     align: 'center',
-    key: 'note',
+    key: 'phoneNumber',
   },
+  {
+    title: 'Email',
+    align: 'center',
+    key: 'email',
+  },
+  {
+    title: 'Địa chỉ',
+    align: 'center',
+    key: 'address',
+  },
+  // {
+  //   title: 'Mô tả',
+  //   align: 'center',
+  //   key: 'description',
+  // },
+  // {
+  //   title: 'Ghi chú',
+  //   align: 'center',
+  //   key: 'note',
+  // },
 ])
-const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listUnit = ref<Unit.Data[]>([])
-const unit = ref<Unit.Data>({
-  name: '',
-  status: 'ACTIVE',
-})
+const columnsRef = ref<DataTableColumns<Supplier.Data>>(columns.value)
+const suppliers = ref<Supplier.Data[]>([])
 const totalRecords = ref<number>(0)
 
 function sortDefault(columnKey: string) {
@@ -69,42 +93,30 @@ function sortDefault(columnKey: string) {
 async function changePage(page: number, size: number) {
   dataTableRequest.value.currentPage = page
   dataTableRequest.value.perPage = size
-  await getListUnit()
+  await getSuppliers()
 }
 
-async function getListUnit() {
-  await ProductService.getListUnit(dataTableRequest.value)
+async function getSuppliers() {
+  await SupplierService.getSuppliers(dataTableRequest.value)
     .then((res: any) => {
-      listUnit.value = res.data.list
+      suppliers.value = res.data.list
       totalRecords.value = res.data.totalRecords
     })
 }
 
 async function reloadTableFirst() {
   dataTableRequest.value.currentPage = 1
-  await getListUnit()
+  await getSuppliers()
+}
+
+async function reloadFilter() {
+  dataTableRequest.value.currentPage = 1
+  dataTableRequest.value.filter = ''
+  await getSuppliers()
 }
 
 async function reloadTable() {
-  await getListUnit()
-}
-
-async function getUnit(id: string) {
-  await ProductService.getUnit(id)
-    .then((res: any) => {
-      unit.value = res.data
-      openModal()
-    })
-}
-
-async function createOrUpdateUnit() {
-  await ProductService.createOrUpdateUnit(unit.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        hideModal()
-        reloadTableFirst()
-      }
-    })
+  await getSuppliers()
 }
 
 function sortTable(sorter: DataTableSortState) {
@@ -132,7 +144,7 @@ function sortData(sorter: DataTableSortState) {
 }
 
 onMounted(() => {
-  getListUnit()
+  getSuppliers()
 })
 </script>
 
@@ -151,7 +163,7 @@ onMounted(() => {
               </template>
               Tìm kiếm
             </NButton>
-            <NButton strong secondary @click="reloadTableFirst()">
+            <NButton strong secondary @click="reloadFilter()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
@@ -169,51 +181,18 @@ onMounted(() => {
             secondary
             class="ml-a"
             @click="() => {
-              unit.id = '',
-              unit.name = '',
-              unit.status = 'ACTIVE'
-              openModal()
+              router.push({
+                name: 'supplier-and-customer-management.supplier.detail',
+                params: { supplierId: 'new' },
+              })
             }"
           >
             <NIcon size="18" :component="Add" style="margin-right: 5px;" />Thêm
           </NButton>
         </div>
-        <n-data-table ref="tableRef" :columns="columns" :data="listUnit" @update:sorter="sortTable" />
+        <n-data-table ref="tableRef" :columns="columns" :data="suppliers" @update:sorter="sortTable" />
         <Pagination :count="totalRecords" @change="changePage" />
       </NSpace>
     </n-card>
-    <n-modal
-      v-model:show="visible"
-      :mask-closable="false"
-      preset="card"
-      :title="unit.id ? 'Sửa' : 'Thêm'"
-      class="w-400px"
-      :segmented="{
-        content: true,
-        action: true,
-      }"
-    >
-      <n-form label-placement="left" :model="unit" label-align="left" :label-width="80">
-        <n-form-item label="Tên" path="name">
-          <n-input v-model:value="unit.name" placeholder="" />
-        </n-form-item>
-        <n-form-item label="Mô tả" path="description">
-          <n-input v-model:value="unit.description" type="textarea" placeholder="" />
-        </n-form-item>
-        <n-form-item label="Ghi chú" path="note">
-          <n-input v-model:value="unit.note" type="textarea" placeholder="" />
-        </n-form-item>
-      </n-form>
-      <template #action>
-        <NSpace justify="center">
-          <NButton @click="hideModal()">
-            Hủy
-          </NButton>
-          <NButton type="primary" @click="createOrUpdateUnit()">
-            Lưu
-          </NButton>
-        </NSpace>
-      </template>
-    </n-modal>
   </NSpace>
 </template>

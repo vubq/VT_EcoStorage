@@ -131,26 +131,26 @@
     "cascader": "Administrative region selection",
     "dict": "Dictionary example",
     "user-management": {
-      "index": "User Management",
-      "user": "User",
-      "user-info": "User",
-      "permission": "Permission Group"
+      "index": "Quản lý người dùng",
+      "user": "Người dùng",
+      "user-info": "Người dùng",
+      "permission": "Nhóm quyền"
     },
-    "warehouse-management": "Warehouse Management",
+    "warehouse-management": "Quản lý kho",
     "product-management": {
-      "index": "Product Management",
-      "product": "Product",
-      "list": "Product List"
+      "index": "Quản lý sản phẩm",
+      "product": "Sản phẩm",
+      "list": "Sản phẩm"
     },
     "export-order-management": {
-      "index": "Export Order Management",
-      "export-order": "Export Order",
-      "list": "Export Order List"
+      "index": "Quản lý Xuất hàng",
+      "export-order": "Xuất hàng",
+      "list": "Danh sách Xuất hàng"
     },
     "purchase-order-management": {
-      "index": "Purchase Order Management",
-      "purchase-order": "Purchase Order",
-      "list": "Purchase Order List"
+      "index": "Quản lý Nhập hàng",
+      "purchase-order": "Nhập hàng",
+      "list": "Danh sách Nhập hàng"
     }
   },
   "http": {

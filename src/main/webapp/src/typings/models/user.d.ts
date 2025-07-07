@@ -11,5 +11,6 @@ namespace User {
     status?: string
 
     permissions?: string[]
+    permissionGroups?: string[]
   }
 }

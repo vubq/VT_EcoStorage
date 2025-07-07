@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.FloorDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ShelfDto;
+import vubq.warehouse_management.VT_EcoStorage.dtos.WarehouseDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ZoneDto;
+import vubq.warehouse_management.VT_EcoStorage.entities.Warehouse;
 import vubq.warehouse_management.VT_EcoStorage.services.WarehouseService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.Response;
 
@@ -23,6 +25,11 @@ public class WarehouseController {
     @GetMapping("/{warehouseId}")
     public Response getWarehouse(@PathVariable("warehouseId") String warehouseId) {
         return Response.success(warehouseService.getWarehouse(warehouseId));
+    }
+
+    @PostMapping("/create-or-update-warehouse")
+    public Response createOrUpdateWarehouse(@RequestBody WarehouseDto warehouseDto) {
+        return Response.success(warehouseService.createOrUpdateWarehouse(warehouseDto));
     }
 
     @PostMapping("/create-or-update-zone")

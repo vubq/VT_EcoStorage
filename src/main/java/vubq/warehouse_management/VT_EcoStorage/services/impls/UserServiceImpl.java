@@ -9,15 +9,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vubq.warehouse_management.VT_EcoStorage.dtos.UserDto;
-import vubq.warehouse_management.VT_EcoStorage.entities.SystemPermission;
-import vubq.warehouse_management.VT_EcoStorage.entities.User;
-import vubq.warehouse_management.VT_EcoStorage.entities.UserPermission;
-import vubq.warehouse_management.VT_EcoStorage.entities.UserPermissionId;
+import vubq.warehouse_management.VT_EcoStorage.entities.*;
+import vubq.warehouse_management.VT_EcoStorage.repositories.SystemPermissionGroupRepository;
+import vubq.warehouse_management.VT_EcoStorage.repositories.UserPermissionGroupRepository;
 import vubq.warehouse_management.VT_EcoStorage.repositories.UserPermissionRepository;
 import vubq.warehouse_management.VT_EcoStorage.repositories.UserRepository;
 import vubq.warehouse_management.VT_EcoStorage.services.UserService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
-import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableResponse;
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.BaseSpecification;
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchCriteria;
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchOperation;
@@ -32,6 +30,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserPermissionRepository userPermissionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserPermissionGroupRepository userPermissionGroupRepository;
+    private final SystemPermissionGroupRepository systemPermissionGroupRepository;
 
     @Override
     public UserDto getUser(String userId) {
@@ -46,6 +46,8 @@ public class UserServiceImpl implements UserService {
                     .map(detail -> detail.getSystemPermission().getId())
                     .toList();
             userDto.setPermissions(permissionIds);
+
+            userDto.setPermissionGroups(userPermissionGroupRepository.findSystemPermissionGroupIdsByUserId(userId));
         }
         return userDto;
     }
@@ -83,6 +85,23 @@ public class UserServiceImpl implements UserService {
                 .toList();
 
         this.userPermissionRepository.saveAllAndFlush(userPermissions);
+
+        userPermissionGroupRepository.deleteAllByUserId(userDto.getId());
+        List<UserPermissionGroup> newGroups = userDto.getPermissionGroups().stream()
+                .map(groupId -> {
+                    SystemPermissionGroup group = systemPermissionGroupRepository.findById(groupId)
+                            .orElseThrow(() -> new RuntimeException("Nhom quyen khong ton tai"));
+
+                    return UserPermissionGroup.builder()
+                            .id(new UserPermissionGroupId(userDto.getId(), groupId))
+                            .user(finalUser)
+                            .systemPermissionGroup(group)
+                            .build();
+                }).toList();
+
+        if (!newGroups.isEmpty()) {
+            userPermissionGroupRepository.saveAll(newGroups);
+        }
         return UserDto.toDto(user);
     }
 

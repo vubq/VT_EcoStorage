@@ -14,6 +14,7 @@ import lombok.experimental.FieldNameConstants;
 @Builder
 public class Supplier extends Base {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     private String code;
     private String taxNumber;

@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { PermissionGroupService } from '@/service/api/permission-group-service'
-import { NButton, NIcon } from 'naive-ui'
+import { FormRules, NButton, NIcon } from 'naive-ui'
 import { Save } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { UserService } from '@/service/api/user'
@@ -23,13 +23,43 @@ const user = ref<User.Data>({
 })
 
 const formUserRef = ref()
+
+const rules: FormRules = {
+  username: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  firstName: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  lastName: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  phoneNumber: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+}
+
 const errors = ref<Error.ValidationError[]>([])
+
+const listPermissionGroup = ref<PermissionGroup.Data[]>([])
 
 const userRules = ref(
   initRulesForm(user.value, (rule, value, callback, key) => {
     validateFieldFromErrors(errors, key, callback)
   }),
 )
+
+const optionsPermission = [
+  { label: 'Mục 1', value: '1' },
+  { label: 'Mục 2', value: '2' },
+  { label: 'Mục 3', value: '3' }
+]
 
 const listModule = ref<Module.Data[]>([])
 
@@ -62,11 +92,26 @@ async function createOrUpdateUser() {
     })
 }
 
+async function getListPermissionGroup() {
+  await PermissionGroupService.getListPermissionGroup()
+    .then((res: any) => {
+      listPermissionGroup.value.push(...res.data)
+    })
+}
+
+function optionPermissionGroups() {
+  return listPermissionGroup.value.map(item => ({
+    label: item.name,
+    value: item.id,
+  }))
+}
+
 onMounted(async () => {
   await getListModule()
   if (userId !== 'new') {
     await getUser()
   }
+  await getListPermissionGroup()
 })
 </script>
 
@@ -76,7 +121,7 @@ onMounted(async () => {
       <template #header-extra>
         <NButton secondary type="primary" @click="createOrUpdateUser()">
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
-          {{ user.id ? 'Edit' : 'Add' }}
+          Lưu
         </NButton>
       </template>
 
@@ -85,44 +130,44 @@ onMounted(async () => {
         inline
         :label-width="80"
         :model="user"
-        :rules="userRules"
+        :rules="rules"
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
-            <n-form-item label="Username" path="username">
-              <n-input v-model:value="user.username" placeholder="Input Username" :disabled="!!user.id" />
+            <n-form-item label="Tài khoản" path="username">
+              <n-input v-model:value="user.username" placeholder="" :disabled="!!user.id" />
             </n-form-item>
           </NGi>
           <NGi :span="1">
-            <n-form-item label="Password" path="password">
-              <n-input v-model:value="user.password" placeholder="Input Password" />
+            <n-form-item label="Mật khẩu" path="password">
+              <n-input v-model:value="user.password" placeholder="" />
             </n-form-item>
           </NGi>
           <NGi :span="1">
             <n-form-item label="Email" path="email">
-              <n-input v-model:value="user.email" placeholder="Input Email" />
+              <n-input v-model:value="user.email" placeholder="" />
             </n-form-item>
           </NGi>
           <NGi :span="1">
-            <n-form-item label="First name" path="firstName">
-              <n-input v-model:value="user.firstName" placeholder="Input First name" />
+            <n-form-item label="Họ" path="firstName">
+              <n-input v-model:value="user.firstName" placeholder="" />
             </n-form-item>
           </NGi>
           <NGi :span="1">
-            <n-form-item label="Last name" path="lastName">
-              <n-input v-model:value="user.lastName" placeholder="Input Last name" />
+            <n-form-item label="Tên" path="lastName">
+              <n-input v-model:value="user.lastName" placeholder="" />
             </n-form-item>
           </NGi>
           <NGi :span="1">
-            <n-form-item label="Phone number" path="phoneNumber">
-              <n-input v-model:value="user.phoneNumber" placeholder="Input Phone number" />
+            <n-form-item label="Số điện thoại" path="phoneNumber">
+              <n-input v-model:value="user.phoneNumber" placeholder="" />
             </n-form-item>
           </NGi>
           <NGi :span="3">
-            <n-form-item label="Note" path="note">
+            <n-form-item label="Ghi chú" path="note">
               <n-input
                 v-model:value="user.note"
-                placeholder="Input Note"
+                placeholder=""
                 type="textarea"
                 :autosize="{
                   minRows: 3,
@@ -134,7 +179,7 @@ onMounted(async () => {
         </NGrid>
       </n-form>
     </n-card>
-    <n-card title="Permission">
+    <n-card title="Quyền">
       <NSpace vertical size="large">
         <n-checkbox-group v-model:value="user.permissions">
           <NGrid cols="6" y-gap="24">
@@ -157,7 +202,9 @@ onMounted(async () => {
     <n-divider dashed>
       Or
     </n-divider>
-    <n-card title="Permission Group" />
+    <n-card title="Nhóm quyền">
+      <n-select v-model:value="user.permissionGroups" multiple :options="optionPermissionGroups()" placeholder="Chọn nhóm quyền" />
+    </n-card>
   </NSpace>
 </template>
 

@@ -14,4 +14,6 @@ public interface ExportOrderService {
     ReferenceDataExportOrderResponse getReferenceDataExportOrder();
 
     ExportOrderDto getExportOrder(String exportOrderId);
+
+    Page<ExportOrder> getExportOrders(DataTableRequest dataTableRequest, String customerId);
 }

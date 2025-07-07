@@ -17,7 +17,7 @@ const dataTableRequest = ref<DataTable.Request>({
 const categoryId = ref<string>('')
 const columns = ref<DataTableColumns<Category.Data>>([
   {
-    title: 'Id',
+    title: 'ID',
     align: 'center',
     key: 'id',
     width: '300',
@@ -35,18 +35,18 @@ const columns = ref<DataTableColumns<Category.Data>>([
     },
   },
   {
-    title: 'Name',
+    title: 'Tên',
     align: 'center',
     key: 'name',
     width: '300',
   },
   {
-    title: 'Description',
+    title: 'Mô tả',
     align: 'center',
     key: 'description',
   },
   {
-    title: 'Note',
+    title: 'Ghi chú',
     align: 'center',
     key: 'note',
   },
@@ -141,21 +141,20 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
-          <n-form-item label="Search" path="filter">
-            <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
+          <n-form-item label="Tìm kiếm" path="filter">
+            <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
           </n-form-item>
           <n-flex class="ml-auto">
             <NButton type="primary" secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
-              Search
+              Tìm kiếm
             </NButton>
             <NButton strong secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
-              Reload
             </NButton>
           </n-flex>
         </n-flex>
@@ -176,7 +175,7 @@ onMounted(() => {
               openModal()
             }"
           >
-            <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
+            <NIcon size="18" :component="Add" style="margin-right: 5px;" />Thêm
           </NButton>
         </div>
         <n-data-table ref="tableRef" :columns="columns" :data="listCategory" @update:sorter="sortTable" />
@@ -187,7 +186,7 @@ onMounted(() => {
       v-model:show="visible"
       :mask-closable="false"
       preset="card"
-      :title="category.id ? 'Edit' : 'Add'"
+      :title="category.id ? 'Sửa' : 'Thêm'"
       class="w-400px"
       :segmented="{
         content: true,
@@ -195,23 +194,23 @@ onMounted(() => {
       }"
     >
       <n-form label-placement="left" :model="category" label-align="left" :label-width="90">
-        <n-form-item label="Name" path="name">
-          <n-input v-model:value="category.name" />
+        <n-form-item label="Tên" path="name">
+          <n-input v-model:value="category.name" placeholder="" />
         </n-form-item>
-        <n-form-item label="Description" path="description">
-          <n-input v-model:value="category.description" type="textarea" />
+        <n-form-item label="Mô tả" path="description">
+          <n-input v-model:value="category.description" type="textarea" placeholder="" />
         </n-form-item>
-        <n-form-item label="Note" path="note">
-          <n-input v-model:value="category.note" type="textarea" />
+        <n-form-item label="Ghi chú" path="note">
+          <n-input v-model:value="category.note" type="textarea" placeholder="" />
         </n-form-item>
       </n-form>
       <template #action>
         <NSpace justify="center">
           <NButton @click="hideModal()">
-            Cancel
+            Hủy
           </NButton>
           <NButton type="primary" @click="createOrUpdateCategory()">
-            {{ category.id ? 'Edit' : 'Add' }}
+            Lưu
           </NButton>
         </NSpace>
       </template>

@@ -15,4 +15,6 @@ public interface PurchaseOrderService {
     ReferenceDataPurchaseOrderResponse getReferenceDataPurchaseOrder();
 
     PurchaseOrderDto getPurchaseOrder(String purchaseOrderId);
+
+    Page<PurchaseOrder> getPurchaseOrders(DataTableRequest dataTableRequest, String supplierId);
 }

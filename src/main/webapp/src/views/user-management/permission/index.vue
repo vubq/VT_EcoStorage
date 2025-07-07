@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { PermissionGroupService } from '@/service/api/permission-group-service'
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
 import { NButton, NIcon } from 'naive-ui'
 import { Add, Save, TrashSharp } from '@vicons/ionicons5'
 
@@ -11,7 +11,7 @@ const permissionGroup = ref<PermissionGroup.Data>({
 const listPermissionSelected = ref<string[]>([])
 const columns: DataTableColumns<PermissionGroup.Table> = [
   {
-    title: 'Permission group name',
+    title: 'Nhóm quyền',
     // align: 'center',
     key: 'name',
     render: (row) => {
@@ -30,7 +30,7 @@ const columns: DataTableColumns<PermissionGroup.Table> = [
           >
             {{
               icon: () => (<NIcon size={18}><Add /></NIcon>),
-              default: () => 'New',
+              default: () => 'Thêm',
             }}
           </NButton>
         )
@@ -56,6 +56,14 @@ const columns: DataTableColumns<PermissionGroup.Table> = [
     },
   },
 ]
+
+const formRef = ref<FormInst | null>(null)
+
+const rules: FormRules = {
+  name: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+}
 
 const listModule = ref<Module.Data[]>([])
 const listPermissionGroup = ref<PermissionGroup.Table[]>([])
@@ -99,6 +107,8 @@ async function createOrUpdatePermissionGroup() {
         id: res.data.id,
         name: res.data.name,
       })
+    } else {
+      listPermissionGroup.value.find(p => p.id === res.data.id)!.name = res.data.name
     }
     permissionGroup.value.id = res.data.id
   })
@@ -125,9 +135,9 @@ onMounted(async () => {
       </NSpace> -->
       <NSpace vertical size="large">
         <n-card>
-          <n-form label-placement="left" :model="permissionGroup" label-align="left" :label-width="0">
+          <n-form ref="formRef" label-placement="left" :model="permissionGroup" :rules="rules" label-align="left" :label-width="0">
             <n-form-item-grid-item label="" path="name">
-              <n-input v-model:value="permissionGroup.name" placeholder="Name" />
+              <n-input v-model:value="permissionGroup.name" placeholder="" />
               <NButton
                 style="margin-left: 20px;"
                 type="primary"
@@ -135,10 +145,10 @@ onMounted(async () => {
                 @click="createOrUpdatePermissionGroup()"
               >
                 <NIcon size="18" :component="Save" style="margin-right: 5px;" />
-                {{ permissionGroup.id ? 'Edit' : 'Add' }}
+                Lưu
               </NButton>
               <NButton v-if="permissionGroup.id" style="margin-left: 10px;" tertiary @click="createOrUpdatePermissionGroup()">
-                <NIcon size="18" :component="TrashSharp" style="margin-right: 5px;" /> Delete
+                <NIcon size="18" :component="TrashSharp" style="margin-right: 5px;" /> Xóa
               </NButton>
             </n-form-item-grid-item>
           </n-form>

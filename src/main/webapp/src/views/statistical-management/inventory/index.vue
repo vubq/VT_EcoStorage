@@ -150,21 +150,20 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
-          <n-form-item label="Search" path="filter">
-            <n-input v-model:value="dataTableRequest.filter" placeholder="Keyword" />
+          <n-form-item label="Tìm kiếm" path="filter">
+            <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
           </n-form-item>
           <n-flex class="ml-auto">
             <NButton type="primary" secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
-              Search
+              Tìm kiếm
             </NButton>
             <NButton strong secondary @click="reloadTableFirst()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
-              Reload
             </NButton>
           </n-flex>
         </n-flex>
@@ -175,13 +174,13 @@ onMounted(() => {
         <n-table :single-line="false" cellspacing="0" cellpadding="5">
           <thead>
             <tr>
-              <th>Warehouse</th>
-              <th>Product Name</th>
-              <th>Product Barcode</th>
-              <th>Product SKU</th>
-              <th>Total inventory</th>
-              <th>Inventory location</th>
-              <th>Inventory</th>
+              <th>Kho</th>
+              <th>Dản phẩm</th>
+              <th>Barcode</th>
+              <th>SKU</th>
+              <th>Tồn kho</th>
+              <th>Vị trí</th>
+              <th>Tồn kho theo vị trí</th>
             </tr>
           </thead>
           <tbody>

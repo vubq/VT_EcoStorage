@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
 import { NButton, NGi, NGrid, NIcon, NInputNumber, NSelect, NSpace } from 'naive-ui'
 import { Add, CheckboxOutline, Save, TrashSharp } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
@@ -30,10 +30,35 @@ const purchaseOrder = ref<PurchaseOrder.Data>({
   details: [],
   note: '',
 })
+const formRef = ref<FormInst | null>(null)
+const rules: FormRules = {
+  supplierId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  warehouseId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  expectedDate: [
+    {
+      required: true,
+      validator: (_rule, value) => {
+        const selectedDate = moment(expectedDate.value).startOf('day')
+        const today = moment().startOf('day')
+
+        if (selectedDate.isBefore(today)) {
+          return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+        }
+
+        return Promise.resolve()
+      },
+      trigger: 'blur'
+    }
+  ],
+}
 const columns = computed(() => {
   const baseColumns: DataTableColumns<PurchaseOrderDetail.Data> = [
     {
-      title: 'Product Barcode',
+      title: 'Barcode',
       align: 'center',
       key: 'productBarcode',
       render: row => (
@@ -43,17 +68,17 @@ const columns = computed(() => {
       ),
     },
     {
-      title: 'Product Name',
+      title: 'Tên sản phẩm',
       align: 'center',
       key: 'productName',
     },
     {
-      title: 'Product Unit',
+      title: 'Đơn vị tính',
       align: 'center',
       key: 'productUnit',
     },
     {
-      title: 'Quantity',
+      title: 'Số lượng',
       align: 'center',
       key: 'quantity',
       width: 150,
@@ -70,7 +95,7 @@ const columns = computed(() => {
           : <span>{row.quantity}</span>,
     },
     {
-      title: 'Unit Price',
+      title: 'Đơn giá',
       align: 'center',
       key: 'unitPrice',
       width: 180,
@@ -87,7 +112,7 @@ const columns = computed(() => {
           : <span>{row.unitPrice!.toLocaleString('vi-VN')}</span>,
     },
     {
-      title: 'Total Amount',
+      title: 'Tổng tiền',
       align: 'center',
       key: 'totalAmount',
       render: row => <span>{row.totalAmount!.toLocaleString('vi-VN')}</span>,
@@ -114,7 +139,7 @@ const columns = computed(() => {
       0,
       {
         type: 'expand',
-        title: 'Location',
+        title: 'Vị trí',
         align: 'center',
         width: 100,
         renderExpand: (row: any) => (
@@ -122,10 +147,10 @@ const columns = computed(() => {
             <NSpace vertical size="large">
               {(row.locations || []).map((l: any, index: number) => (
                 <NGrid key={index} cols={5} y-gap={12} x-gap={24}>
-                  <NGi span={1}><NSelect options={optionZones()} placeholder="Zone" v-model:value={l.zoneId} /></NGi>
-                  <NGi span={1}><NSelect options={optionShelf(l.zoneId)} placeholder="Shelf" v-model:value={l.shelfId} /></NGi>
-                  <NGi span={1}><NSelect options={optionFloor(l.zoneId, l.shelfId, row.productId!)} placeholder="Floor" v-model:value={l.locationId} /></NGi>
-                  <NGi span={1}><NInputNumber v-model:value={l.quantity} placeholder="Quantity" /></NGi>
+                  <NGi span={1}><NSelect options={optionZones()} placeholder="Khu vực" v-model:value={l.zoneId} /></NGi>
+                  <NGi span={1}><NSelect options={optionShelf(l.zoneId)} placeholder="Kệ" v-model:value={l.shelfId} /></NGi>
+                  <NGi span={1}><NSelect options={optionFloor(l.zoneId, l.shelfId, row.productId!)} placeholder="Tầng" v-model:value={l.locationId} /></NGi>
+                  <NGi span={1}><NInputNumber v-model:value={l.quantity} placeholder="Số lượng" min={1} /></NGi>
                   <NGi span={1}>
                     <NButton secondary type="error" onClick={() => removeLocation(row, index)}>
                       <NIcon size={18} component={TrashSharp} />
@@ -148,7 +173,7 @@ const columns = computed(() => {
 
 const columnsProduct = ref<DataTableColumns<PurchaseOrder.Product>>([
   {
-    title: 'Product Barcode',
+    title: 'Barcode',
     align: 'center',
     key: 'barcode',
     render: (row) => {
@@ -166,27 +191,27 @@ const columnsProduct = ref<DataTableColumns<PurchaseOrder.Product>>([
     },
   },
   {
-    title: 'Product Name',
+    title: 'Tên sản phẩm',
     align: 'center',
     key: 'name',
   },
   {
-    title: 'Unit',
+    title: 'Đơn vị tính',
     align: 'center',
     key: 'productUnitName',
   },
   {
-    title: 'Category',
+    title: 'Danh mục',
     align: 'center',
     key: 'productCategoryName',
   },
   {
-    title: 'Inventory Quantity',
+    title: 'Tồn kho',
     align: 'center',
     key: 'inventoryQuantity',
   },
   {
-    title: 'Cost Price',
+    title: 'Giá nhập',
     align: 'center',
     key: 'costPrice',
     render: (row) => {
@@ -196,7 +221,7 @@ const columnsProduct = ref<DataTableColumns<PurchaseOrder.Product>>([
     },
   },
   {
-    title: 'Sale Price',
+    title: 'Giá bán',
     align: 'center',
     key: 'salePrice',
     render: (row) => {
@@ -211,7 +236,7 @@ function addLocation(row: any) {
   if (!Array.isArray(row.locations)) {
     row.locations = []
   }
-  row.locations.push({ zoneId: null, shelfId: null, locationId: null, productId: row.productId, purchaseOrderDetailId: row.id, quantity: 0 })
+  row.locations.push({ zoneId: null, shelfId: null, locationId: null, productId: row.productId, purchaseOrderDetailId: row.id, quantity: 1 })
 }
 
 function removeLocation(row: any, index: number) {
@@ -279,7 +304,7 @@ function disabledOptionFloor(floorId: string, productId: string): boolean {
 function optionCategories() {
   return [
     {
-      label: 'All',
+      label: 'Tất cả',
       value: 'ALL',
     },
     ...referenceData.value.categories.map(item => ({
@@ -389,23 +414,39 @@ function addProduct(product: PurchaseOrder.Product) {
 }
 
 async function createOrUpdatePurchaseOrder(status: string) {
-  purchaseOrder.value.expectedDate = moment(expectedDate.value).toDate()
-  purchaseOrder.value.details = purchaseOrder.value.details!.filter(
-    detail => detail.productId && detail.delete !== true,
-  )
-  await PurchaseOrderService.createOrUpdatePurchase({
-    ...purchaseOrder.value,
-    status,
+  formRef.value?.validate(async (errors) => {
+    if (!errors) {
+      if (status !== 'CANCELED') {
+        if (!purchaseOrder.value.details || purchaseOrder.value.details.length < 1) {
+          window.$message.error('Vui lòng chọn sản phẩm cần nhập')
+          return
+        }
+        for (const p of purchaseOrder.value.details) {
+          if (!p.locations || p.locations.length < 1) {
+            window.$message.error('Vui lòng chọn vị trí để ' + p.productName + ' [Barcode: ' + p.productBarcode + ']')
+            return
+          }
+        }
+      }
+      purchaseOrder.value.expectedDate = moment(expectedDate.value).toDate()
+      purchaseOrder.value.details = purchaseOrder.value.details!.filter(
+        detail => detail.productId && detail.delete !== true,
+      )
+      await PurchaseOrderService.createOrUpdatePurchase({
+        ...purchaseOrder.value,
+        status,
+      })
+        .then((res: any) => {
+          if (res.isSuccess) {
+            router.push({ name: 'purchase-order-management.list' })
+          }
+          else {
+            // errors.value = res.data
+            // formUserRef.value.validate()
+          }
+        })
+    }
   })
-    .then((res: any) => {
-      if (res.isSuccess) {
-        router.push({ name: 'purchase-order-management.list' })
-      }
-      else {
-        // errors.value = res.data
-        // formUserRef.value.validate()
-      }
-    })
 }
 
 async function getPurchaseOrder() {
@@ -437,7 +478,7 @@ onMounted(async () => {
 
 <template>
   <NSpace vertical size="large">
-    <n-card title="Purchase Order">
+    <n-card title="Phiếu nhập">
       <template #header-extra>
         <n-tag v-if="purchaseOrder.status === 'CANCELED'" type="error">
           Canceled
@@ -455,7 +496,7 @@ onMounted(async () => {
           }"
         >
           <NIcon size="18" :component="TrashSharp" style="margin-right: 5px;" />
-          Cancel
+          Hủy
         </NButton>
         <NButton
           v-if="purchaseOrder.status === 'NEW'"
@@ -465,7 +506,7 @@ onMounted(async () => {
           @click="createOrUpdatePurchaseOrder('NEW')"
         >
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
-          {{ purchaseOrder.id ? 'Edit' : 'Add' }}
+          Lưu
         </NButton>
         <NButton
           v-if="purchaseOrder.id && purchaseOrder.status === 'NEW'"
@@ -477,7 +518,7 @@ onMounted(async () => {
           }"
         >
           <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
-          Confirm
+          Xác nhận
         </NButton>
         <NButton
           v-if="purchaseOrder.id && purchaseOrder.status === 'CONFIRMED'"
@@ -489,20 +530,20 @@ onMounted(async () => {
           }"
         >
           <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
-          Receive
+          Đã nhận hàng
         </NButton>
       </template>
 
       <n-form
-        ref="formUserRef"
+        ref="formRef"
         inline
         :label-width="80"
         :model="purchaseOrder"
-        :rules="purchaseOrderRules"
+        :rules="rules"
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
-            <n-form-item label="Supplier" path="supplier">
+            <n-form-item label="Nhà cung cấp" path="supplierId">
               <NSelect
                 v-model:value="purchaseOrder.supplierId"
                 placeholder=""
@@ -513,7 +554,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Warehouse" path="warehouse">
+            <n-form-item label="Kho" path="warehouseId">
               <NSelect
                 v-model:value="purchaseOrder.warehouseId"
                 placeholder=""
@@ -524,7 +565,7 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Expected Date" path="expectedDate">
+            <n-form-item label="Ngày dự kiến" path="expectedDate">
               <n-date-picker
                 v-model:value="expectedDate"
                 value-format="yyyy-MM-dd"
@@ -535,26 +576,26 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="3">
-            <n-form-item label="Note" path="note">
+            <n-form-item label="Ghi chú" path="note">
               <n-input
                 v-model:value="purchaseOrder.note"
-                placeholder="Input Note"
+                placeholder=""
                 type="textarea"
                 :autosize="{
                   minRows: 3,
                   maxRows: 5,
                 }"
-                :disabled="purchaseOrder.status !== 'NEW'"
+                :disabled="!(purchaseOrder.status === 'NEW' || purchaseOrder.status === 'CONFIRMED')"
               />
             </n-form-item>
           </NGi>
         </NGrid>
       </n-form>
     </n-card>
-    <n-card title="Purchase Order Detail">
+    <n-card title="Sản phẩm nhập">
       <template #header-extra>
         <NButton v-if="purchaseOrder.status === 'NEW'" secondary type="primary" @click="openModalProduct()">
-          <NIcon size="18" :component="Add" style="margin-right: 5px;" />Add
+          <NIcon size="18" :component="Add" style="margin-right: 5px;" />Thêm
         </NButton>
       </template>
       <NSpace vertical size="large">
@@ -564,7 +605,7 @@ onMounted(async () => {
           v-model:show="isModalProduct"
           :mask-closable="false"
           preset="card"
-          title="Product List"
+          title="Danh sách sản phẩm"
           class="w-1000px"
           :segmented="{
             content: true,
@@ -572,15 +613,15 @@ onMounted(async () => {
           }"
         >
           <NSpace vertical size="large">
-            <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
+            <n-form :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
               <NGrid cols="3" y-gap="12" x-gap="24">
                 <NGi :span="1">
-                  <n-form-item label="Search" path="filter">
-                    <n-input v-model:value="dataTableRequest.filter" placeholder="Product Name or Product Barcode" />
+                  <n-form-item label="Tìm kiếm" path="filter">
+                    <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
                   </n-form-item>
                 </NGi>
                 <NGi :span="1">
-                  <n-form-item label="Category" path="filter">
+                  <n-form-item label="Danh mục" path="filter">
                     <NSelect v-model:value="dataRequestBody.productCategoryId" placeholder="" :options="optionCategories()" />
                   </n-form-item>
                 </NGi>
@@ -590,13 +631,12 @@ onMounted(async () => {
                       <template #icon>
                         <icon-park-outline-search />
                       </template>
-                      Search
+                      Tìm kiếm
                     </NButton>
                     <NButton strong secondary @click="reloadFormSearch()">
                       <template #icon>
                         <icon-park-outline-redo />
                       </template>
-                      Reload
                     </NButton>
                   </n-flex>
                 </NGi>
