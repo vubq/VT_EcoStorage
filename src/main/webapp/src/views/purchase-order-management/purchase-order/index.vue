@@ -33,10 +33,10 @@ const purchaseOrder = ref<PurchaseOrder.Data>({
 const formRef = ref<FormInst | null>(null)
 const rules: FormRules = {
   supplierId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
   warehouseId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
   expectedDate: [
     {
@@ -45,14 +45,16 @@ const rules: FormRules = {
         const selectedDate = moment(expectedDate.value).startOf('day')
         const today = moment().startOf('day')
 
-        if (selectedDate.isBefore(today)) {
-          return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+        if (purchaseOrder.value.status === 'NEW') {
+          if (selectedDate.isBefore(today)) {
+            return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+          }
         }
 
         return Promise.resolve()
       },
-      trigger: 'blur'
-    }
+      trigger: 'blur',
+    },
   ],
 }
 const columns = computed(() => {
@@ -421,10 +423,12 @@ async function createOrUpdatePurchaseOrder(status: string) {
           window.$message.error('Vui lòng chọn sản phẩm cần nhập')
           return
         }
-        for (const p of purchaseOrder.value.details) {
-          if (!p.locations || p.locations.length < 1) {
-            window.$message.error('Vui lòng chọn vị trí để ' + p.productName + ' [Barcode: ' + p.productBarcode + ']')
-            return
+        if (status === 'RECEIVED') {
+          for (const p of purchaseOrder.value.details) {
+            if (!p.locations || p.locations.length < 1) {
+              window.$message.error(`Vui lòng chọn vị trí để ${p.productName} [Barcode: ${p.productBarcode}]`)
+              return
+            }
           }
         }
       }
@@ -466,6 +470,18 @@ async function getWarehouse() {
     })
 }
 
+function optionWarehousesFrom() {
+  if (!purchaseOrder.value.warehouseId) {
+    return []
+  }
+  else {
+    return referenceData.value.warehouses.filter(w => w.id !== purchaseOrder.value.warehouseId).map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+  }
+}
+
 onMounted(async () => {
   await getReferenceData()
   await getListProduct()
@@ -478,7 +494,16 @@ onMounted(async () => {
 
 <template>
   <NSpace vertical size="large">
-    <n-card title="Phiếu nhập">
+    <n-card>
+      <template #header>
+        <div class="n-card-header__main" role="heading">
+          Phiếu nhập hàng
+          <n-tag v-if="purchaseOrder.status !== 'NEW'" type="primary" style="margin-left: 5px;">
+            <span v-if="purchaseOrder.type === 'PURCHASE'">THƯỜNG</span>
+            <span v-if="purchaseOrder.type === 'INTERNAL'">NỘI BỘ</span>
+          </n-tag>
+        </div>
+      </template>
       <template #header-extra>
         <n-tag v-if="purchaseOrder.status === 'CANCELED'" type="error">
           Canceled
@@ -543,17 +568,6 @@ onMounted(async () => {
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
-            <n-form-item label="Nhà cung cấp" path="supplierId">
-              <NSelect
-                v-model:value="purchaseOrder.supplierId"
-                placeholder=""
-                :options="optionSuppliers()"
-                :disabled="purchaseOrder.status !== 'NEW'"
-              />
-            </n-form-item>
-          </NGi>
-
-          <NGi :span="1">
             <n-form-item label="Kho" path="warehouseId">
               <NSelect
                 v-model:value="purchaseOrder.warehouseId"
@@ -565,11 +579,32 @@ onMounted(async () => {
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Ngày dự kiến" path="expectedDate">
+            <n-form-item v-if="purchaseOrder.type === 'PURCHASE'" label="Nhà cung cấp" path="supplierId">
+              <NSelect
+                v-model:value="purchaseOrder.supplierId"
+                placeholder=""
+                :options="optionSuppliers()"
+                :disabled="purchaseOrder.status !== 'NEW'"
+              />
+            </n-form-item>
+
+            <n-form-item v-else label="Từ kho" path="warehouseFromId">
+              <NSelect
+                v-model:value="purchaseOrder.warehouseFromId"
+                placeholder=""
+                :options="optionWarehousesFrom()"
+                :disabled="purchaseOrder.status !== 'NEW'"
+              />
+            </n-form-item>
+          </NGi>
+
+          <NGi :span="1">
+            <n-form-item label="Ngày dự kiến" path="expectedDate" style="width: 100%;">
               <n-date-picker
                 v-model:value="expectedDate"
                 value-format="yyyy-MM-dd"
                 type="date"
+                style="width: 100%;"
                 :disabled="purchaseOrder.status !== 'NEW'"
               />
             </n-form-item>

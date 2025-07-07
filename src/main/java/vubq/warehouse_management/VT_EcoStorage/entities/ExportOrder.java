@@ -51,6 +51,20 @@ public class ExportOrder extends Base {
     )
     private Warehouse warehouse;
 
+    @Column(name = "warehouse_to_id")
+    private String warehouseToId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "warehouse_to_id",
+            insertable = false,
+            updatable = false
+    )
+    private Warehouse warehouseTo;
+
+    @Column(name = "purchase_order_id")
+    private String purchaseOrderId;
+
     public enum Status {
         NEW,
         CONFIRMED,

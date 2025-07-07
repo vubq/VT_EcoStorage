@@ -8,10 +8,13 @@ import org.springframework.stereotype.Repository;
 import vubq.warehouse_management.VT_EcoStorage.entities.PurchaseOrder;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, String> {
     void deleteByIdIn(Collection<String> ids);
 
     Page<PurchaseOrder> findAll(Specification<PurchaseOrder> spec, Pageable pageable);
+
+    Optional<PurchaseOrder> findByExportOrderId(String exportOrderId);
 }

@@ -40,6 +40,8 @@ public class ExportOrderServiceImpl implements ExportOrderService {
     final private CustomerRepository customerRepository;
     final private ProductInventoryLocationRepository productInventoryLocationRepository;
     final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
+    final private PurchaseOrderRepository purchaseOrderRepository;
+    final private PurchaseOrderDetailRepository purchaseOrderDetailRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -50,20 +52,27 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                 .getSingleResult()).longValue();
     }
 
+    public Long getNextPurchaseOrderSeq() {
+        return ((Number) entityManager.createNativeQuery("SELECT nextval('purchase_order_seq')").getSingleResult()).longValue();
+    }
+
     @Override
     public boolean createOrUpdateExportOrder(ExportOrderDto exportOrderDto) {
         if (exportOrderDto.getDetails() == null || exportOrderDto.getDetails().isEmpty()) {
-            throw new IllegalArgumentException("No products have been added");
+            if (exportOrderDto.getStatus() != ExportOrder.Status.DELIVERED) {
+                throw new IllegalArgumentException("No products have been added");
+            }
         }
         ExportOrder exportOrder;
         if (StringUtils.isEmpty(exportOrderDto.getId())) {
             exportOrder = new ExportOrder();
             exportOrder.setId(generateExportOrderId(exportOrderDto.getCustomerId()));
             exportOrder.setStatus(ExportOrder.Status.NEW);
-            exportOrder.setCustomerId(exportOrderDto.getCustomerId());
             exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
-            exportOrder.setType(ExportOrder.Type.EXPORT);
+            exportOrder.setWarehouseToId(StringUtils.isEmpty(exportOrderDto.getWarehouseToId()) ? null : exportOrderDto.getWarehouseToId());
+            exportOrder.setCustomerId(StringUtils.isEmpty(exportOrderDto.getCustomerId()) ? null : exportOrderDto.getCustomerId());
+            exportOrder.setType(exportOrderDto.getType());
 
             exportOrder = exportOrderRepository.saveAndFlush(exportOrder);
 
@@ -88,10 +97,12 @@ public class ExportOrderServiceImpl implements ExportOrderService {
         }
 
         if (exportOrder.getStatus() == ExportOrder.Status.NEW && exportOrderDto.getStatus() == ExportOrder.Status.NEW) {
-            exportOrder.setCustomerId(exportOrderDto.getCustomerId());
             exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
+            exportOrder.setType(exportOrderDto.getType());
             exportOrder.setNote(exportOrderDto.getNote());
+            exportOrder.setWarehouseToId(StringUtils.isEmpty(exportOrderDto.getWarehouseToId()) ? null : exportOrderDto.getWarehouseToId());
+            exportOrder.setCustomerId(StringUtils.isEmpty(exportOrderDto.getCustomerId()) ? null : exportOrderDto.getCustomerId());
 
             ExportOrder finalExportOrder = exportOrder;
             List<ExportOrderDetail> exportOrderDetails = exportOrderDto.getDetails().stream()
@@ -124,15 +135,35 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setNote(exportOrderDto.getNote());
             exportOrderRepository.saveAndFlush(exportOrder);
 
+            PurchaseOrder purchaseOrder = purchaseOrderRepository.findByExportOrderId(exportOrder.getId()).orElse(null);
+            if (purchaseOrder != null) {
+                purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
+                purchaseOrder.setNote(exportOrderDto.getNote());
+            }
+            return true;
+        }
+
+        if (exportOrder.getStatus() == ExportOrder.Status.CONFIRMED && exportOrderDto.getStatus() == ExportOrder.Status.CANCELED) {
+            exportOrder.setStatus(ExportOrder.Status.CANCELED);
+            exportOrder.setNote(exportOrderDto.getNote());
+            exportOrderRepository.saveAndFlush(exportOrder);
+
+            PurchaseOrder purchaseOrder = purchaseOrderRepository.findByExportOrderId(exportOrder.getId()).orElse(null);
+            if (purchaseOrder != null) {
+                purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
+                purchaseOrder.setNote(exportOrderDto.getNote());
+            }
             return true;
         }
 
         if (exportOrder.getStatus() == ExportOrder.Status.NEW && exportOrderDto.getStatus() == ExportOrder.Status.CONFIRMED) {
             exportOrder.setStatus(ExportOrder.Status.CONFIRMED);
-            exportOrder.setCustomerId(exportOrderDto.getCustomerId());
             exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
+            exportOrder.setType(exportOrderDto.getType());
             exportOrder.setNote(exportOrderDto.getNote());
+            exportOrder.setWarehouseToId(StringUtils.isEmpty(exportOrderDto.getWarehouseToId()) ? null : exportOrderDto.getWarehouseToId());
+            exportOrder.setCustomerId(StringUtils.isEmpty(exportOrderDto.getCustomerId()) ? null : exportOrderDto.getCustomerId());
 
             ExportOrder finalExportOrder = exportOrder;
             List<ExportOrderDetail> exportOrderDetails = exportOrderDto.getDetails().stream()
@@ -147,7 +178,6 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                             .reduce(BigDecimal.ZERO, BigDecimal::add)
             );
 
-            exportOrderRepository.saveAndFlush(exportOrder);
             exportOrderDetailRepository.saveAll(exportOrderDetails);
 
             List<String> purchaseOrderDetailDeleteIds = exportOrderDto.getDetails().stream()
@@ -157,6 +187,52 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                     .toList();
             exportOrderDetailRepository.deleteByIdIn(purchaseOrderDetailDeleteIds);
 
+            if (exportOrder.getType() == ExportOrder.Type.INTERNAL) {
+                PurchaseOrder purchaseOrder = new PurchaseOrder();
+                purchaseOrder.setId(generatePurchaseOrderId());
+                purchaseOrder.setStatus(PurchaseOrder.Status.CONFIRMED);
+                purchaseOrder.setWarehouseId(exportOrder.getWarehouseToId());
+                purchaseOrder.setWarehouseFromId(exportOrder.getWarehouseId());
+                purchaseOrder.setExpectedDate(exportOrder.getExpectedDate());
+                purchaseOrder.setExportOrderId(exportOrder.getId());
+                purchaseOrder.setType(PurchaseOrder.Type.INTERNAL);
+
+                List<PurchaseOrderDetail> purchaseOrderDetails = new ArrayList<>();
+
+                Map<String, List<ExportOrderDetailDto>> groupedMap = exportOrderDto.getDetails().stream()
+                        .filter(detail -> !detail.isDelete())
+                        .collect(Collectors.groupingBy(dto -> dto.getProductId() + "|" + dto.getUnitPrice()));
+
+                for (List<ExportOrderDetailDto> group : groupedMap.values()) {
+                    long totalQuantity = 0;
+                    BigDecimal totalAmount = BigDecimal.ZERO;
+                    ExportOrderDetailDto exportOrderDetailDto = group.get(0);
+
+                    for (ExportOrderDetailDto dto : group) {
+                        totalQuantity += dto.getQuantity();
+                        totalAmount = totalAmount.add(dto.getTotalAmount());
+                    }
+
+                    PurchaseOrderDetail purchaseOrderDetail = new PurchaseOrderDetail();
+                    purchaseOrderDetail.setProductId(exportOrderDetailDto.getProductId());
+                    purchaseOrderDetail.setQuantity(totalQuantity);
+                    purchaseOrderDetail.setUnitPrice(exportOrderDetailDto.getUnitPrice());
+                    purchaseOrderDetail.setTotalAmount(totalAmount);
+                    purchaseOrderDetail.setStatus(PurchaseOrderDetail.Status.ACTIVE);
+                    purchaseOrderDetail.setPurchaseOrderId(purchaseOrder.getId());
+
+                    purchaseOrderDetails.add(purchaseOrderDetail);
+                }
+
+                purchaseOrder.setTotalAmount(purchaseOrderDetails.stream().map(PurchaseOrderDetail::getTotalAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+
+                purchaseOrder = purchaseOrderRepository.saveAndFlush(purchaseOrder);
+
+                purchaseOrderDetailRepository.saveAllAndFlush(purchaseOrderDetails);
+
+                exportOrder.setPurchaseOrderId(purchaseOrder.getId());
+                exportOrderRepository.saveAndFlush(exportOrder);
+            }
             return true;
         }
 
@@ -245,6 +321,11 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                 + "-" + "EO" + "-C"
 //                + "-" + customerId
                 + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date());
+    }
+
+    private String generatePurchaseOrderId() {
+        return "PO" + "-" + getNextPurchaseOrderSeq()
+                + "-W" + "-W" + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date());
     }
 
     @Override

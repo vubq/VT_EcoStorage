@@ -8,6 +8,8 @@ namespace ExportOrder {
     status?: string
     warehouseName?: string
     customerName?: string
+    type?: string
+    warehouseToName?: string
   }
 
   interface Data {
@@ -21,6 +23,8 @@ namespace ExportOrder {
     customerId?: string
     details?: ExportOrderDetail.Data[]
     note?: string
+    warehouseToId?: string
+    purchaseOrderId?: string
   }
 
   interface Product {

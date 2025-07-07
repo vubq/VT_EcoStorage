@@ -8,6 +8,8 @@ namespace PurchaseOrder {
     status?: string
     warehouseName?: string
     supplierName?: string
+    type?: string
+    warehouseFromName?: string
   }
 
   interface Data {
@@ -21,6 +23,7 @@ namespace PurchaseOrder {
     supplierId?: string
     details?: PurchaseOrderDetail.Data[]
     note?: string
+    warehouseFromId?: string
   }
 
   interface Product {

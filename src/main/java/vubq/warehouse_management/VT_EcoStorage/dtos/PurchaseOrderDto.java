@@ -26,10 +26,12 @@ public class PurchaseOrderDto {
     private BigDecimal totalAmount;
     private PurchaseOrder.Type type;
     private String warehouseId;
+    private String warehouseFromId;
     private String supplierId;
     private String note;
 
     private String warehouseName;
+    private String warehouseFromName;
     private String supplierName;
 
     @Valid
@@ -44,7 +46,8 @@ public class PurchaseOrderDto {
                 .totalAmount(purchaseOrder.getTotalAmount())
                 .type(purchaseOrder.getType())
                 .warehouseName(purchaseOrder.getWarehouse().getName())
-                .supplierName(purchaseOrder.getSupplier().getName())
+                .warehouseFromName(purchaseOrder.getWarehouseFrom() != null ? purchaseOrder.getWarehouseFrom().getName() : null)
+                .supplierName(purchaseOrder.getSupplier() != null ? purchaseOrder.getSupplier().getName() : null)
                 .build();
     }
 
@@ -57,7 +60,8 @@ public class PurchaseOrderDto {
                 .totalAmount(purchaseOrder.getTotalAmount())
                 .type(purchaseOrder.getType())
                 .warehouseId(purchaseOrder.getWarehouse().getId())
-                .supplierId(purchaseOrder.getSupplier().getId())
+                .warehouseFromId(purchaseOrder.getWarehouseFrom() != null ? purchaseOrder.getWarehouseFrom().getId() : null)
+                .supplierId(purchaseOrder.getSupplier() != null ? purchaseOrder.getSupplier().getId() : null)
                 .note(purchaseOrder.getNote())
                 .build();
     }

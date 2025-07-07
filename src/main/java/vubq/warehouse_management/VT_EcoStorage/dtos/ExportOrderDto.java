@@ -23,11 +23,14 @@ public class ExportOrderDto {
     private ExportOrder.Type type;
     private String customerId;
     private String warehouseId;
+    private String warehouseToId;
+    private String purchaseOrderId;
 
     private String note;
 
     private String customerName;
     private String warehouseName;
+    private String warehouseToName;
 
     List<ExportOrderDetailDto> details;
 
@@ -39,8 +42,9 @@ public class ExportOrderDto {
                 .deliveredDate(exportOrder.getDeliveredDate())
                 .totalAmount(exportOrder.getTotalAmount())
                 .type(exportOrder.getType())
-                .customerName(exportOrder.getCustomer().getName())
+                .customerName(exportOrder.getCustomer() != null ? exportOrder.getCustomer().getName() : null)
                 .warehouseName(exportOrder.getWarehouse().getName())
+                .warehouseToName(exportOrder.getWarehouseTo() != null ? exportOrder.getWarehouseTo().getName() : null)
                 .build();
     }
 
@@ -52,9 +56,11 @@ public class ExportOrderDto {
                 .deliveredDate(exportOrder.getDeliveredDate())
                 .totalAmount(exportOrder.getTotalAmount())
                 .type(exportOrder.getType())
-                .customerId(exportOrder.getCustomer().getId())
+                .customerId(exportOrder.getCustomer() != null ? exportOrder.getCustomer().getId() : null)
                 .warehouseId(exportOrder.getWarehouse().getId())
+                .warehouseToId(exportOrder.getWarehouseTo() != null ? exportOrder.getWarehouseTo().getId() : null)
                 .note(exportOrder.getNote())
+                .purchaseOrderId(exportOrder.getPurchaseOrderId())
                 .build();
     }
 }

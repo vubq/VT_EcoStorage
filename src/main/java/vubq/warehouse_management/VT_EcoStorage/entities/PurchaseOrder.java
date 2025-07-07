@@ -42,6 +42,20 @@ public class PurchaseOrder extends Base {
     )
     private Warehouse warehouse;
 
+    @Column(name = "warehouse_from_id")
+    private String warehouseFromId;
+
+    @Column(name = "export_order_id")
+    private String exportOrderId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "warehouse_from_id",
+            insertable = false,
+            updatable = false
+    )
+    private Warehouse warehouseFrom;
+
     @Column(name = "supplier_id")
     private String supplierId;
 

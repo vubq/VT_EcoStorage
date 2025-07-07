@@ -13,6 +13,7 @@ import vubq.warehouse_management.VT_EcoStorage.dtos.*;
 import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataPurchaseOrderResponse;
 import vubq.warehouse_management.VT_EcoStorage.entities.*;
 import vubq.warehouse_management.VT_EcoStorage.repositories.*;
+import vubq.warehouse_management.VT_EcoStorage.services.ExportOrderService;
 import vubq.warehouse_management.VT_EcoStorage.services.PurchaseOrderService;
 import vubq.warehouse_management.VT_EcoStorage.utils.dates.DateUtils;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
@@ -42,6 +43,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     final private FloorRepository floorRepository;
     final private ProductRepository productRepository;
     final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
+    final private ExportOrderRepository exportOrderRepository;
+    final private ExportOrderService exportOrderService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -103,6 +106,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
             purchaseOrderRepository.saveAndFlush(purchaseOrder);
 
+            ExportOrder exportOrder = exportOrderRepository.findById(purchaseOrder.getExportOrderId()).orElse(null);
+            if (exportOrder != null) {
+                exportOrder.setStatus(ExportOrder.Status.CANCELED);
+                exportOrder.setNote(purchaseOrderDto.getNote());
+                exportOrderRepository.saveAndFlush(exportOrder);
+            }
             return true;
         }
 
@@ -111,6 +120,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
             purchaseOrderRepository.saveAndFlush(purchaseOrder);
 
+            ExportOrder exportOrder = exportOrderRepository.findById(purchaseOrder.getExportOrderId()).orElse(null);
+            if (exportOrder != null) {
+                exportOrder.setStatus(ExportOrder.Status.CANCELED);
+                exportOrder.setNote(purchaseOrderDto.getNote());
+                exportOrderRepository.saveAndFlush(exportOrder);
+            }
             return true;
         }
 
@@ -217,6 +232,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 //        }
 
         if (purchaseOrder.getStatus() == PurchaseOrder.Status.CONFIRMED && purchaseOrderDto.getStatus() == PurchaseOrder.Status.RECEIVED) {
+            ExportOrder exportOrder = exportOrderRepository.findById(purchaseOrder.getExportOrderId()).orElse(null);
+            if (exportOrder != null) {
+                ExportOrderDto exportOrderDto = exportOrderService.getExportOrder(exportOrder.getId());
+                exportOrderDto.setStatus(ExportOrder.Status.DELIVERED);
+                exportOrderDto.setNote(purchaseOrderDto.getNote());
+                exportOrderService.createOrUpdateExportOrder(exportOrderDto);
+            }
 
             // Validate location
             for (PurchaseOrderDetailDto p : purchaseOrderDto.getDetails()) {

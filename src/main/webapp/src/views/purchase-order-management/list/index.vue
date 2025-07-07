@@ -11,7 +11,7 @@ const dataTableRequest = ref<DataTable.Request>({
   currentPage: 1,
   perPage: 10,
   filter: '',
-  sortBy: 'id',
+  sortBy: 'expectedDate',
   sortDesc: true,
 })
 const userId = ref<string>('')
@@ -51,15 +51,24 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     title: 'Kho',
     align: 'center',
     key: 'warehouseName',
-    sorter: true,
-    sortOrder: sortDefault('warehouseName'),
+  },
+  {
+    title: 'Loại',
+    align: 'center',
+    key: 'type',
   },
   {
     title: 'Nhà cung cấp',
     align: 'center',
     key: 'supplierName',
-    sorter: true,
-    sortOrder: sortDefault('supplierName'),
+    render: (row) => {
+      return (
+        <div>
+          <span v-if={row.type === 'EXPORT'}>{ row.supplierName }</span>
+          <span v-if={row.type === 'INTERNAL'}>{ row.warehouseFromName }</span>
+        </div>
+      )
+    },
   },
   {
     title: 'Ngày dự kiến',
@@ -101,8 +110,6 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     title: 'Trạng thái',
     align: 'center',
     key: 'status',
-    sorter: true,
-    sortOrder: sortDefault('status'),
     render: (row) => {
       return (
         <NTag type={statusTypeMap[row.status!] || 'default'}>

@@ -31,30 +31,34 @@ const exportOrder = ref<ExportOrder.Data>({
   note: '',
 })
 const formRef = ref<FormInst | null>(null)
-const rules: FormRules = {
-  customerId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
-  ],
-  warehouseId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
-  ],
-  expectedDate: [
-    {
-      required: true,
-      validator: (_rule, value) => {
-        const selectedDate = moment(expectedDate.value).startOf('day')
-        const today = moment().startOf('day')
+const rules = computed<FormRules>(() => {
+  return {
+    [exportOrder.value.type === 'EXPORT' ? 'customerId' : 'warehouseToId']: [
+      { required: true, message: 'Không được để trống', trigger: 'blur' },
+    ],
+    warehouseId: [
+      { required: true, message: 'Không được để trống', trigger: 'blur' },
+    ],
+    expectedDate: [
+      {
+        required: true,
+        validator: (_rule, value) => {
+          const selectedDate = moment(expectedDate.value).startOf('day')
+          const today = moment().startOf('day')
 
-        if (selectedDate.isBefore(today)) {
-          return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
-        }
+          if (exportOrder.value.status === 'NEW') {
+            if (selectedDate.isBefore(today)) {
+              return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+            }
+          }
 
-        return Promise.resolve()
+          return Promise.resolve()
+        },
+        trigger: 'blur',
       },
-      trigger: 'blur'
-    }
-  ],
-}
+    ],
+  }
+})
 const columns = computed(() => {
   const baseColumns: DataTableColumns<ExportOrderDetail.Data> = [
     {
@@ -241,6 +245,11 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   },
 ])
 
+const exportTypeOptions = [
+  { label: 'Xuất hàng thường', value: 'EXPORT' },
+  { label: 'Xuất hàng nội bộ', value: 'INTERNAL' },
+]
+
 // function addLocation(row: any) {
 //   if (!Array.isArray(row.locations)) {
 //     row.locations = []
@@ -343,6 +352,18 @@ function optionWarehouses() {
     label: item.name,
     value: item.id,
   }))
+}
+
+function optionWarehousesTo() {
+  if (!exportOrder.value.warehouseId) {
+    return []
+  }
+  else {
+    return referenceData.value.warehouses.filter(w => w.id !== exportOrder.value.warehouseId).map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+  }
 }
 
 // function optionZones() {
@@ -548,7 +569,8 @@ async function showListProduct() {
     dataRequestBody.value.warehouseId = exportOrder.value.warehouseId
     await getListProduct()
     openModalProduct()
-  } else {
+  }
+  else {
     window.$message.error('Vui lòng chọn kho cần xuất')
   }
 }
@@ -565,7 +587,16 @@ onMounted(async () => {
 
 <template>
   <NSpace vertical size="large">
-    <n-card title="Phiếu xuất hàng">
+    <n-card>
+      <template #header>
+        <div class="n-card-header__main" role="heading">
+          Phiếu xuất hàng
+          <n-tag v-if="exportOrder.status !== 'NEW'" type="primary" style="margin-left: 5px;">
+            <span v-if="exportOrder.type === 'EXPORT'">THƯỜNG</span>
+            <span v-if="exportOrder.type === 'INTERNAL'">NỘI BỘ</span>
+          </n-tag>
+        </div>
+      </template>
       <template #header-extra>
         <n-tag v-if="exportOrder.status === 'CANCELED'" type="error">
           Canceled
@@ -613,7 +644,15 @@ onMounted(async () => {
           secondary
           type="primary"
           @click="() => {
-            createOrUpdateExportOrder('DELIVERED')
+            if (exportOrder.type === 'INTERNAL') {
+              router.push({
+                name: 'purchase-order-management.purchase-order',
+                params: { purchaseOrderId: exportOrder.purchaseOrderId },
+              })
+            }
+            if (exportOrder.type === 'PURCHASE') {
+              createOrUpdateExportOrder('DELIVERED')
+            }
           }"
         >
           <NIcon size="18" :component="CheckboxOutline" style="margin-right: 5px;" />
@@ -630,15 +669,27 @@ onMounted(async () => {
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi :span="1">
-            <n-form-item label="Khách hàng" path="customerId">
+            <n-form-item v-if="exportOrder.status === 'NEW'" label="Loại" path="type">
               <NSelect
-                v-model:value="exportOrder.customerId"
+                v-model:value="exportOrder.type"
                 placeholder=""
-                :options="optionCustomers()"
+                :options="exportTypeOptions"
                 :disabled="exportOrder.status !== 'NEW'"
+                @change="() => {
+                  if (exportOrder.type === 'EXPORT') {
+                    exportOrder.warehouseToId = ''
+                  }
+                  else {
+                    exportOrder.customerId = ''
+                  }
+                }"
               />
             </n-form-item>
           </NGi>
+
+          <NGi :span="1" />
+
+          <NGi :span="1" />
 
           <NGi :span="1">
             <n-form-item label="Kho" path="warehouseId">
@@ -647,17 +698,41 @@ onMounted(async () => {
                 placeholder=""
                 :options="optionWarehouses()"
                 :disabled="exportOrder.status !== 'NEW'"
-                @change="() => exportOrder.details = []"
+                @change="() => {
+                  exportOrder.details = []
+                  exportOrder.warehouseToId = ''
+                }"
               />
             </n-form-item>
           </NGi>
 
           <NGi :span="1">
-            <n-form-item label="Ngày dự kiến" path="expectedDate">
+            <n-form-item v-if="exportOrder.type === 'EXPORT'" label="Khách hàng" path="customerId">
+              <NSelect
+                v-model:value="exportOrder.customerId"
+                placeholder=""
+                :options="optionCustomers()"
+                :disabled="exportOrder.status !== 'NEW'"
+              />
+            </n-form-item>
+
+            <n-form-item v-else label="Đến kho" path="warehouseToId">
+              <NSelect
+                v-model:value="exportOrder.warehouseToId"
+                placeholder=""
+                :options="optionWarehousesTo()"
+                :disabled="exportOrder.status !== 'NEW'"
+              />
+            </n-form-item>
+          </NGi>
+
+          <NGi :span="1">
+            <n-form-item label="Ngày dự kiến" path="expectedDate" style="width: 100%;">
               <n-date-picker
                 v-model:value="expectedDate"
                 value-format="yyyy-MM-dd"
                 type="date"
+                style="width: 100%;"
                 :disabled="exportOrder.status !== 'NEW'"
               />
             </n-form-item>
@@ -673,7 +748,7 @@ onMounted(async () => {
                   minRows: 3,
                   maxRows: 5,
                 }"
-                :disabled="exportOrder.status !== 'NEW'"
+                :disabled="!(exportOrder.status === 'NEW' || exportOrder.status === 'CONFIRMED')"
               />
             </n-form-item>
           </NGi>
