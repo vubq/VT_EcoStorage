@@ -659,14 +659,14 @@ onMounted(async () => {
           secondary
           type="primary"
           @click="() => {
-            checkDate = false
             if (exportOrder.type === 'INTERNAL') {
               router.push({
                 name: 'purchase-order-management.purchase-order',
                 params: { purchaseOrderId: exportOrder.purchaseOrderId },
               })
             }
-            if (exportOrder.type === 'PURCHASE') {
+            if (exportOrder.type === 'EXPORT') {
+              checkDate = false
               createOrUpdateExportOrder('DELIVERED')
             }
           }"

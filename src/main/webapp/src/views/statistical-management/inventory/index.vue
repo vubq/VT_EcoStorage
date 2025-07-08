@@ -2,6 +2,7 @@
 import { NButton, NSpace } from 'naive-ui'
 import { InventoryService } from '@/service/api/inventory-service'
 import { useAppStore } from '@/store'
+import { router } from '@/router'
 
 const appStore = useAppStore()
 
@@ -151,7 +152,19 @@ onMounted(async () => {
                       {{ product.productName }}
                     </td>
                     <td v-if="lIndex === 0" :rowspan="product.locations?.length || 1">
-                      {{ product.productBarcode }}
+                      <n-a
+                        href="#"
+                        class="underline-on-hover"
+                        internal="true"
+                        @click.prevent="() => {
+                          router.push({
+                            name: 'product-management.product',
+                            params: { productId: product.productId },
+                          })
+                        }"
+                      >
+                        {{ product.productBarcode }}
+                      </n-a>
                     </td>
                     <td v-if="lIndex === 0" :rowspan="product.locations?.length || 1">
                       {{ product.productSKU }}
@@ -167,7 +180,18 @@ onMounted(async () => {
                     </td>
 
                     <!-- Location -->
-                    <td>{{ location.locationName }}</td>
+                    <td>
+                      <n-a
+                        href="#"
+                        class="underline-on-hover"
+                        internal="true"
+                        @click.prevent="() => {
+                          router.push({ name: 'warehouse-management', query: { locationId: location.locationId } })
+                        }"
+                      >
+                        {{ location.locationName }}
+                      </n-a>
+                    </td>
                     <td>{{ location.inventoryQuantity }}</td>
                   </tr>
                 </template>

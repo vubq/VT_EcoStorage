@@ -15,4 +15,6 @@ public interface ProductByLocationRepository extends JpaRepository<ProductByLoca
     Page<ProductByLocation> findAll(Specification<ProductByLocation> spec, Pageable pageable);
 
     List<ProductByLocation> findByFloorId(String floorId);
+
+    List<ProductByLocation> findByFloorIdAndInventoryQuantityGreaterThan(String floorId, Long quantity);
 }

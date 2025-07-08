@@ -3,7 +3,7 @@ import { Add } from '@vicons/ionicons5'
 
 import { useBoolean } from '@/hooks'
 import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
-import { NButton, NSpace } from 'naive-ui'
+import { NA, NButton, NSpace } from 'naive-ui'
 import { WarehouseService } from '@/service/api/warehouse-service'
 import { ProductService } from '@/service/api/product-service'
 import { router } from '@/router'
@@ -13,6 +13,9 @@ const { bool: isModalAddShelf, setTrue: showModalAddShelf, setFalse: hidenModalA
 const { bool: isModalAddFloor, setTrue: showModalAddFloor, setFalse: hidenModalAddFloor } = useBoolean(false)
 const { bool: isModalAddWarehouse, setTrue: showModalAddWarehouse, setFalse: hidenModalAddWarehouse } = useBoolean(false)
 
+const route = useRoute()
+const locationId = route.query.locationId as string
+
 const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
   {
     title: 'Barcode',
@@ -20,68 +23,56 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
     key: 'barcode',
     render: (row) => {
       return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
-            router.push({
-              name: 'product-management.product',
-              params: { productId: row.productId },
-            })
-          }}
-        >
-          {row.productBarcode}
-        </NButton>
+        h(
+          NA,
+          {
+            href: '#',
+            class: 'underline-on-hover',
+            internal: true,
+            onClick: (e: MouseEvent) => {
+              e.preventDefault()
+              router.push({
+                name: 'product-management.product',
+                params: { productId: row.productId },
+              })
+            }
+          },
+          { default: () => row.productBarcode }
+        )
       )
     },
   },
   {
-    title: 'Tên',
+    title: 'Sản phẩm',
     align: 'center',
     key: 'productName',
   },
-  // {
-  //   title: 'Unit',
-  //   align: 'center',
-  //   key: 'productUnitName',
-  // },
-  // {
-  //   title: 'Category',
-  //   align: 'center',
-  //   key: 'productCategoryName',
-  // },
-  // {
-  //   title: 'Location',
-  //   align: 'center',
-  //   key: 'location',
-  // },
   {
     title: 'Tồn kho',
     align: 'center',
     key: 'inventoryQuantity',
   },
-  // {
-  //   title: 'Cost Price',
-  //   align: 'center',
-  //   key: 'costPrice',
-  //   render: (row) => {
-  //     return (
-  //       <span>{row.productCostPrice!.toLocaleString('vi-VN')}</span>
-  //     )
-  //   },
-  // },
-  // {
-  //   title: 'Sale Price',
-  //   align: 'center',
-  //   key: 'salePrice',
-  //   render: (row) => {
-  //     return (
-  //       <span>{row.productSalePrice!.toLocaleString('vi-VN')}</span>
-  //     )
-  //   },
-  // },
+  {
+    title: '',
+    align: 'center',
+    key: 'barcode',
+    render: (row) => {
+      return (
+        h(
+          NA,
+          {
+            href: '#',
+            class: 'underline-on-hover',
+            internal: true,
+            onClick: (e: MouseEvent) => {
+              e.preventDefault()
+            }
+          },
+          { default: () => 'Di chuyển vị trí' }
+        )
+      )
+    },
+  },
 ])
 
 const formWarehouseRef = ref<FormInst | null>(null)
@@ -180,34 +171,94 @@ function isSelectedFloor(
 
 // Set giá trị id
 function setZoneId(warehouse: Warehouse.Data, zoneId: string) {
-  warehouse.zoneId = zoneId
-  const zone = findZone(warehouse, zoneId)
-  if (zone) {
-    zone.shelfId = undefined
-    warehouse.products = undefined
+  // Nếu zoneId mới giống với zoneId hiện tại -> reset
+  if (warehouse.zoneId === zoneId) {
+    const currentZone = findZone(warehouse, zoneId);
+    if (currentZone) {
+      const currentShelf = currentZone.shelves?.find(s => s.id === currentZone.shelfId);
+      if (currentShelf) {
+        currentShelf.floorId = undefined;
+      }
+      currentZone.shelfId = undefined;
+    }
+    warehouse.zoneId = undefined;
+    warehouse.products = undefined;
+    return;
   }
+
+  // Nếu khác -> cập nhật zoneId mới và reset shelfId + floorId + products
+  warehouse.zoneId = zoneId;
+  const zone = findZone(warehouse, zoneId);
+  if (zone) {
+    const shelf = zone.shelves?.find(s => s.id === zone.shelfId);
+    if (shelf) {
+      shelf.floorId = undefined;
+    }
+    zone.shelfId = undefined;
+  }
+  warehouse.products = undefined;
 }
 function setShelfId(warehouse: Warehouse.Data, zoneId: string, shelfId: string) {
-  const zone = findZone(warehouse, zoneId)
-  if (zone) {
-    zone.shelfId = shelfId
-    const shelf = findShelf(warehouse, zoneId, shelfId)
-    if (shelf) {
-      shelf.floorId = undefined
-      warehouse.products = undefined
+  const zone = findZone(warehouse, zoneId);
+  if (!zone) return;
+
+  // Nếu shelfId trùng với shelfId hiện tại, đặt lại là null và reset floorId + products
+  if (zone.shelfId === shelfId) {
+    zone.shelfId = undefined;
+    const currentShelf = findShelf(warehouse, zoneId, shelfId);
+    if (currentShelf) {
+      currentShelf.floorId = undefined;
     }
+    warehouse.products = undefined;
+    return;
   }
+
+  // Nếu shelfId mới khác, cập nhật shelfId mới và reset
+  zone.shelfId = shelfId;
+  const newShelf = findShelf(warehouse, zoneId, shelfId);
+  if (newShelf) {
+    newShelf.floorId = undefined;
+  }
+  warehouse.products = undefined;
 }
 async function setFloorId(warehouse: Warehouse.Data, zoneId: string, floorId: string) {
-  const zone = findZone(warehouse, zoneId)
-  const shelf = zone?.shelves?.find(s => s.id === zone.shelfId)
-  if (shelf) {
-    shelf.floorId = floorId
+  const zone = findZone(warehouse, zoneId);
+  const shelf = zone?.shelves?.find(s => s.id === zone.shelfId);
+
+  if (!shelf) return;
+
+  // Nếu floorId mới trùng với floorId hiện tại, gán null và không gọi API
+  if (shelf.floorId === floorId) {
+    shelf.floorId = undefined;
+    warehouse.products = [];
+    return;
   }
+
+  shelf.floorId = floorId;
   await ProductService.getListProductInventoryByLocationId(floorId)
     .then((res: any) => {
       warehouse.products = res.data
     })
+}
+
+function findWarehouseByLocationId(warehouses: Warehouse.Data[], locationId: string) {
+  for (const warehouse of warehouses) {
+    for (const zone of warehouse.zones || []) {
+      for (const shelf of zone.shelves || []) {
+        for (const floor of shelf.floors || []) {
+          if (floor.id === locationId) {
+            return {
+              warehouse,
+              zoneId: zone.id,
+              shelfId: shelf.id,
+              floorId: floor.id,
+            }
+          }
+        }
+      }
+    }
+  }
+  return null
 }
 
 async function createOrUpdateZone() {
@@ -316,6 +367,15 @@ async function createOrUpdateWarehouse() {
 
 onMounted(async () => {
   await getListWarehouse()
+  if (locationId && warehouseList.value.length > 0) {
+    const path = findWarehouseByLocationId(warehouseList.value, locationId)
+    if (path) {
+      const { warehouse, zoneId, shelfId, floorId } = path
+      setZoneId(warehouse, zoneId!)
+      setShelfId(warehouse, zoneId!, shelfId!)
+      await setFloorId(warehouse, zoneId!, floorId!) // gọi API để load product
+    }
+  }
 })
 </script>
 

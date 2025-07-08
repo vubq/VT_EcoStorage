@@ -22,3 +22,15 @@ const naiveLocale = computed(() => {
     </naive-provider>
   </n-config-provider>
 </template>
+
+<style>
+.underline-on-hover {
+  text-decoration: none;
+}
+
+.underline-on-hover:hover {
+  text-decoration: underline;
+}
+</style>
+
+

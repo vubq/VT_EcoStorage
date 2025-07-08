@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, FormRules } from 'naive-ui'
-import { NButton, NGi, NGrid, NIcon, NSelect, NSpace, NTag } from 'naive-ui'
+import { NA, NButton, NGi, NGrid, NIcon, NSelect, NSpace, NTag } from 'naive-ui'
 import { Add, CheckboxOutline, Save, TrashSharp } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { initRulesForm, validateFieldFromErrors } from '@/utils/error'
@@ -77,40 +77,42 @@ const rules: FormRules = {
 
 const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
   {
-    title: 'Đơn hàng',
+    title: 'Phiếu',
     align: 'center',
     key: 'id',
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
-            if (row.type === 'PURCHASE_ORDER') {
-              router.push({
-                name: 'purchase-order-management.purchase-order',
-                params: { purchaseOrderId: row.purchaseOrderId },
-              })
-            }
-            if (row.type === 'EXPORT_ORDER') {
-              router.push({
-                name: 'export-order-management.export-order',
-                params: { exportOrderId: row.exportOrderId },
-              })
-            }
-          }}
-        >
-          { row.type === 'PURCHASE_ORDER'
-            ? <span>{ row.purchaseOrderId }</span> 
-            : '' 
-          }
-          { row.type === 'EXPORT_ORDER'
-            ? <span>{ row.exportOrderId }</span> 
-            : '' 
-          }
-        </NButton>
+      const handleClick = (e: MouseEvent) => {
+        e.preventDefault()
+        if (row.type === 'PURCHASE_ORDER') {
+          router.push({
+            name: 'purchase-order-management.purchase-order',
+            params: { purchaseOrderId: row.purchaseOrderId },
+          })
+        }
+        if (row.type === 'EXPORT_ORDER') {
+          router.push({
+            name: 'export-order-management.export-order',
+            params: { exportOrderId: row.exportOrderId },
+          })
+        }
+      }
+
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: handleClick,
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () =>
+            row.type === 'PURCHASE_ORDER'
+              ? row.purchaseOrderId
+              : row.type === 'EXPORT_ORDER'
+              ? row.exportOrderId
+              : ''
+        }
       )
     },
   },
@@ -127,11 +129,11 @@ const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
       return (
         <div>
           { row.type === 'PURCHASE_ORDER'
-            ? <NTag type='success'>Purchase</NTag>
+            ? <NTag type='success'>NHẬP</NTag>
             : '' 
           }
           { row.type === 'EXPORT_ORDER'
-            ? <NTag type='error'>Export</NTag>
+            ? <NTag type='error'>XUẤT</NTag>
             : '' 
           }
         </div>
@@ -361,7 +363,7 @@ onMounted(async () => {
         </NGrid>
       </n-form>
     </n-card>
-    <n-card title="Lịch sử tồn kho" v-if="listProductInventory.length > 0">
+    <n-card title="Lịch sử" v-if="listProductInventory.length > 0">
       <template #header-extra>
         <NButton v-if="listProductInventory.length > 0" secondary type="primary" strong>
           Tồn kho: {{ product.inventoryQuantity }}

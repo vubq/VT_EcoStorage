@@ -127,7 +127,10 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     render: (row) => {
       return (
         <NTag type={statusTypeMap[row.status!] || 'default'}>
-          {row.status}
+          {row.status === 'NEW' && <span>THÊM MỚI</span>}
+          {row.status === 'CONFIRMED' && <span>ĐÃ XÁC NHẬN</span>}
+          {row.status === 'DELIVERED' && <span>ĐÃ XUẤT HÀNG</span>}
+          {row.status === 'CANCELED' && <span>ĐÃ HỦY</span>}
         </NTag>
       )
     },
@@ -261,6 +264,7 @@ onMounted(async () => {
               <n-input
                 v-model:value="customer.description"
                 type="textarea"
+                placeholder=""
                 :autosize="{
                   minRows: 3,
                   maxRows: 5,
@@ -274,6 +278,7 @@ onMounted(async () => {
               <n-input
                 v-model:value="customer.note"
                 type="textarea"
+                placeholder=""
                 :autosize="{
                   minRows: 3,
                   maxRows: 5,

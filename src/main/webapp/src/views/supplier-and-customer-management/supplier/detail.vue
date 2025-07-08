@@ -99,7 +99,7 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     },
   },
   {
-    title: 'Ngày giao hàng',
+    title: 'Ngày nhận hàng',
     align: 'center',
     key: 'deliveredDate',
     render: (row) => {
@@ -125,7 +125,10 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     render: (row) => {
       return (
         <NTag type={statusTypeMap[row.status!] || 'default'}>
-          {row.status}
+          {row.status === 'NEW' && <span>THÊM MỚI</span>}
+          {row.status === 'CONFIRMED' && <span>ĐÃ XÁC NHẬN</span>}
+          {row.status === 'RECEIVED' && <span>ĐÃ NHẬN HÀNG</span>}
+          {row.status === 'CANCELED' && <span>ĐÃ HỦY</span>}
         </NTag>
       )
     },
@@ -259,6 +262,7 @@ onMounted(async () => {
               <n-input
                 v-model:value="supplier.description"
                 type="textarea"
+                placeholder=""
                 :autosize="{
                   minRows: 3,
                   maxRows: 5,
@@ -272,6 +276,7 @@ onMounted(async () => {
               <n-input
                 v-model:value="supplier.note"
                 type="textarea"
+                placeholder=""
                 :autosize="{
                   minRows: 3,
                   maxRows: 5,

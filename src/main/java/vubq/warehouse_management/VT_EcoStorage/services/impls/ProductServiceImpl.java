@@ -335,7 +335,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductByLocation> getListProductInventoryByLocation(String locationId) {
-        return productByLocationRepository.findByFloorId(locationId);
+        return productByLocationRepository.findByFloorIdAndInventoryQuantityGreaterThan(locationId, 0L);
     }
 
     @Override

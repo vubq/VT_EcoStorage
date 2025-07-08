@@ -441,6 +441,9 @@ async function createOrUpdatePurchaseOrder(status: string) {
               window.$message.error(`Vui lòng chọn vị trí để ${p.productName} [Barcode: ${p.productBarcode}]`)
               return
             }
+            if (Number(p.quantity) !== Number(p.locations.reduce((sum, item) => sum + (item.quantity || 0), 0))) {
+              window.$message.error(`Vui lòng xác nhận lại số lượng ${p.productName} [Barcode: ${p.productBarcode}]`)
+            }
           }
         }
       }
