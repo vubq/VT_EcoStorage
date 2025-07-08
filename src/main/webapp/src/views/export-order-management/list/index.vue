@@ -55,6 +55,14 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     title: 'Loại',
     align: 'center',
     key: 'type',
+    render: (row) => {
+      return (
+        <div>
+          {row.type === 'EXPORT' && <span>THƯỜNG</span>}
+          {row.type === 'INTERNAL' && <span>NỘI BỘ</span>}
+        </div>
+      )
+    },
   },
   {
     title: 'Khách hàng',
@@ -63,8 +71,8 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     render: (row) => {
       return (
         <div>
-          <span v-if={row.type === 'EXPORT'}>{ row.customerName }</span>
-          <span v-if={row.type === 'INTERNAL'}>{ row.warehouseToName }</span>
+          {row.type === 'EXPORT' && <span>{ row.customerName }</span>}
+          {row.type === 'INTERNAL' && <span>{ row.warehouseToName }</span>}
         </div>
       )
     },
@@ -112,7 +120,10 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     render: (row) => {
       return (
         <NTag type={statusTypeMap[row.status!] || 'default'}>
-          {row.status}
+          {row.status === 'NEW' && <span>THÊM MỚI</span>}
+          {row.status === 'CONFIRMED' && <span>ĐÃ XÁC NHẬN</span>}
+          {row.status === 'DELIVERED' && <span>ĐÃ XUẤT HÀNG</span>}
+          {row.status === 'CANCELED' && <span>ĐÃ HỦY</span>}
         </NTag>
       )
     },
@@ -136,6 +147,9 @@ async function changePage(page: number, size: number) {
 }
 
 async function getListExportOrder() {
+  dataTableRequest.value.warehouseId = warehouseId.value
+  dataTableRequest.value.type = type.value
+  dataTableRequest.value.status = status.value
   await ExportOrderService.getListExportOrder(dataTableRequest.value)
     .then((res: any) => {
       listExportOrder.value = res.data.list
@@ -154,6 +168,10 @@ async function reloadTable() {
 
 async function reloadSearch() {
   dataTableRequest.value.filter = ''
+  type.value = 'ALL'
+  status.value = 'ALL'
+  warehouseId.value = 'ALL'
+  dataTableRequest.value.currentPage = 1
   await reloadTableFirst()
 }
 
@@ -191,8 +209,55 @@ function sortData(sorter: DataTableSortState) {
   reloadTable()
 }
 
-onMounted(() => {
-  reloadTableFirst()
+async function getReferenceData() {
+  await ExportOrderService.getReferenceData()
+    .then((res: any) => {
+      referenceData.value = res.data
+    })
+}
+
+const warehouseId = ref<string>('ALL')
+
+const referenceData = ref<ReferenceData.ExportOrder>({
+  warehouses: [],
+  customers: [],
+  categories: [],
+})
+
+function optionWarehouses() {
+  return [
+    {
+      label: 'Tất cả',
+      value: 'ALL',
+    },
+    ...referenceData.value.warehouses.map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+  ]
+}
+
+const type = ref<string>('ALL')
+
+const exportTypeOptions = [
+  { label: 'Tất cả', value: 'ALL' },
+  { label: 'THƯỜNG', value: 'EXPORT' },
+  { label: 'NỘI BỘ', value: 'INTERNAL' },
+]
+
+const status = ref<string>('ALL')
+
+const statusOptions = [
+  { label: 'Tất cả', value: 'ALL' },
+  { label: 'THÊM MỚI', value: 'NEW' },
+  { label: 'ĐÃ XÁC NHẬN', value: 'CONFIRMED' },
+  { label: 'ĐÃ XUẤT HÀNG', value: 'DELIVERED' },
+  { label: 'ĐÃ HỦY', value: 'CANCELED' },
+]
+
+onMounted(async () => {
+  await getReferenceData()
+  await reloadTableFirst()
 })
 </script>
 
@@ -201,6 +266,30 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
+          <n-form-item label="Kho">
+            <n-select
+              v-model:value="warehouseId"
+              placeholder=""
+              :options="optionWarehouses()"
+              style="width: 150px;"
+            />
+          </n-form-item>
+          <n-form-item label="Loại">
+            <n-select
+              v-model:value="type"
+              placeholder=""
+              :options="exportTypeOptions"
+              style="width: 150px;"
+            />
+          </n-form-item>
+          <n-form-item label="Trạng thái">
+            <n-select
+              v-model:value="status"
+              placeholder=""
+              :options="statusOptions"
+              style="width: 150px;"
+            />
+          </n-form-item>
           <n-form-item label="Tìm kiếm" path="filter">
             <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
           </n-form-item>

@@ -22,7 +22,11 @@ public class StatisticalController {
     @GetMapping
     public Response getStatistical(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @RequestParam String warehouseId,
+            @RequestParam String keyword,
+            @RequestParam boolean onlyWithTransaction
+    ) {
         Calendar startCal = Calendar.getInstance();
         startCal.setTime(startDate);
         startCal.set(Calendar.HOUR_OF_DAY, 0);
@@ -39,7 +43,14 @@ public class StatisticalController {
         endCal.set(Calendar.MILLISECOND, 999);
         Date end = endCal.getTime();
         return Response.success(
-                statisticalService.getStatistical(start, end)
+                statisticalService.getStatistical(start, end, warehouseId, keyword, onlyWithTransaction)
+        );
+    }
+
+    @GetMapping("/reference-data")
+    public Response getReferenceData() {
+        return Response.success(
+                statisticalService.getReferenceDataStatistical()
         );
     }
 }

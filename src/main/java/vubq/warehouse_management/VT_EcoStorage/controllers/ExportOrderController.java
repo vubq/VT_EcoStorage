@@ -22,8 +22,13 @@ public class ExportOrderController {
 
 //    @PreAuthorize("hasAuthority('NHAPHANG_THEM1') or hasAuthority('PURCHASE_ORDER.VIEW')")
     @GetMapping("/list")
-    public Response getListUser(@NonNull DataTableRequest dataTableRequest) {
-        Page<ExportOrder> results = exportOrderService.getExportOrders(dataTableRequest);
+    public Response getListUser(
+            @NonNull DataTableRequest dataTableRequest,
+            @RequestParam String warehouseId,
+            @RequestParam String type,
+            @RequestParam String status
+    ) {
+        Page<ExportOrder> results = exportOrderService.getExportOrders(dataTableRequest, warehouseId, type, status);
         return Response.success(
                 DataTableResponse.builder()
                         .list(results.getContent().stream().map(ExportOrderDto::toDataTable).toList())

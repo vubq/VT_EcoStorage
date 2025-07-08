@@ -1,10 +1,16 @@
 <script setup lang="tsx">
-import type { DataTableColumns, DataTableSortState } from 'naive-ui'
+import type { DataTableColumns, DataTableSortState, FormRules } from 'naive-ui'
 import { NButton, NSpace } from 'naive-ui'
 import { Add } from '@vicons/ionicons5'
 import { ProductService } from '@/service/api/product-service'
 import { useBoolean } from '@/hooks'
 
+const formRef = ref()
+const rules: FormRules = {
+  name: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+}
 const { bool: visible, setTrue: openModal, setFalse: hideModal } = useBoolean(false)
 const tableRef = ref()
 const dataTableRequest = ref<DataTable.Request>({
@@ -98,13 +104,17 @@ async function getCategory(id: string) {
 }
 
 async function createOrUpdateCategory() {
-  await ProductService.createOrUpdateCategory(category.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        hideModal()
-        reloadTableFirst()
-      }
-    })
+  formRef.value?.validate(async (errors: any) => {
+    if (!errors) {
+      await ProductService.createOrUpdateCategory(category.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            hideModal()
+            reloadTableFirst()
+          }
+        })
+    }
+  })
 }
 
 function sortTable(sorter: DataTableSortState) {
@@ -139,7 +149,7 @@ onMounted(() => {
 <template>
   <NSpace vertical size="large">
     <n-card>
-      <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
+      <n-form :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
           <n-form-item label="Tìm kiếm" path="filter">
             <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
@@ -193,7 +203,7 @@ onMounted(() => {
         action: true,
       }"
     >
-      <n-form label-placement="left" :model="category" label-align="left" :label-width="90">
+      <n-form ref="formRef" :rules="rules" label-placement="left" :model="category" label-align="left" :label-width="90">
         <n-form-item label="Tên" path="name">
           <n-input v-model:value="category.name" placeholder="" />
         </n-form-item>

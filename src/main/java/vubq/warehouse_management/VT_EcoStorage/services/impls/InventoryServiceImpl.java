@@ -2,9 +2,14 @@ package vubq.warehouse_management.VT_EcoStorage.services.impls;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import vubq.warehouse_management.VT_EcoStorage.dtos.InventoryDto;
-import vubq.warehouse_management.VT_EcoStorage.dtos.InventoryLocationDto;
+import vubq.warehouse_management.VT_EcoStorage.dtos.*;
+import vubq.warehouse_management.VT_EcoStorage.dtos.responses.ReferenceDataInventoryResponse;
+import vubq.warehouse_management.VT_EcoStorage.entities.Customer;
+import vubq.warehouse_management.VT_EcoStorage.entities.ProductCategory;
+import vubq.warehouse_management.VT_EcoStorage.entities.Warehouse;
+import vubq.warehouse_management.VT_EcoStorage.repositories.ProductCategoryRepository;
 import vubq.warehouse_management.VT_EcoStorage.repositories.ProductInventoryLocationRepository;
+import vubq.warehouse_management.VT_EcoStorage.repositories.WarehouseRepository;
 import vubq.warehouse_management.VT_EcoStorage.services.InventoryService;
 
 import java.util.ArrayList;
@@ -17,11 +22,15 @@ import java.util.stream.Collectors;
 public class InventoryServiceImpl implements InventoryService {
 
     private final ProductInventoryLocationRepository productInventoryLocationRepository;
+    private final WarehouseRepository warehouseRepository;
+    private final ProductCategoryRepository productCategoryRepository;
 
     @Override
-    public List<InventoryDto> getAllInventory() {
-        Map<String, Map<String, List<InventoryLocationDto>>> grouped = productInventoryLocationRepository
-                .findAllInventoryWithLocation().stream()
+    public List<InventoryDto> getAllInventory(String warehouseId, String productCategoryId, String keyword) {
+        List<InventoryLocationDto> rawData = productInventoryLocationRepository
+                .findAllInventoryWithLocation(warehouseId, productCategoryId, keyword);
+
+        Map<String, Map<String, List<InventoryLocationDto>>> grouped = rawData.stream()
                 .collect(Collectors.groupingBy(
                         InventoryLocationDto::getWarehouseId,
                         Collectors.groupingBy(InventoryLocationDto::getProductId)
@@ -30,7 +39,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<InventoryDto> result = new ArrayList<>();
 
         for (Map.Entry<String, Map<String, List<InventoryLocationDto>>> warehouseEntry : grouped.entrySet()) {
-            String warehouseId = warehouseEntry.getKey();
+            String wId = warehouseEntry.getKey();
             Map<String, List<InventoryLocationDto>> productMap = warehouseEntry.getValue();
 
             String warehouseName = productMap.values().stream()
@@ -43,7 +52,6 @@ public class InventoryServiceImpl implements InventoryService {
 
             for (Map.Entry<String, List<InventoryLocationDto>> productEntry : productMap.entrySet()) {
                 List<InventoryLocationDto> locations = productEntry.getValue();
-
                 InventoryLocationDto first = locations.get(0);
 
                 List<InventoryDto.Product.Location> locationList = locations.stream()
@@ -63,6 +71,10 @@ public class InventoryServiceImpl implements InventoryService {
                         first.getProductName(),
                         first.getProductBarcode(),
                         first.getProductSKU(),
+                        first.getProductCategoryId(),
+                        first.getProductCategoryName(),
+                        first.getProductUnitId(),
+                        first.getProductUnitName(),
                         totalQuantity,
                         locationList
                 );
@@ -70,9 +82,17 @@ public class InventoryServiceImpl implements InventoryService {
                 products.add(product);
             }
 
-            InventoryDto inventoryDto = new InventoryDto(warehouseId, warehouseName, products);
-            result.add(inventoryDto);
+            result.add(new InventoryDto(wId, warehouseName, products));
         }
+
         return result;
+    }
+
+    @Override
+    public ReferenceDataInventoryResponse getReferenceDataInventory() {
+        ReferenceDataInventoryResponse referenceDataInventoryResponse = new ReferenceDataInventoryResponse();
+        referenceDataInventoryResponse.setWarehouses(warehouseRepository.findByStatus(Warehouse.Status.ACTIVE).stream().map(WarehouseDto::toDto).collect(Collectors.toList()));
+        referenceDataInventoryResponse.setCategories(productCategoryRepository.findByStatus(ProductCategory.Status.ACTIVE).stream().map(ProductCategoryDto::toDto).collect(Collectors.toList()));
+        return referenceDataInventoryResponse;
     }
 }

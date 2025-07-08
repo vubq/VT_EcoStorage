@@ -31,32 +31,44 @@ const purchaseOrder = ref<PurchaseOrder.Data>({
   note: '',
 })
 const formRef = ref<FormInst | null>(null)
-const rules: FormRules = {
-  supplierId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' },
-  ],
-  warehouseId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' },
-  ],
-  expectedDate: [
-    {
-      required: true,
-      validator: (_rule, value) => {
-        const selectedDate = moment(expectedDate.value).startOf('day')
-        const today = moment().startOf('day')
+const checkDate = ref<boolean>(false)
+const rules = computed<FormRules>(() => {
+  return {
+    [purchaseOrder.value.type === 'PURCHASE' ? 'supplierId' : 'warehouseFromId']: [
+      { required: true, message: 'Không được để trống', trigger: 'blur' },
+    ],
+    warehouseId: [
+      { required: true, message: 'Không được để trống', trigger: 'blur' },
+    ],
+    expectedDate: [
+      {
+        required: true,
+        validator: (_rule, value) => {
+          const selectedDate = moment(expectedDate.value).startOf('day')
+          const selectedDatePurchaseOrder = moment(purchaseOrder.value.expectedDate).startOf('day')
+          const today = moment().startOf('day')
 
-        if (purchaseOrder.value.status === 'NEW') {
-          if (selectedDate.isBefore(today)) {
-            return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+          if (checkDate.value) {
+            if (!purchaseOrder.value.expectedDate) {
+              if (selectedDate.isBefore(today)) {
+                return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+              }
+            } else {
+              if (selectedDate !== selectedDatePurchaseOrder) {
+                if (selectedDate.isBefore(today)) {
+                  return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+                }
+              }
+            }
           }
-        }
 
-        return Promise.resolve()
+          return Promise.resolve()
+        },
+        trigger: 'blur',
       },
-      trigger: 'blur',
-    },
-  ],
-}
+    ],
+  }
+})
 const columns = computed(() => {
   const baseColumns: DataTableColumns<PurchaseOrderDetail.Data> = [
     {
@@ -149,8 +161,8 @@ const columns = computed(() => {
             <NSpace vertical size="large">
               {(row.locations || []).map((l: any, index: number) => (
                 <NGrid key={index} cols={5} y-gap={12} x-gap={24}>
-                  <NGi span={1}><NSelect options={optionZones()} placeholder="Khu vực" v-model:value={l.zoneId} /></NGi>
-                  <NGi span={1}><NSelect options={optionShelf(l.zoneId)} placeholder="Kệ" v-model:value={l.shelfId} /></NGi>
+                  <NGi span={1}><NSelect options={optionZones()} placeholder="Khu vực" v-model:value={l.zoneId} onChange={() => {l.shelfId = null; l.locationId = null }} /></NGi>
+                  <NGi span={1}><NSelect options={optionShelf(l.zoneId)} placeholder="Kệ" v-model:value={l.shelfId} onChange={() => l.locationId = null} /></NGi>
                   <NGi span={1}><NSelect options={optionFloor(l.zoneId, l.shelfId, row.productId!)} placeholder="Tầng" v-model:value={l.locationId} /></NGi>
                   <NGi span={1}><NInputNumber v-model:value={l.quantity} placeholder="Số lượng" min={1} /></NGi>
                   <NGi span={1}>
@@ -506,10 +518,10 @@ onMounted(async () => {
       </template>
       <template #header-extra>
         <n-tag v-if="purchaseOrder.status === 'CANCELED'" type="error">
-          Canceled
+          ĐÃ HỦY
         </n-tag>
         <n-tag v-if="purchaseOrder.status === 'RECEIVED'" type="success">
-          Received
+          ĐÃ NHẬN HÀNG
         </n-tag>
         <NButton
           v-if="purchaseOrder.id && purchaseOrder.status !== 'RECEIVED' && purchaseOrder.status !== 'CANCELED'"
@@ -517,6 +529,7 @@ onMounted(async () => {
           secondary
           type="error"
           @click="() => {
+            checkDate = false
             createOrUpdatePurchaseOrder('CANCELED')
           }"
         >
@@ -528,7 +541,10 @@ onMounted(async () => {
           secondary
           type="primary"
           style="margin-left: 10px;"
-          @click="createOrUpdatePurchaseOrder('NEW')"
+          @click="() => {
+            checkDate = true
+            createOrUpdatePurchaseOrder('NEW')
+          }"
         >
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
           Lưu
@@ -539,6 +555,7 @@ onMounted(async () => {
           secondary
           type="primary"
           @click="() => {
+            checkDate = true
             createOrUpdatePurchaseOrder('CONFIRMED')
           }"
         >
@@ -551,6 +568,7 @@ onMounted(async () => {
           secondary
           type="primary"
           @click="() => {
+            checkDate = false
             createOrUpdatePurchaseOrder('RECEIVED')
           }"
         >

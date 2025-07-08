@@ -16,4 +16,13 @@ namespace ReferenceData {
     productUnits: Unit.Data[]
     productOrigins: Origin.Data[]
   }
+
+  interface Statistical {
+    warehouses: Warehouse.Data[]
+  }
+
+  interface Inventory {
+    warehouses: Warehouse.Data[]
+    categories: Category.Data[]
+  }
 }

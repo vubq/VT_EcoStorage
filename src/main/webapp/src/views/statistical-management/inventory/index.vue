@@ -1,129 +1,30 @@
 <script setup lang="tsx">
-import type { DataTableColumns, DataTableSortState } from 'naive-ui'
 import { NButton, NSpace } from 'naive-ui'
-import { Add } from '@vicons/ionicons5'
-import { ProductService } from '@/service/api/product-service'
-import { useBoolean } from '@/hooks'
 import { InventoryService } from '@/service/api/inventory-service'
+import { useAppStore } from '@/store'
 
-const { bool: visible, setTrue: openModal, setFalse: hideModal } = useBoolean(false)
-const tableRef = ref()
-const dataTableRequest = ref<DataTable.Request>({
-  currentPage: 1,
-  perPage: 10,
-  filter: '',
-  sortBy: 'id',
-  sortDesc: true,
-})
-const categoryId = ref<string>('')
-const columns = ref<DataTableColumns<Category.Data>>([
-  {
-    title: 'Id',
-    align: 'center',
-    key: 'id',
-    render: (row) => {
-      return (
-        <NButton
-          secondary
-          type="primary"
-          strong
-          onClick={() => getCategory(row.id!)}
-        >
-          {row.id}
-        </NButton>
-      )
-    },
-  },
-  {
-    title: 'Name',
-    align: 'center',
-    key: 'name',
-  },
-])
-const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
-const listCategory = ref<Category.Data[]>([])
-const category = ref<Category.Data>({
-  name: '',
-  status: 'ACTIVE',
-})
-const totalRecords = ref<number>(0)
-
-function sortDefault(columnKey: string) {
-  if (dataTableRequest.value.sortBy !== columnKey) {
-    return false
-  }
-  return dataTableRequest.value.sortDesc ? 'descend' : 'ascend'
-}
-
-async function changePage(page: number, size: number) {
-  dataTableRequest.value.currentPage = page
-  dataTableRequest.value.perPage = size
-  await getListCategory()
-}
-
-async function getListCategory() {
-  await ProductService.getListCategory(dataTableRequest.value)
-    .then((res: any) => {
-      listCategory.value = res.data.list
-      totalRecords.value = res.data.totalRecords
-    })
-}
-
-async function reloadTableFirst() {
-  dataTableRequest.value.currentPage = 1
-  await getListCategory()
-}
-
-async function reloadTable() {
-  await getListCategory()
-}
-
-async function getCategory(id: string) {
-  await ProductService.getCategory(id)
-    .then((res: any) => {
-      category.value = res.data
-      openModal()
-    })
-}
-
-async function createOrUpdateCategory() {
-  await ProductService.createOrUpdateCategory(category.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        hideModal()
-        reloadTableFirst()
-      }
-    })
-}
-
-function sortTable(sorter: DataTableSortState) {
-  columnsRef.value.forEach((column: any) => {
-    if (column.key === sorter.columnKey) {
-      column.sortOrder = sorter.order
-    }
-    else {
-      column.sortOrder = false
-    }
-  })
-  sortData(sorter)
-}
-
-function sortData(sorter: DataTableSortState) {
-  if (!sorter.order) {
-    dataTableRequest.value.sortBy = ''
-    dataTableRequest.value.sortDesc = false
-  }
-  else {
-    dataTableRequest.value.sortBy = sorter.columnKey.toString()
-    dataTableRequest.value.sortDesc = sorter.order === 'descend'
-  }
-  reloadTable()
-}
+const appStore = useAppStore()
 
 const inventoryList = ref<Inventory.Data[]>([])
+const referenceData = ref<ReferenceData.Inventory>({
+  warehouses: [],
+  categories: [],
+})
+const warehouseId = ref<string>('ALL')
+const productCategoryId = ref<string>('ALL')
+const keyword = ref<string>('')
+
+async function getReferenceData() {
+  appStore.showProgress && window.$loadingBar?.start()
+  await InventoryService.getReferenceData()
+    .then((res: any) => {
+      referenceData.value = res.data
+    })
+    .finally(() => appStore.showProgress && window.$loadingBar?.finish())
+}
 
 async function getInventory() {
-  await InventoryService.getInventory()
+  await InventoryService.getInventory(warehouseId.value, productCategoryId.value, keyword.value)
     .then((res: any) => {
       if (res.isSuccess) {
         inventoryList.value = res.data
@@ -139,28 +40,77 @@ function getWarehouseRowspan(warehouse: Inventory.Data): number {
   }, 0)
 }
 
-onMounted(() => {
+function optionWarehouses() {
+  return [
+    {
+      label: 'Tất cả',
+      value: 'ALL',
+    },
+    ...referenceData.value.warehouses.map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+  ]
+}
+
+function optionProductCategories() {
+  return [
+    {
+      label: 'Tất cả',
+      value: 'ALL',
+    },
+    ...referenceData.value.categories.map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+  ]
+}
+
+function reloadFilter() {
+  keyword.value = ''
+  warehouseId.value = 'ALL'
+  productCategoryId.value = 'ALL'
   getInventory()
-  getListCategory()
+}
+
+onMounted(async () => {
+  await getReferenceData()
+  await getInventory()
 })
 </script>
 
 <template>
   <NSpace vertical size="large">
     <n-card>
-      <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
+      <n-form label-placement="left" inline :show-feedback="false">
         <n-flex>
+          <n-form-item label="Kho">
+            <n-select
+              v-model:value="warehouseId"
+              placeholder=""
+              :options="optionWarehouses()"
+              style="width: 150px;"
+            />
+          </n-form-item>
+          <n-form-item label="Danh mục">
+            <n-select
+              v-model:value="productCategoryId"
+              placeholder=""
+              :options="optionProductCategories()"
+              style="width: 150px;"
+            />
+          </n-form-item>
           <n-form-item label="Tìm kiếm" path="filter">
-            <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
+            <n-input v-model:value="keyword" placeholder="Từ khóa..." />
           </n-form-item>
           <n-flex class="ml-auto">
-            <NButton type="primary" secondary @click="reloadTableFirst()">
+            <NButton type="primary" secondary @click="getInventory()">
               <template #icon>
                 <icon-park-outline-search />
               </template>
-              Tìm kiếm
+              Lọc
             </NButton>
-            <NButton strong secondary @click="reloadTableFirst()">
+            <NButton strong secondary @click="reloadFilter()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>
@@ -175,9 +125,11 @@ onMounted(() => {
           <thead>
             <tr>
               <th>Kho</th>
-              <th>Dản phẩm</th>
+              <th>Sản phẩm</th>
               <th>Barcode</th>
               <th>SKU</th>
+              <th>Danh mục</th>
+              <th>Đơn vị tính</th>
               <th>Tồn kho</th>
               <th>Vị trí</th>
               <th>Tồn kho theo vị trí</th>
@@ -203,6 +155,12 @@ onMounted(() => {
                     </td>
                     <td v-if="lIndex === 0" :rowspan="product.locations?.length || 1">
                       {{ product.productSKU }}
+                    </td>
+                    <td v-if="lIndex === 0" :rowspan="product.locations?.length || 1">
+                      {{ product.productCategoryName }}
+                    </td>
+                    <td v-if="lIndex === 0" :rowspan="product.locations?.length || 1">
+                      {{ product.productUnitName }}
                     </td>
                     <td v-if="lIndex === 0" :rowspan="product.locations?.length || 1">
                       {{ product.inventoryQuantity }}

@@ -10,7 +10,7 @@ public interface PurchaseOrderService {
 
     boolean createOrUpdatePurchaseOrder(PurchaseOrderDto purchaseOrderDto);
 
-    Page<PurchaseOrder> getListPurchaseOrder(DataTableRequest dataTableRequest);
+    Page<PurchaseOrder> getListPurchaseOrder(DataTableRequest dataTableRequest, String warehouseId, String type, String status);
 
     ReferenceDataPurchaseOrderResponse getReferenceDataPurchaseOrder();
 

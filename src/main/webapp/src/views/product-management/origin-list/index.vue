@@ -1,10 +1,16 @@
 <script setup lang="tsx">
-import type { DataTableColumns, DataTableSortState } from 'naive-ui'
+import type { DataTableColumns, DataTableSortState, FormRules } from 'naive-ui'
 import { NButton, NSpace } from 'naive-ui'
 import { Add } from '@vicons/ionicons5'
 import { ProductService } from '@/service/api/product-service'
 import { useBoolean } from '@/hooks'
 
+const formRef = ref()
+const rules: FormRules = {
+  name: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+}
 const { bool: visible, setTrue: openModal, setFalse: hideModal } = useBoolean(false)
 const tableRef = ref()
 const dataTableRequest = ref<DataTable.Request>({
@@ -98,13 +104,17 @@ async function getOrigin(id: string) {
 }
 
 async function createOrUpdateOrigin() {
-  await ProductService.createOrUpdateOrigin(origin.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        hideModal()
-        reloadTableFirst()
-      }
-    })
+  formRef.value?.validate(async (errors: any) => {
+    if (!errors) {
+      await ProductService.createOrUpdateOrigin(origin.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            hideModal()
+            reloadTableFirst()
+          }
+        })
+    }
+  })
 }
 
 function sortTable(sorter: DataTableSortState) {

@@ -20,8 +20,13 @@ public class PurchaseOrderController {
     final private PurchaseOrderService purchaseOrderService;
 
     @GetMapping("/list")
-    public Response getListUser(@NonNull DataTableRequest dataTableRequest) {
-        Page<PurchaseOrder> results = purchaseOrderService.getListPurchaseOrder(dataTableRequest);
+    public Response getListUser(
+            @NonNull DataTableRequest dataTableRequest,
+            @RequestParam String warehouseId,
+            @RequestParam String type,
+            @RequestParam String status
+    ) {
+        Page<PurchaseOrder> results = purchaseOrderService.getListPurchaseOrder(dataTableRequest, warehouseId, type, status);
         return Response.success(
                 DataTableResponse.builder()
                         .list(results.getContent().stream().map(PurchaseOrderDto::toDataTable).toList())

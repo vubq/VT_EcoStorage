@@ -24,6 +24,13 @@ public class InventoryDto {
         private String productName;
         private String productBarcode;
         private String productSKU;
+
+        private String productCategoryId;
+        private String productCategoryName;
+
+        private String productUnitId;
+        private String productUnitName;
+
         private Long inventoryQuantity;
 
         private List<Location> locations;

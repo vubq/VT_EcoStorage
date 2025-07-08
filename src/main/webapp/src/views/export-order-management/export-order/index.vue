@@ -31,6 +31,7 @@ const exportOrder = ref<ExportOrder.Data>({
   note: '',
 })
 const formRef = ref<FormInst | null>(null)
+const checkDate = ref<boolean>(false)
 const rules = computed<FormRules>(() => {
   return {
     [exportOrder.value.type === 'EXPORT' ? 'customerId' : 'warehouseToId']: [
@@ -44,11 +45,20 @@ const rules = computed<FormRules>(() => {
         required: true,
         validator: (_rule, value) => {
           const selectedDate = moment(expectedDate.value).startOf('day')
+          const selectedDateExportOrder = moment(exportOrder.value.expectedDate).startOf('day')
           const today = moment().startOf('day')
 
-          if (exportOrder.value.status === 'NEW') {
-            if (selectedDate.isBefore(today)) {
-              return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+          if (checkDate.value) {
+            if (!exportOrder.value.expectedDate) {
+              if (selectedDate.isBefore(today)) {
+                return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+              }
+            } else {
+              if (selectedDate !== selectedDateExportOrder) {
+                if (selectedDate.isBefore(today)) {
+                  return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
+                }
+              }
             }
           }
 
@@ -599,10 +609,10 @@ onMounted(async () => {
       </template>
       <template #header-extra>
         <n-tag v-if="exportOrder.status === 'CANCELED'" type="error">
-          Canceled
+          ĐÃ HỦY
         </n-tag>
         <n-tag v-if="exportOrder.status === 'DELIVERED'" type="success">
-          Delivered
+          ĐÃ XUẤT HÀNG
         </n-tag>
         <NButton
           v-if="exportOrder.id && exportOrder.status !== 'DELIVERED' && exportOrder.status !== 'CANCELED'"
@@ -610,6 +620,7 @@ onMounted(async () => {
           secondary
           type="error"
           @click="() => {
+            checkDate = false
             createOrUpdateExportOrder('CANCELED')
           }"
         >
@@ -621,7 +632,10 @@ onMounted(async () => {
           secondary
           type="primary"
           style="margin-left: 10px;"
-          @click="createOrUpdateExportOrder('NEW')"
+          @click="() => {
+            checkDate = true
+            createOrUpdateExportOrder('NEW')
+          }"
         >
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
           Lưu
@@ -632,6 +646,7 @@ onMounted(async () => {
           secondary
           type="primary"
           @click="() => {
+            checkDate = true
             createOrUpdateExportOrder('CONFIRMED')
           }"
         >
@@ -644,6 +659,7 @@ onMounted(async () => {
           secondary
           type="primary"
           @click="() => {
+            checkDate = false
             if (exportOrder.type === 'INTERNAL') {
               router.push({
                 name: 'purchase-order-management.purchase-order',

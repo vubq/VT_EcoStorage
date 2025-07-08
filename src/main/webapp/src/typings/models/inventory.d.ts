@@ -11,6 +11,10 @@ namespace Inventory {
     productName?: string
     productBarcode?: string
     productSKU?: string
+    productCategoryId?: string
+    productCategoryName?: string
+    productUnitId?: string
+    productUnitName?: string
     inventoryQuantity?: number
     locations?: Inventory.Location[]
   }

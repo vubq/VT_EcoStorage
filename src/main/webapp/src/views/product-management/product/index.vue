@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, FormRules } from 'naive-ui'
 import { NButton, NGi, NGrid, NIcon, NSelect, NSpace, NTag } from 'naive-ui'
 import { Add, CheckboxOutline, Save, TrashSharp } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
@@ -35,6 +35,45 @@ const product = ref<Product.Data>({
   productUnitId: '',
   inventoryQuantity: 0,
 })
+
+const rules: FormRules = {
+  name: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  costPrice: [
+    {
+      required: true,
+      validator: (_rule, value) => {
+        if (value < 0) {
+          return Promise.reject('Giá vốn phải lớn hơn hoặc bằng 0');
+        }
+        return Promise.resolve();
+      },
+      trigger: 'blur'
+    }
+  ],
+  salePrice: [
+    {
+      required: true,
+      validator: (_rule, value) => {
+        if (value < 0) {
+          return Promise.reject('Giá bán phải lớn hơn hoặc bằng 0');
+        }
+        return Promise.resolve();
+      },
+      trigger: 'blur'
+    }
+  ],
+  productCategoryId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  productUnitId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+  productOriginId: [
+    { required: true, message: 'Không được để trống', trigger: 'blur' }
+  ],
+}
 
 const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
   {
@@ -179,19 +218,23 @@ async function changePage(page: number, size: number) {
 }
 
 async function createOrUpdateProduct(status: string) {
-  await ProductService.createOrUpdateProduct({
-    ...product.value,
-    status,
+  formProductRef.value?.validate(async (errors: any) => {
+    if (!errors) {
+      await ProductService.createOrUpdateProduct({
+        ...product.value,
+        status,
+      })
+        .then((res: any) => {
+          if (res.isSuccess) {
+            router.push({ name: 'product-management.list' })
+          }
+          else {
+            // errors.value = res.data
+            // formUserRef.value.validate()
+          }
+        })
+    }
   })
-    .then((res: any) => {
-      if (res.isSuccess) {
-        router.push({ name: 'product-management.list' })
-      }
-      else {
-        // errors.value = res.data
-        // formUserRef.value.validate()
-      }
-    })
 }
 
 onMounted(async () => {
@@ -220,11 +263,11 @@ onMounted(async () => {
       </template>
 
       <n-form
-        ref="formUserRef"
+        ref="formProductRef"
         inline
         :label-width="80"
         :model="product"
-        :rules="productRules"
+        :rules="rules"
       >
         <NGrid cols="3" y-gap="12" x-gap="24">
           <NGi NGi :span="1">
@@ -242,6 +285,7 @@ onMounted(async () => {
                 style="width: 100%;"
                 v-model:value="product.costPrice"
                 placeholder=""
+                min="0"
               />
             </n-form-item>
           </NGi>
@@ -252,6 +296,7 @@ onMounted(async () => {
                 style="width: 100%;"
                 v-model:value="product.salePrice"
                 placeholder=""
+                min="0"
               />
             </n-form-item>
           </NGi>

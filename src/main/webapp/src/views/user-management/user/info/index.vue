@@ -80,16 +80,20 @@ async function getUser() {
 }
 
 async function createOrUpdateUser() {
-  await UserService.createOrUpdateUser(user.value)
-    .then((res: any) => {
-      if (res.isSuccess) {
-        router.push({ name: 'user-management.user' })
-      }
-      else {
-        errors.value = res.data
-        formUserRef.value.validate()
-      }
-    })
+  formUserRef.value?.validate(async (errors: any) => {
+    if (!errors) {
+      await UserService.createOrUpdateUser(user.value)
+        .then((res: any) => {
+          if (res.isSuccess) {
+            router.push({ name: 'user-management.user' })
+          }
+          else {
+            errors.value = res.data
+            formUserRef.value.validate()
+          }
+        })
+    }
+  })
 }
 
 async function getListPermissionGroup() {

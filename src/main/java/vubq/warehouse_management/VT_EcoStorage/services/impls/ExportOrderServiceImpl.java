@@ -135,10 +135,12 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setNote(exportOrderDto.getNote());
             exportOrderRepository.saveAndFlush(exportOrder);
 
-            PurchaseOrder purchaseOrder = purchaseOrderRepository.findByExportOrderId(exportOrder.getId()).orElse(null);
-            if (purchaseOrder != null) {
-                purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
-                purchaseOrder.setNote(exportOrderDto.getNote());
+            if (!StringUtils.isEmpty(exportOrder.getId())) {
+                PurchaseOrder purchaseOrder = purchaseOrderRepository.findByExportOrderId(exportOrder.getId()).orElse(null);
+                if (purchaseOrder != null) {
+                    purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
+                    purchaseOrder.setNote(exportOrderDto.getNote());
+                }
             }
             return true;
         }
@@ -148,10 +150,12 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             exportOrder.setNote(exportOrderDto.getNote());
             exportOrderRepository.saveAndFlush(exportOrder);
 
-            PurchaseOrder purchaseOrder = purchaseOrderRepository.findByExportOrderId(exportOrder.getId()).orElse(null);
-            if (purchaseOrder != null) {
-                purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
-                purchaseOrder.setNote(exportOrderDto.getNote());
+            if (!StringUtils.isEmpty(exportOrder.getId())) {
+                PurchaseOrder purchaseOrder = purchaseOrderRepository.findByExportOrderId(exportOrder.getId()).orElse(null);
+                if (purchaseOrder != null) {
+                    purchaseOrder.setStatus(PurchaseOrder.Status.CANCELED);
+                    purchaseOrder.setNote(exportOrderDto.getNote());
+                }
             }
             return true;
         }
@@ -329,7 +333,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
     }
 
     @Override
-    public Page<ExportOrder> getExportOrders(DataTableRequest dataTableRequest) {
+    public Page<ExportOrder> getExportOrders(DataTableRequest dataTableRequest, String warehouseId, String type, String status) {
         PageRequest pageable = dataTableRequest.toPageable();
         BaseSpecification<ExportOrder> specIdContains = new BaseSpecification<>(
                 SearchCriteria.builder()
@@ -338,7 +342,49 @@ public class ExportOrderServiceImpl implements ExportOrderService {
                         .value(dataTableRequest.getFilter().trim().toUpperCase())
                         .build()
         );
-        return exportOrderRepository.findAll(Specification.where(specIdContains), pageable);
+        BaseSpecification<ExportOrder> specCustomerNameContains = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{"customer", Base.Fields.name})
+                        .operation(SearchOperation.CONTAINS)
+                        .value(dataTableRequest.getFilter().trim().toUpperCase())
+                        .build()
+        );
+        BaseSpecification<ExportOrder> specWarehouseToNameContains = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{"warehouseTo", Base.Fields.name})
+                        .operation(SearchOperation.CONTAINS)
+                        .value(dataTableRequest.getFilter().trim().toUpperCase())
+                        .build()
+        );
+        BaseSpecification<ExportOrder> specWarehouseIdEqual = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ExportOrder.Fields.warehouseId})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(warehouseId)
+                        .build()
+        );
+        BaseSpecification<ExportOrder> specTypeEqual = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ExportOrder.Fields.type})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(type)
+                        .build()
+        );
+        BaseSpecification<ExportOrder> specStatusEqual = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{ExportOrder.Fields.status})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(status)
+                        .build()
+        );
+        return exportOrderRepository.findAll(
+                Specification.where(specIdContains)
+                        .or(specCustomerNameContains)
+                        .or(specWarehouseToNameContains)
+                        .and(warehouseId.equals("ALL") ? null : specWarehouseIdEqual)
+                        .and(type.equals("ALL") ? null : specTypeEqual)
+                        .and(status.equals("ALL") ? null : specStatusEqual)
+                , pageable);
     }
 
     @Override

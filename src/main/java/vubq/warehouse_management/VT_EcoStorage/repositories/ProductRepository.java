@@ -59,46 +59,192 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     );
 
     @Query(value = """
-            SELECT 
-                wh.id AS warehouse_id,
-                wh.name AS warehouse_name,
-                p.id AS product_id,
-                p.name AS product_name,
-                p.barcode AS product_barcode,
-                p.sku AS product_sku,
+                WITH all_product_warehouses AS (
+                    SELECT 
+                        p.id AS product_id,
+                        w.id AS warehouse_id,
+                        p.name AS product_name,
+                        p.barcode AS product_barcode,
+                        p.sku AS product_sku,
+                        w.name AS warehouse_name
+                    FROM tb_products p
+                    CROSS JOIN tb_warehouses w
+                ),
+                import_data AS (
+                    SELECT
+                        pod.product_id,
+                        po.warehouse_id,
+                        SUM(pod.quantity) AS total_import_quantity,
+                        SUM(pod.total_amount) AS total_import_amount
+                    FROM tb_purchase_order_details pod
+                    JOIN tb_purchase_orders po ON pod.purchase_order_id = po.id
+                    WHERE po.status = 'RECEIVED'
+                      AND po.received_date BETWEEN :startDate AND :endDate
+                    GROUP BY pod.product_id, po.warehouse_id
+                ),
+                export_data AS (
+                    SELECT
+                        eod.product_id,
+                        eo.warehouse_id,
+                        SUM(eod.quantity) AS total_export_quantity,
+                        SUM(eod.total_amount) AS total_export_amount
+                    FROM tb_export_order_details eod
+                    JOIN tb_export_orders eo ON eod.export_order_id = eo.id
+                    WHERE eo.status = 'DELIVERED'
+                      AND eo.delivered_date BETWEEN :startDate AND :endDate
+                    GROUP BY eod.product_id, eo.warehouse_id
+                )
 
-                COALESCE(SUM(CASE 
-                    WHEN po.status = 'RECEIVED' 
-                     AND po.received_date BETWEEN :startDate AND :endDate 
-                    THEN pod.quantity ELSE 0 END), 0) AS total_import_quantity,
-
-                COALESCE(SUM(CASE 
-                    WHEN po.status = 'RECEIVED' 
-                     AND po.received_date BETWEEN :startDate AND :endDate 
-                    THEN pod.total_amount ELSE 0 END), 0) AS total_import_amount,
-
-                COALESCE(SUM(CASE 
-                    WHEN eo.status = 'DELIVERED' 
-                     AND eo.delivered_date BETWEEN :startDate AND :endDate 
-                    THEN eod.quantity ELSE 0 END), 0) AS total_export_quantity,
-
-                COALESCE(SUM(CASE 
-                    WHEN eo.status = 'DELIVERED' 
-                     AND eo.delivered_date BETWEEN :startDate AND :endDate 
-                    THEN eod.total_amount ELSE 0 END), 0) AS total_export_amount
-
-            FROM tb_products p
-
-            LEFT JOIN tb_purchase_order_details pod ON pod.product_id = p.id
-            LEFT JOIN tb_purchase_orders po ON pod.purchase_order_id = po.id
-
-            LEFT JOIN tb_export_order_details eod ON eod.product_id = p.id
-            LEFT JOIN tb_export_orders eo ON eod.export_order_id = eo.id
-
-            LEFT JOIN tb_warehouses wh ON wh.id = COALESCE(po.warehouse_id, eo.warehouse_id)
-
-            GROUP BY wh.id, wh.name, p.id, p.name, p.barcode, p.sku
-            ORDER BY wh.name, p.name
+                SELECT 
+                    apw.warehouse_id,
+                    apw.warehouse_name,
+                    apw.product_id,
+                    apw.product_name,
+                    apw.product_barcode,
+                    apw.product_sku,
+                    COALESCE(i.total_import_quantity, 0) AS total_import_quantity,
+                    COALESCE(i.total_import_amount, 0) AS total_import_amount,
+                    COALESCE(e.total_export_quantity, 0) AS total_export_quantity,
+                    COALESCE(e.total_export_amount, 0) AS total_export_amount
+                FROM all_product_warehouses apw
+                LEFT JOIN import_data i ON apw.product_id = i.product_id AND apw.warehouse_id = i.warehouse_id
+                LEFT JOIN export_data e ON apw.product_id = e.product_id AND apw.warehouse_id = e.warehouse_id
+                ORDER BY apw.warehouse_name, apw.product_name
             """, nativeQuery = true)
     List<Object[]> getWarehouseProductStats(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+    @Query(value = """
+                WITH all_product_warehouses AS (
+                    SELECT 
+                        p.id AS product_id,
+                        w.id AS warehouse_id,
+                        p.name AS product_name,
+                        p.barcode AS product_barcode,
+                        p.sku AS product_sku,
+                        w.name AS warehouse_name
+                    FROM tb_products p
+                    CROSS JOIN tb_warehouses w
+                ),
+                import_data AS (
+                    SELECT
+                        pod.product_id,
+                        po.warehouse_id,
+                        SUM(pod.quantity) AS total_import_quantity,
+                        SUM(pod.total_amount) AS total_import_amount
+                    FROM tb_purchase_order_details pod
+                    JOIN tb_purchase_orders po ON pod.purchase_order_id = po.id
+                    WHERE po.status = 'RECEIVED'
+                      AND po.received_date BETWEEN :startDate AND :endDate
+                    GROUP BY pod.product_id, po.warehouse_id
+                ),
+                export_data AS (
+                    SELECT
+                        eod.product_id,
+                        eo.warehouse_id,
+                        SUM(eod.quantity) AS total_export_quantity,
+                        SUM(eod.total_amount) AS total_export_amount
+                    FROM tb_export_order_details eod
+                    JOIN tb_export_orders eo ON eod.export_order_id = eo.id
+                    WHERE eo.status = 'DELIVERED'
+                      AND eo.delivered_date BETWEEN :startDate AND :endDate
+                    GROUP BY eod.product_id, eo.warehouse_id
+                )
+
+                SELECT 
+                    apw.warehouse_id,
+                    apw.warehouse_name,
+                    apw.product_id,
+                    apw.product_name,
+                    apw.product_barcode,
+                    apw.product_sku,
+                    COALESCE(i.total_import_quantity, 0) AS total_import_quantity,
+                    COALESCE(i.total_import_amount, 0) AS total_import_amount,
+                    COALESCE(e.total_export_quantity, 0) AS total_export_quantity,
+                    COALESCE(e.total_export_amount, 0) AS total_export_amount
+                FROM all_product_warehouses apw
+                LEFT JOIN import_data i ON apw.product_id = i.product_id AND apw.warehouse_id = i.warehouse_id
+                LEFT JOIN export_data e ON apw.product_id = e.product_id AND apw.warehouse_id = e.warehouse_id
+                WHERE (:onlyWithTransaction = false 
+                       OR COALESCE(i.total_import_quantity, 0) > 0 
+                       OR COALESCE(e.total_export_quantity, 0) > 0)
+                ORDER BY apw.warehouse_name, apw.product_name
+            """, nativeQuery = true)
+    List<Object[]> getWarehouseProductStats(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("onlyWithTransaction") boolean onlyWithTransaction
+    );
+
+    @Query(value = """
+                WITH all_product_warehouses AS (
+                    SELECT 
+                        p.id AS product_id,
+                        w.id AS warehouse_id,
+                        p.name AS product_name,
+                        p.barcode AS product_barcode,
+                        p.sku AS product_sku,
+                        w.name AS warehouse_name
+                    FROM tb_products p
+                    CROSS JOIN tb_warehouses w
+                    WHERE 
+                        (:warehouseId = 'ALL' OR w.id = :warehouseId)
+                        AND (
+                            :keyword IS NULL OR 
+                            LOWER(p.name) ILIKE LOWER(CONCAT('%', :keyword, '%')) OR 
+                            LOWER(p.barcode) ILIKE LOWER(CONCAT('%', :keyword, '%')) OR 
+                            LOWER(p.sku) ILIKE LOWER(CONCAT('%', :keyword, '%'))
+                        )
+                ),
+                import_data AS (
+                    SELECT
+                        pod.product_id,
+                        po.warehouse_id,
+                        SUM(pod.quantity) AS total_import_quantity,
+                        SUM(pod.total_amount) AS total_import_amount
+                    FROM tb_purchase_order_details pod
+                    JOIN tb_purchase_orders po ON pod.purchase_order_id = po.id
+                    WHERE po.status = 'RECEIVED'
+                      AND po.received_date BETWEEN :startDate AND :endDate
+                    GROUP BY pod.product_id, po.warehouse_id
+                ),
+                export_data AS (
+                    SELECT
+                        eod.product_id,
+                        eo.warehouse_id,
+                        SUM(eod.quantity) AS total_export_quantity,
+                        SUM(eod.total_amount) AS total_export_amount
+                    FROM tb_export_order_details eod
+                    JOIN tb_export_orders eo ON eod.export_order_id = eo.id
+                    WHERE eo.status = 'DELIVERED'
+                      AND eo.delivered_date BETWEEN :startDate AND :endDate
+                    GROUP BY eod.product_id, eo.warehouse_id
+                )
+
+                SELECT 
+                    apw.warehouse_id,
+                    apw.warehouse_name,
+                    apw.product_id,
+                    apw.product_name,
+                    apw.product_barcode,
+                    apw.product_sku,
+                    COALESCE(i.total_import_quantity, 0) AS total_import_quantity,
+                    COALESCE(i.total_import_amount, 0) AS total_import_amount,
+                    COALESCE(e.total_export_quantity, 0) AS total_export_quantity,
+                    COALESCE(e.total_export_amount, 0) AS total_export_amount
+                FROM all_product_warehouses apw
+                LEFT JOIN import_data i ON apw.product_id = i.product_id AND apw.warehouse_id = i.warehouse_id
+                LEFT JOIN export_data e ON apw.product_id = e.product_id AND apw.warehouse_id = e.warehouse_id
+                WHERE (:onlyWithTransaction = false 
+                       OR COALESCE(i.total_import_quantity, 0) > 0 
+                       OR COALESCE(e.total_export_quantity, 0) > 0)
+                ORDER BY apw.warehouse_name, apw.product_name
+            """, nativeQuery = true)
+    List<Object[]> getWarehouseProductStats(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("warehouseId") String warehouseId,
+            @Param("keyword") String keyword,
+            @Param("onlyWithTransaction") boolean onlyWithTransaction
+    );
+
 }

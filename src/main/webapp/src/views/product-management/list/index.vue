@@ -124,6 +124,7 @@ async function reloadSearch() {
     productOriginId: 'ALL',
     productUnitId: 'ALL',
   }
+  dataTableRequest.value.currentPage = 1
   await reloadTableFirst()
 }
 
@@ -173,37 +174,29 @@ onMounted(async () => {
 <template>
   <NSpace vertical size="large">
     <n-card>
-      <NSpace vertical size="large">
-        <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
-          <NGrid cols="5" y-gap="12" x-gap="24">
-            <NGi :span="1">
-              <n-form-item label="Tìm kiếm" path="filter">
-                <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
-              </n-form-item>
-            </NGi>
-            <NGi :span="1">
-              <n-form-item label="Danh mục" path="filter">
-                <NSelect v-model:value="dataRequestBody.productCategoryId" placeholder="" :options="optionCategories()" />
-              </n-form-item>
-            </NGi>
-            <NGi :span="1">
-              <n-flex justify="end">
-                <NButton type="primary" secondary @click="reloadTableFirst()">
-                  <template #icon>
-                    <icon-park-outline-search />
-                  </template>
-                  Tìm kiếm
-                </NButton>
-                <NButton strong secondary @click="reloadSearch()">
-                  <template #icon>
-                    <icon-park-outline-redo />
-                  </template>
-                </NButton>
-              </n-flex>
-            </NGi>
-          </NGrid>
-        </n-form>
-      </NSpace>
+      <n-form :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
+        <n-flex>
+          <n-form-item label="Danh mục" path="filter">
+            <NSelect style="width: 150px;" v-model:value="dataRequestBody.productCategoryId" placeholder="" :options="optionCategories()" />
+          </n-form-item>
+          <n-form-item label="Tìm kiếm" path="filter">
+            <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
+          </n-form-item>
+          <n-flex class="ml-auto">
+            <NButton type="primary" secondary @click="reloadTableFirst()">
+              <template #icon>
+                <icon-park-outline-search />
+              </template>
+              Tìm kiếm
+            </NButton>
+            <NButton strong secondary @click="reloadSearch()">
+              <template #icon>
+                <icon-park-outline-redo />
+              </template>
+            </NButton>
+          </n-flex>
+        </n-flex>
+      </n-form>
     </n-card>
     <n-card>
       <NSpace vertical size="large">

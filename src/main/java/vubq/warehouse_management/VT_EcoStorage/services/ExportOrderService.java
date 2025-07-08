@@ -9,7 +9,7 @@ import vubq.warehouse_management.VT_EcoStorage.utils.https.DataTableRequest;
 public interface ExportOrderService {
     boolean createOrUpdateExportOrder(ExportOrderDto exportOrderDto);
 
-    Page<ExportOrder> getExportOrders(DataTableRequest dataTableRequest);
+    Page<ExportOrder> getExportOrders(DataTableRequest dataTableRequest, String warehouseId, String type, String status);
 
     ReferenceDataExportOrderResponse getReferenceDataExportOrder();
 
