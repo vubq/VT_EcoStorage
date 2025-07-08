@@ -4,32 +4,16 @@ import { StatisticalService } from '@/service/api/statistical-service'
 import moment from 'moment'
 import { useAppStore } from '@/store'
 import { router } from '@/router'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 
 const statisticalList = ref<Statistical.Data[]>([])
 
 const appStore = useAppStore()
 
-async function getStatistical() {
-  await StatisticalService.getStatistical(
-    moment(range.value[0]).format("YYYY-MM-DD"),
-    moment(range.value[1]).format("YYYY-MM-DD"),
-    warehouseId.value,
-    keyword.value,
-    onlyWithTransaction.value
-  )
-    .then((res: any) => {
-      if (res.isSuccess) {
-        statisticalList.value = res.data
-        console.log(res)
-      }
-    })
-}
-
 const range = ref<[number, number]>([
   new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
-  Date.now()
+  Date.now(),
 ])
 const onlyWithTransaction = ref<boolean>(false)
 const warehouseId = ref<string>('ALL')
@@ -57,14 +41,29 @@ function optionWarehouses() {
     ...referenceData.value.warehouses.map(item => ({
       label: item.name,
       value: item.id,
-    }))
+    })),
   ]
+}
+
+async function getStatistical() {
+  await StatisticalService.getStatistical(
+    moment(range.value[0]).format('YYYY-MM-DD'),
+    moment(range.value[1]).format('YYYY-MM-DD'),
+    warehouseId.value,
+    keyword.value,
+    onlyWithTransaction.value,
+  )
+    .then((res: any) => {
+      if (res.isSuccess) {
+        statisticalList.value = res.data
+      }
+    })
 }
 
 function reloadFilter() {
   range.value = [
     new Date(new Date().setMonth(new Date().getMonth() - 1)).getTime(),
-    Date.now()
+    Date.now(),
   ]
   warehouseId.value = 'ALL'
   keyword.value = ''
@@ -72,11 +71,12 @@ function reloadFilter() {
   getStatistical()
 }
 
-function exportToExcel() {
-  const aoa: any[][] = []
+async function exportToExcel() {
+  const workbook = new ExcelJS.Workbook()
+  const sheet = workbook.addWorksheet('Thống kê')
 
-  // Header
-  aoa.push([
+  // 1. Header
+  const headers = [
     'Kho',
     'Sản phẩm',
     'Barcode',
@@ -85,86 +85,86 @@ function exportToExcel() {
     'Tổng nhập (Tiền)',
     'Tổng xuất (SL)',
     'Tổng xuất (Tiền)',
-  ])
+  ]
+  sheet.addRow(headers)
 
-  const merges: XLSX.Range[] = []
-  let currentRow = 1
+  // 2. Style dòng tiêu đề
+  const headerRow = sheet.getRow(1)
+  headerRow.height = 24
+  headerRow.eachCell((cell) => {
+    cell.font = { bold: true }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' }, // Xám nhạt
+    }
+    cell.border = {
+      top: { style: 'thin' },
+      bottom: { style: 'thin' },
+      left: { style: 'thin' },
+      right: { style: 'thin' },
+    }
+  })
 
+  // 3. Data + merge dòng kho
+  let rowIndex = 2
   statisticalList.value.forEach((warehouse) => {
-    const productList = warehouse.products || []
+    const products = warehouse.products || []
 
-    productList.forEach((product) => {
-      aoa.push([
+    products.forEach((product) => {
+      const row = sheet.addRow([
         warehouse.warehouseName,
         product.productName,
         product.productBarcode,
         product.productSKU,
-        (product.totalImportQuantity ?? 0).toLocaleString('vi-VN'),
-        (product.totalImportAmount ?? 0).toLocaleString('vi-VN'),
-        (product.totalExportQuantity ?? 0).toLocaleString('vi-VN'),
-        (product.totalExportAmount ?? 0).toLocaleString('vi-VN'),
+        product.totalImportQuantity ?? 0,
+        product.totalImportAmount ?? 0,
+        product.totalExportQuantity ?? 0,
+        product.totalExportAmount ?? 0,
       ])
+
+      row.eachCell((cell, colNumber) => {
+        // Format tiền
+        if ([6, 8].includes(colNumber)) {
+          cell.numFmt = '#,##0'
+        }
+
+        cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true }
+        cell.border = {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        }
+      })
     })
 
-    if (productList.length > 1) {
-      merges.push({
-        s: { r: currentRow, c: 0 },
-        e: { r: currentRow + productList.length - 1, c: 0 },
-      })
+    // Merge dòng tên kho nếu cần
+    if (products.length > 1) {
+      sheet.mergeCells(`A${rowIndex}:A${rowIndex + products.length - 1}`)
+      const cell = sheet.getCell(`A${rowIndex}`)
+      cell.alignment = { vertical: 'middle', horizontal: 'left' }
     }
 
-    currentRow += productList.length
+    rowIndex += products.length
   })
 
-  const worksheet = XLSX.utils.aoa_to_sheet(aoa)
-
-  // Merge ô theo kho
-  worksheet['!merges'] = merges
-
-  // Set độ rộng cột (dãn khoảng cách)
-  worksheet['!cols'] = [
-    { wch: 20 }, // Kho
-    { wch: 25 }, // Sản phẩm
-    { wch: 20 }, // Barcode
-    { wch: 20 }, // SKU
-    { wch: 15 }, // Tổng nhập SL
-    { wch: 18 }, // Tổng nhập Tiền
-    { wch: 15 }, // Tổng xuất SL
-    { wch: 18 }, // Tổng xuất Tiền
-  ]
-
-  // Thêm border cho từng ô
-  const borderAll = {
-    top: { style: 'thin' },
-    bottom: { style: 'thin' },
-    left: { style: 'thin' },
-    right: { style: 'thin' }
-  }
-
-  const range = XLSX.utils.decode_range(worksheet['!ref']!)
-  for (let R = range.s.r; R <= range.e.r; ++R) {
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const cell_address = { c: C, r: R }
-      const cell_ref = XLSX.utils.encode_cell(cell_address)
-      if (!worksheet[cell_ref]) continue
-
-      if (!worksheet[cell_ref].s) worksheet[cell_ref].s = {}
-      worksheet[cell_ref].s.border = borderAll
-    }
-  }
-
-  // Tạo workbook và export
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Thống kê')
-
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: 'xlsx',
-    type: 'array',
-    cellStyles: true // quan trọng để border áp dụng
+  // 4. Auto độ rộng cột
+  sheet.columns.forEach((col) => {
+    let maxLength = 0
+    col.eachCell?.({ includeEmpty: true }, (cell) => {
+      const len = String(cell.value || '').length
+      if (len > maxLength)
+        maxLength = len
+    })
+    col.width = maxLength + 2
   })
 
-  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' })
-  saveAs(blob, `ThongKeKho_${moment().format('YYYYMMDD_HHmmss')}.xlsx`)
+  // 5. Tạo file và tự động tải
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  saveAs(blob, `ThongKe_${moment().format('YYYYMMDD_HHmmss')}.xlsx`)
 }
 
 onMounted(async () => {
@@ -220,12 +220,14 @@ onMounted(async () => {
     </n-card>
     <n-card>
       <NSpace vertical size="large">
-        <NButton type="success" ghost @click="exportToExcel()">
-          <template #icon>
-            <icon-park-outline-download />
-          </template>
-          Xuất Excel
-        </NButton>
+        <div class="flex gap-4">
+          <NButton type="primary" strong secondary class="ml-a" @click="exportToExcel()">
+            <template #icon>
+              <icon-park-outline-download />
+            </template>
+            Xuất Excel
+          </NButton>
+        </div>
         <n-table :single-line="false" cellspacing="0" cellpadding="5">
           <thead>
             <tr>

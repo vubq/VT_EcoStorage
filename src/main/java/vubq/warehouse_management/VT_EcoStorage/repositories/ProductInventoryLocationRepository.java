@@ -17,6 +17,8 @@ public interface ProductInventoryLocationRepository extends JpaRepository<Produc
             List<String> locationIds
     );
 
+    List<ProductInventoryLocation> findByProductIdAndLocationIdIn(String productId, List<String> locationIds);
+
     List<ProductInventoryLocation> findByIdIn(List<String> ids);
 
 //    @Query("""

@@ -19,4 +19,7 @@ export const WarehouseService = {
   createOrUpdateWarehouse(data: any) {
     return request.Post<Service.ResponseResult<any>>('/api/warehouse/create-or-update-warehouse', data)
   },
+  moveLocation(data: any) {
+    return request.Post<Service.ResponseResult<any>>('/api/warehouse/move-location', data)
+  },
 }

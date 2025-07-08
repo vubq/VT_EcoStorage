@@ -3,6 +3,9 @@ import { NButton, NSpace } from 'naive-ui'
 import { InventoryService } from '@/service/api/inventory-service'
 import { useAppStore } from '@/store'
 import { router } from '@/router'
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
+import moment from 'moment'
 
 const appStore = useAppStore()
 
@@ -29,13 +32,13 @@ async function getInventory() {
     .then((res: any) => {
       if (res.isSuccess) {
         inventoryList.value = res.data
-        console.log(res)
       }
     })
 }
 
 function getWarehouseRowspan(warehouse: Inventory.Data): number {
-  if (!warehouse.products) return 1
+  if (!warehouse.products)
+    return 1
   return warehouse.products.reduce((sum, product) => {
     return sum + (product.locations?.length || 1)
   }, 0)
@@ -50,7 +53,7 @@ function optionWarehouses() {
     ...referenceData.value.warehouses.map(item => ({
       label: item.name,
       value: item.id,
-    }))
+    })),
   ]
 }
 
@@ -63,7 +66,7 @@ function optionProductCategories() {
     ...referenceData.value.categories.map(item => ({
       label: item.name,
       value: item.id,
-    }))
+    })),
   ]
 }
 
@@ -72,6 +75,86 @@ function reloadFilter() {
   warehouseId.value = 'ALL'
   productCategoryId.value = 'ALL'
   getInventory()
+}
+
+async function exportToExcel() {
+  const workbook = new ExcelJS.Workbook()
+  const sheet = workbook.addWorksheet('Tồn kho')
+
+  // Header
+  const headers = [
+    'Kho',
+    'Sản phẩm',
+    'Barcode',
+    'SKU',
+    'Danh mục',
+    'Đơn vị tính',
+    'Tồn kho',
+    'Vị trí',
+    'Tồn kho theo vị trí',
+  ]
+  sheet.addRow(headers)
+  const headerRow = sheet.getRow(1)
+  headerRow.eachCell((cell) => {
+    cell.font = { bold: true }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } }
+    cell.alignment = { horizontal: 'center', vertical: 'middle' }
+    cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+  })
+
+  // Dữ liệu
+  let rowIndex = 2
+  inventoryList.value.forEach((warehouse) => {
+    const warehouseStart = rowIndex
+
+    warehouse.products?.forEach((product) => {
+      const productStart = rowIndex
+
+      product.locations?.forEach((location) => {
+        const row = sheet.addRow([
+          warehouse.warehouseName,
+          product.productName,
+          product.productBarcode,
+          product.productSKU,
+          product.productCategoryName,
+          product.productUnitName,
+          product.inventoryQuantity,
+          location.locationName,
+          location.inventoryQuantity,
+        ])
+        row.eachCell((cell) => {
+          cell.alignment = { vertical: 'top' }
+          cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+        })
+        rowIndex++
+      })
+
+      // Merge sản phẩm
+      if ((product.locations?.length || 0) > 1) {
+        for (let col = 2; col <= 7; col++) {
+          sheet.mergeCells(productStart, col, rowIndex - 1, col)
+        }
+      }
+    })
+
+    // Merge kho
+    if (rowIndex - warehouseStart > 1) {
+      sheet.mergeCells(warehouseStart, 1, rowIndex - 1, 1)
+    }
+  })
+
+  // Auto width
+  sheet.columns.forEach((col) => {
+    let max = 0
+    col.eachCell?.({ includeEmpty: true }, (c) => {
+      max = Math.max(max, String(c.value || '').length)
+    })
+    col.width = max + 2
+  })
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  saveAs(blob, `TonKho_${moment().format('YYYYMMDD_HHmmss')}.xlsx`)
 }
 
 onMounted(async () => {
@@ -122,6 +205,14 @@ onMounted(async () => {
     </n-card>
     <n-card>
       <NSpace vertical size="large">
+        <div class="flex gap-4">
+          <NButton type="primary" strong secondary class="ml-a" @click="exportToExcel()">
+            <template #icon>
+              <icon-park-outline-download />
+            </template>
+            Xuất Excel
+          </NButton>
+        </div>
         <n-table :single-line="false" cellspacing="0" cellpadding="5">
           <thead>
             <tr>
@@ -142,8 +233,10 @@ onMounted(async () => {
                 <template v-for="(location, lIndex) in product.locations || []" :key="location.locationId">
                   <tr>
                     <!-- Warehouse rowspan -->
-                    <td v-if="pIndex === 0 && lIndex === 0"
-                        :rowspan="getWarehouseRowspan(warehouse)">
+                    <td
+                      v-if="pIndex === 0 && lIndex === 0"
+                      :rowspan="getWarehouseRowspan(warehouse)"
+                    >
                       {{ warehouse.warehouseName }}
                     </td>
 

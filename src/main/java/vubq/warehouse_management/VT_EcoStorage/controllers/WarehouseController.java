@@ -6,6 +6,7 @@ import vubq.warehouse_management.VT_EcoStorage.dtos.FloorDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ShelfDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.WarehouseDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ZoneDto;
+import vubq.warehouse_management.VT_EcoStorage.dtos.requests.MoveLocationRequest;
 import vubq.warehouse_management.VT_EcoStorage.entities.Warehouse;
 import vubq.warehouse_management.VT_EcoStorage.services.WarehouseService;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.Response;
@@ -45,5 +46,11 @@ public class WarehouseController {
     @PostMapping("/create-or-update-floor")
     public Response createOrUpdateFloor(@RequestBody FloorDto floorDto) {
         return Response.success(warehouseService.createOrUpdateFloor(floorDto));
+    }
+
+    @PostMapping("/move-location")
+    public Response moveLocation(@RequestBody MoveLocationRequest moveLocationRequest) {
+        boolean success = warehouseService.moveLocation(moveLocationRequest);
+        return Response.success(success);
     }
 }

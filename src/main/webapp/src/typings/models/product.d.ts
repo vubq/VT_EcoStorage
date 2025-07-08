@@ -64,5 +64,7 @@ namespace Product {
     floor?: number
     inventoryQuantity?: number
     location?: string
+    warehouseId?: string
+    warehouseName?: string
   }
 }

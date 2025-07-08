@@ -7,6 +7,7 @@ import vubq.warehouse_management.VT_EcoStorage.dtos.FloorDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ShelfDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.WarehouseDto;
 import vubq.warehouse_management.VT_EcoStorage.dtos.ZoneDto;
+import vubq.warehouse_management.VT_EcoStorage.dtos.requests.MoveLocationRequest;
 import vubq.warehouse_management.VT_EcoStorage.entities.*;
 import vubq.warehouse_management.VT_EcoStorage.repositories.*;
 import vubq.warehouse_management.VT_EcoStorage.services.WarehouseService;
@@ -14,6 +15,8 @@ import vubq.warehouse_management.VT_EcoStorage.services.WarehouseService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +29,9 @@ public class WarehouseServiceImpl implements WarehouseService {
     final private ZoneRepository zoneRepository;
     final private ShelfRepository shelfRepository;
     final private FloorRepository floorRepository;
+    final private ProductInventoryLocationRepository productInventoryLocationRepository;
+    final private ProductInventoryRepository productInventoryRepository;
+    final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
 
     @Override
     public List<WarehouseDto> getWarehouses() {
@@ -171,5 +177,93 @@ public class WarehouseServiceImpl implements WarehouseService {
         warehouse.setCompanyId(companies.get(0).getId());
         warehouseRepository.save(warehouse);
         return WarehouseDto.toDto(warehouse);
+    }
+
+    @Override
+    public boolean moveLocation(MoveLocationRequest moveLocationRequest) {
+        String sourceLocationId = moveLocationRequest.getLocationId();
+        List<MoveLocationRequest.LocationNew> targets = moveLocationRequest.getLocationsNew();
+
+        if (targets.isEmpty()) throw new IllegalArgumentException("Không có vị trí đích");
+
+        String productId = moveLocationRequest.getProductId();
+        List<String> allLocationIds = new ArrayList<>(targets.stream()
+                .map(MoveLocationRequest.LocationNew::getLocationId)
+                .toList());
+        allLocationIds.add(sourceLocationId);
+
+        // Lấy tất cả ProductInventoryLocation liên quan
+        List<ProductInventoryLocation> pilList =
+                productInventoryLocationRepository.findByProductIdAndLocationIdIn(productId, allLocationIds);
+
+        Map<String, ProductInventoryLocation> pilMap = pilList.stream().collect(Collectors.toMap(
+                ProductInventoryLocation::getLocationId,
+                pil -> pil
+        ));
+
+        ProductInventoryLocation sourcePIL = pilMap.get(sourceLocationId);
+        if (sourcePIL == null) {
+            throw new IllegalArgumentException("Không tìm thấy vị trí nguồn");
+        }
+
+        long totalMove = targets.stream().mapToLong(MoveLocationRequest.LocationNew::getQuantity).sum();
+        if (sourcePIL.getInventoryQuantity() < totalMove) {
+            throw new IllegalArgumentException("Tồn kho không đủ để chuyển");
+        }
+
+        // Trừ tồn kho vị trí nguồn
+        sourcePIL.setInventoryQuantity(sourcePIL.getInventoryQuantity() - totalMove);
+
+        List<ProductInventoryLocation> toSave = new ArrayList<>();
+        List<ProductInventoryLocationHistory> histories = new ArrayList<>();
+
+        for (MoveLocationRequest.LocationNew target : targets) {
+            ProductInventoryLocation targetPIL = pilMap.get(target.getLocationId());
+
+            if (targetPIL == null) {
+                targetPIL = new ProductInventoryLocation();
+                targetPIL.setProductId(target.getProductId());
+                targetPIL.setLocationId(target.getLocationId());
+                targetPIL.setInventoryQuantity(0L);
+                targetPIL.setStatus(ProductInventoryLocation.Status.ACTIVE);
+                pilMap.put(target.getLocationId(), targetPIL);
+            }
+
+            targetPIL.setInventoryQuantity(targetPIL.getInventoryQuantity() + target.getQuantity());
+            toSave.add(targetPIL);
+        }
+
+        toSave.add(sourcePIL);
+        List<ProductInventoryLocation> saved = productInventoryLocationRepository.saveAllAndFlush(toSave);
+
+        Map<String, ProductInventoryLocation> savedMap = saved.stream().collect(Collectors.toMap(
+                ProductInventoryLocation::getLocationId,
+                Function.identity()
+        ));
+
+        for (MoveLocationRequest.LocationNew target : targets) {
+            ProductInventoryLocation pil = savedMap.get(target.getLocationId());
+            ProductInventoryLocationHistory h = new ProductInventoryLocationHistory();
+            h.setProductInventoryLocationId(pil.getId());
+            h.setType(ProductInventoryLocationHistory.Type.MOVE);
+            h.setQuantity(target.getQuantity());
+            histories.add(h);
+        }
+
+        productInventoryLocationHistoryRepository.saveAll(histories);
+
+        List<ProductInventory> moveInventories = targets.stream().map(target -> {
+            ProductInventory pi = new ProductInventory();
+            pi.setProductId(target.getProductId());
+            pi.setTransactionType(ProductInventory.TransactionType.MOVE);
+            pi.setType(ProductInventory.Type.MOVE_LOCATION);
+            pi.setQuantity(target.getQuantity());
+            pi.setProductId(target.getProductId());
+            pi.setNote("Di chuyển từ vị trí " + sourceLocationId + " đến " + target.getLocationId());
+            return pi;
+        }).collect(Collectors.toList());
+
+        productInventoryRepository.saveAll(moveInventories);
+        return true;
     }
 }

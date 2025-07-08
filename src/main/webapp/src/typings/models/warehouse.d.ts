@@ -10,4 +10,22 @@ namespace Warehouse {
 
     products?: Product.ProductByLocation[]
   }
+
+  interface MoveLocation {
+    productId: string
+    productBarcode: string
+    productName: string
+    productUnitName: string
+    inventoryQuantity: number
+    location: string
+    locationId: string
+    warehouseId: string
+    warehouseName: string
+    locationsNew: {
+      locationId?: string | null
+      quantity: number
+      zoneId?: string | null
+      shelfId?: string | null
+    }[]
+  }
 }

@@ -58,6 +58,7 @@ public class ProductInventoryLocationHistory extends Base {
 
     public enum Type {
         PURCHASE,
-        EXPORT
+        EXPORT,
+        MOVE
     }
 }

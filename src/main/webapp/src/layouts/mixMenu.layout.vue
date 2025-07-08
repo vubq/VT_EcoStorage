@@ -152,7 +152,7 @@ function updateTopMenu(key: string) {
         position="absolute"
         class="h-40px flex-center"
       >
-        {{ appStore.footerText }}
+        Copyright © 2025 VT EcoStorage
       </n-layout-footer>
       <BackTop />
     </n-layout>

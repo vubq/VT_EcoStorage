@@ -61,11 +61,13 @@ public class ProductInventory extends Base {
     public enum TransactionType {
         ADD,
         SUBTRACT,
+        MOVE
     }
 
     public enum Type {
         PURCHASE_ORDER,
         EXPORT_ORDER,
         ADJUST,
+        MOVE_LOCATION
     }
 }
