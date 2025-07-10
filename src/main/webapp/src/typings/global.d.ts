@@ -54,3 +54,9 @@ declare namespace App {
 interface DictMap {
   [key: string]: Entity.Dict[]
 }
+
+declare module 'html2pdf.js' {
+  const html2pdf: any;
+  export default html2pdf;
+}
+

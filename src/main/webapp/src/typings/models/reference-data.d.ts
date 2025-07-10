@@ -3,12 +3,14 @@ namespace ReferenceData {
     warehouses: Warehouse.Data[]
     suppliers: Supplier.Data[]
     categories: Category.Data[]
+    company: Company.Data
   }
 
   interface ExportOrder {
     warehouses: Warehouse.Data[]
     customers: Customer.Data[]
     categories: Category.Data[]
+    company: Company.Data
   }
 
   interface Product {

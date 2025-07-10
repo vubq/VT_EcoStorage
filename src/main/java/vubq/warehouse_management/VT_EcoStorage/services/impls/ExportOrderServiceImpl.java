@@ -42,6 +42,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
     final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
     final private PurchaseOrderRepository purchaseOrderRepository;
     final private PurchaseOrderDetailRepository purchaseOrderDetailRepository;
+    private final CompanyRepository companyRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -317,6 +318,7 @@ public class ExportOrderServiceImpl implements ExportOrderService {
         referenceDataExportOrderResponse.setWarehouses(warehouseRepository.findByStatus(Warehouse.Status.ACTIVE).stream().map(WarehouseDto::toDto).collect(Collectors.toList()));
         referenceDataExportOrderResponse.setCustomers(customerRepository.findByStatus(Customer.Status.ACTIVE).stream().map(CustomerDto::toDto).collect(Collectors.toList()));
         referenceDataExportOrderResponse.setCategories(productCategoryRepository.findByStatus(ProductCategory.Status.ACTIVE).stream().map(ProductCategoryDto::toDto).collect(Collectors.toList()));
+        referenceDataExportOrderResponse.setCompany(CompanyDto.toDto(companyRepository.findAll().get(0)));
         return referenceDataExportOrderResponse;
     }
 

@@ -10,9 +10,14 @@ import { ProductService } from '@/service/api/product-service'
 import { router } from '@/router'
 import moment from 'moment'
 import { WarehouseService } from '@/service/api/warehouse-service'
+import InvoicePrint from './InvoicePrint.vue'
+import html2pdf from 'html2pdf.js'
+
+const invoiceRef = ref<InstanceType<typeof InvoicePrint> | null>(null)
 
 const route = useRoute()
 
+const { bool: isModalInvoice, setTrue: showModalInvoice, setFalse: hidenModalInvoice } = useBoolean(false)
 const { bool: isModalProduct, setTrue: showModalProduct, setFalse: hidenModalProduct } = useBoolean(false)
 
 const warehouse = ref<Warehouse.Data>({})
@@ -270,6 +275,7 @@ const referenceData = ref<ReferenceData.PurchaseOrder>({
   warehouses: [],
   suppliers: [],
   categories: [],
+  company: {}
 })
 
 async function getReferenceData() {
@@ -497,6 +503,27 @@ function optionWarehousesFrom() {
   }
 }
 
+function printInvoice() {
+  const el = invoiceRef.value?.invoiceContent
+  if (!el) return
+
+  html2pdf()
+    .set({
+      margin: 0,
+      filename: 'phieu-xuat-hang.pdf',
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    })
+    .from(el)
+    .toPdf()
+    .get('pdf')
+    .then((pdf: any) => {
+      pdf.autoPrint()
+      const blobUrl = pdf.output('bloburl')
+      window.open(blobUrl, '_blank')
+    })
+}
+
 onMounted(async () => {
   await getReferenceData()
   await getListProduct()
@@ -704,6 +731,19 @@ onMounted(async () => {
         </n-modal>
       </NSpace>
     </n-card>
+    <div class="flex gap-4">
+      <n-button type="primary" class="ml-a" strong secondary @click="showModalInvoice">Hóa đơn</n-button>
+    </div>
+    <n-modal style="width: 794px; max-width: 100%;" v-model:show="isModalInvoice" preset="card" title="Hóa đơn xuất hàng">
+      <div>
+        <invoice-print ref="invoiceRef" :order="purchaseOrder" :referenceData="referenceData" />
+      </div>
+      <template #action>
+        <div class="flex gap-4">
+          <n-button type="primary" class="ml-a" strong secondary @click="printInvoice">In hóa đơn</n-button>
+        </div>
+      </template>
+    </n-modal>
   </NSpace>
 </template>
 

@@ -45,6 +45,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     final private ProductInventoryLocationHistoryRepository productInventoryLocationHistoryRepository;
     final private ExportOrderRepository exportOrderRepository;
     final private ExportOrderService exportOrderService;
+    private final CompanyRepository companyRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -446,6 +447,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         referenceDataPurchaseOrderResponse.setWarehouses(warehouseRepository.findByStatus(Warehouse.Status.ACTIVE).stream().map(WarehouseDto::toDto).collect(Collectors.toList()));
         referenceDataPurchaseOrderResponse.setSuppliers(supplierRepository.findByStatus(Supplier.Status.ACTIVE).stream().map(SupplierDto::toDto).collect(Collectors.toList()));
         referenceDataPurchaseOrderResponse.setCategories(productCategoryRepository.findByStatus(ProductCategory.Status.ACTIVE).stream().map(ProductCategoryDto::toDto).collect(Collectors.toList()));
+        referenceDataPurchaseOrderResponse.setCompany(CompanyDto.toDto(companyRepository.findAll().get(0)));
         return referenceDataPurchaseOrderResponse;
     }
 
