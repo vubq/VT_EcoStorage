@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { Add, TrashSharp } from '@vicons/ionicons5'
+import { Add, Pencil, TrashSharp } from '@vicons/ionicons5'
 
 import { useBoolean } from '@/hooks'
 import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
@@ -402,7 +402,14 @@ async function createOrUpdateWarehouse() {
       await WarehouseService.createOrUpdateWarehouse(warehouseNew.value)
         .then((res: any) => {
           if (res.isSuccess) {
-            warehouseList.value.push(res.data)
+            if (warehouseNew.value.id) {
+              const index = warehouseList.value.findIndex(w => w.id === res.data.id);
+              if (index !== -1) {
+                warehouseList.value.splice(index, 1, res.data);
+              }
+            } else {
+              warehouseList.value.push(res.data)
+            }
             hidenModalAddWarehouse()
             warehouseNew.value = {
               status: 'ACTIVE',
@@ -411,6 +418,16 @@ async function createOrUpdateWarehouse() {
         })
     }
   })
+}
+
+async function getWarehouse(id: string) {
+  await WarehouseService.getWarehouse(id)
+    .then((res: any) => {
+      if (res.isSuccess) {
+        warehouseNew.value = res.data
+        showModalAddWarehouse()
+      }
+    })
 }
 
 function optionZones() {
@@ -484,6 +501,17 @@ onMounted(async () => {
     <NGrid cols="2" y-gap="12" x-gap="12">
       <NGi v-for="w in warehouseList" :key="w.id" :span="1">
         <n-card :title="`Kho: ${w.name} [${w.address}]`">
+        <template #header-extra>
+          <NButton
+            type="default"
+            strong secondary
+            @click="async () => {
+              await getWarehouse(w.id!)
+            }"
+          >
+            <NIcon size="18" :component="Pencil" />
+          </NButton>
+        </template>
           <NSpace vertical size="large">
             <n-divider />
             <!-- Zone list -->

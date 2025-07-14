@@ -1,6 +1,7 @@
 package vubq.warehouse_management.VT_EcoStorage.services.impls;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vubq.warehouse_management.VT_EcoStorage.dtos.FloorDto;
@@ -128,18 +129,17 @@ public class WarehouseServiceImpl implements WarehouseService {
             return null;
         }
 
-        List<Zone> zones = zoneRepository.findByWarehouseIdAndStatus(
-                warehouseId,
-                Zone.Status.ACTIVE
-        );
-
+        List<Zone> zones = zoneRepository.findByWarehouseIdAndStatus(warehouseId, Zone.Status.ACTIVE);
         List<Shelf> shelves = shelfRepository.findByZoneIdInAndStatus(
-                zones.stream().map(Zone::getId).collect(Collectors.toList()),
+                zones.stream()
+                        .map(Zone::getId)
+                        .collect(Collectors.toList()),
                 Shelf.Status.ACTIVE
         );
-
         List<Floor> floors = floorRepository.findByShelfIdInAndStatus(
-                shelves.stream().map(Shelf::getId).collect(Collectors.toList()),
+                shelves.stream()
+                        .map(Shelf::getId)
+                        .collect(Collectors.toList()),
                 Floor.Status.ACTIVE
         );
 
@@ -149,18 +149,21 @@ public class WarehouseServiceImpl implements WarehouseService {
 
         Map<String, List<ShelfDto>> shelfMap = shelves.stream().map(shelf -> {
             ShelfDto shelfDto = ShelfDto.toDto(shelf);
-            shelfDto.setFloors(floorMap.getOrDefault(shelf.getId(), new ArrayList<>()));
+            List<FloorDto> listFloor = floorMap.getOrDefault(shelf.getId(), new ArrayList<>());
+            shelfDto.setFloors(listFloor);
             return shelfDto;
         }).collect(Collectors.groupingBy(ShelfDto::getZoneId));
 
-        List<ZoneDto> zoneDtos = zones.stream().map(zone -> {
+        Map<String, List<ZoneDto>> zoneMap = zones.stream().map(zone -> {
             ZoneDto zoneDto = ZoneDto.toDto(zone);
-            zoneDto.setShelves(shelfMap.getOrDefault(zone.getId(), new ArrayList<>()));
+            List<ShelfDto> listShelf = shelfMap.getOrDefault(zone.getId(), new ArrayList<>());
+            zoneDto.setShelves(listShelf);
             return zoneDto;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.groupingBy(ZoneDto::getWarehouseId));
 
         WarehouseDto warehouseDto = WarehouseDto.toDto(warehouse);
-        warehouseDto.setZones(zoneDtos);
+        List<ZoneDto> listZones = zoneMap.getOrDefault(warehouse.getId(), new ArrayList<>());
+        warehouseDto.setZones(listZones);
         return warehouseDto;
     }
 
@@ -170,12 +173,59 @@ public class WarehouseServiceImpl implements WarehouseService {
         if (companies.isEmpty()) {
             throw new RuntimeException("Chua co thong tin cong ty");
         }
-        Warehouse warehouse = new Warehouse();
+
+        Warehouse warehouse;
+        if (StringUtils.isEmpty(warehouseDto.getId())) {
+            warehouse = new Warehouse();
+            warehouse.setStatus(Warehouse.Status.ACTIVE);
+        } else {
+            warehouse = warehouseRepository.findById(warehouseDto.getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy kho có ID: " + warehouseDto.getId()));
+            warehouse.setStatus(warehouseDto.getStatus());
+        }
         warehouse.setName(warehouseDto.getName());
         warehouse.setAddress(warehouseDto.getAddress());
         warehouse.setStatus(warehouseDto.getStatus());
         warehouse.setCompanyId(companies.get(0).getId());
         warehouseRepository.save(warehouse);
+
+        if (!StringUtils.isEmpty(warehouseDto.getId())) {
+            List<Zone> zones = zoneRepository.findByWarehouseIdAndStatus(warehouseDto.getId(), Zone.Status.ACTIVE);
+            List<Shelf> shelves = shelfRepository.findByZoneIdInAndStatus(
+                    zones.stream()
+                            .map(Zone::getId)
+                            .collect(Collectors.toList()),
+                    Shelf.Status.ACTIVE
+            );
+            List<Floor> floors = floorRepository.findByShelfIdInAndStatus(
+                    shelves.stream()
+                            .map(Shelf::getId)
+                            .collect(Collectors.toList()),
+                    Floor.Status.ACTIVE
+            );
+
+            Map<String, List<FloorDto>> floorMap = floors.stream()
+                    .map(FloorDto::toDto)
+                    .collect(Collectors.groupingBy(FloorDto::getShelfId));
+
+            Map<String, List<ShelfDto>> shelfMap = shelves.stream().map(shelf -> {
+                ShelfDto shelfDto = ShelfDto.toDto(shelf);
+                List<FloorDto> listFloor = floorMap.getOrDefault(shelf.getId(), new ArrayList<>());
+                shelfDto.setFloors(listFloor);
+                return shelfDto;
+            }).collect(Collectors.groupingBy(ShelfDto::getZoneId));
+
+            Map<String, List<ZoneDto>> zoneMap = zones.stream().map(zone -> {
+                ZoneDto zoneDto = ZoneDto.toDto(zone);
+                List<ShelfDto> listShelf = shelfMap.getOrDefault(zone.getId(), new ArrayList<>());
+                zoneDto.setShelves(listShelf);
+                return zoneDto;
+            }).collect(Collectors.groupingBy(ZoneDto::getWarehouseId));
+            WarehouseDto warehouseDtoUpdate = WarehouseDto.toDto(warehouse);
+            List<ZoneDto> listZones = zoneMap.getOrDefault(warehouse.getId(), new ArrayList<>());
+            warehouseDtoUpdate.setZones(listZones);
+            return warehouseDtoUpdate;
+        }
         return WarehouseDto.toDto(warehouse);
     }
 
