@@ -10,4 +10,8 @@ import java.util.List;
 public interface ShelfRepository extends JpaRepository<Shelf, String> {
 
     List<Shelf> findByZoneIdInAndStatus(List<String> zoneIds, Shelf.Status status);
+
+    boolean existsByNameAndZoneId(String name, String zoneId);
+
+    boolean existsByNameAndZoneIdAndIdNot(String name, String zoneId, String id);
 }

@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
-import { NButton, NGi, NGrid, NIcon, NSelect, NSpace, NTag } from 'naive-ui'
+import { NA, NButton, NGi, NGrid, NIcon, NSelect, NSpace, NTag } from 'naive-ui'
 import { Save } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { initRulesForm, validateFieldFromErrors } from '@/utils/error'
@@ -72,21 +72,22 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     align: 'center',
     key: 'id',
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => {
             router.push({
               name: 'export-order-management.export-order',
               params: { exportOrderId: row.id },
             })
-          }}
-        >
-          {row.id}
-        </NButton>
+          },
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.id
+        }
       )
     },
   },

@@ -78,10 +78,16 @@ public class ProductServiceImpl implements ProductService {
             product.setBarcode(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + String.format("%06d", getNextProductSeq()));
             product.setStatus(Product.Status.ACTIVE);
             product.setInventoryQuantity(0L);
+            if (productRepository.existsByNameAndProductCategoryId(productDto.getName(), productDto.getProductCategoryId())) {
+                throw new IllegalArgumentException("Sản phẩm đã tồn tại");
+            }
         } else {
             product = productRepository.findById(productDto.getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + productDto.getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại ID: " + productDto.getId()));
             product.setStatus(productDto.getStatus());
+            if (productRepository.existsByNameAndProductCategoryIdAndIdNot(productDto.getName(), productDto.getProductCategoryId(), product.getId())) {
+                throw new IllegalArgumentException("Sản phẩm đã tồn tại");
+            }
         }
         product.setName(productDto.getName());
         product.setDescription(productDto.getDescription());
@@ -188,10 +194,16 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.isEmpty(productCategoryDto.getId())) {
             productCategory = new ProductCategory();
             productCategory.setStatus(ProductCategory.Status.ACTIVE);
+            if (productCategoryRepository.existsByName(productCategoryDto.getName())) {
+                throw new IllegalArgumentException("Danh mục sản phẩm đã tồn tại");
+            }
         } else {
             productCategory = productCategoryRepository.findById(productCategoryDto.getId())
-                    .orElseThrow(() -> new RuntimeException("Product category not found with id: " + productCategoryDto.getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Danh mục sản phẩm không tồn tại ID: " + productCategoryDto.getId()));
             productCategory.setStatus(productCategoryDto.getStatus());
+            if (productCategoryRepository.existsByNameAndIdNot(productCategoryDto.getName(), productCategory.getId())) {
+                throw new IllegalArgumentException("Danh mục sản phẩm đã tồn tại");
+            }
         }
         productCategory.setName(productCategoryDto.getName());
         productCategory = productCategoryRepository.saveAndFlush(productCategory);
@@ -204,10 +216,16 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.isEmpty(productUnitDto.getId())) {
             productUnit = new ProductUnit();
             productUnit.setStatus(ProductUnit.Status.ACTIVE);
+            if (productUnitRepository.existsByName(productUnitDto.getName())) {
+                throw new IllegalArgumentException("Đơn vị tính đã tồn tại");
+            }
         } else {
             productUnit = productUnitRepository.findById(productUnitDto.getId())
-                    .orElseThrow(() -> new RuntimeException("Product unit not found with id: " + productUnitDto.getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Đơn vị tính không tồn tại ID: " + productUnitDto.getId()));
             productUnit.setStatus(productUnitDto.getStatus());
+            if (productUnitRepository.existsByNameAndIdNot(productUnitDto.getName(), productUnit.getId())) {
+                throw new IllegalArgumentException("Đơn vị tính đã tồn tại");
+            }
         }
         productUnit.setName(productUnitDto.getName());
         productUnit = productUnitRepository.saveAndFlush(productUnit);
@@ -220,10 +238,16 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.isEmpty(productOriginDto.getId())) {
             productOrigin = new ProductOrigin();
             productOrigin.setStatus(ProductOrigin.Status.ACTIVE);
+            if (productOriginRepository.existsByName(productOriginDto.getName())) {
+                throw new IllegalArgumentException("Xuất sứ đã tồn tại");
+            }
         } else {
             productOrigin = productOriginRepository.findById(productOriginDto.getId())
-                    .orElseThrow(() -> new RuntimeException("Product origin not found with id: " + productOriginDto.getId()));
+                    .orElseThrow(() -> new IllegalArgumentException("Xuất sứ không tồn tại ID: " + productOriginDto.getId()));
             productOrigin.setStatus(productOriginDto.getStatus());
+            if (productOriginRepository.existsByNameAndIdNot(productOriginDto.getName(), productOrigin.getId())) {
+                throw new IllegalArgumentException("Xuất sứ đã tồn tại");
+            }
         }
         productOrigin.setName(productOriginDto.getName());
         productOrigin = productOriginRepository.saveAndFlush(productOrigin);

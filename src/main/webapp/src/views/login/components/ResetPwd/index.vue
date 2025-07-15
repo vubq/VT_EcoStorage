@@ -28,7 +28,7 @@ function handleRegister() {
 <template>
   <div>
     <n-h2 depth="3" class="text-center">
-      {{ $t('login.resetPasswordTitle') }}
+      Đặt lại mật khẩu
     </n-h2>
     <n-form
       ref="formRef"
@@ -41,7 +41,7 @@ function handleRegister() {
         <n-input
           v-model:value="formValue.account"
           clearable
-          :placeholder="$t('login.resetPasswordPlaceholder')"
+          :placeholder="'Tài khoản'"
         />
       </n-form-item>
       <n-form-item>
@@ -55,16 +55,16 @@ function handleRegister() {
             type="primary"
             @click="handleRegister"
           >
-            {{ $t('login.resetPassword') }}
+            Đặt lại
           </n-button>
           <n-flex justify="center">
-            <n-text>{{ $t('login.haveAccountText') }}</n-text>
+            <n-text>Bạn đã có tài khoản?</n-text>
             <n-button
               text
               type="primary"
               @click="toLogin"
             >
-              {{ $t('login.signIn') }}
+              Đăng nhập
             </n-button>
           </n-flex>
         </n-space>

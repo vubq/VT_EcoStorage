@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-import { NButton, NSpace, NTag } from 'naive-ui'
+import { NA, NButton, NSpace, NTag } from 'naive-ui'
 import { router } from '@/router'
 import moment from 'moment'
 import { Add } from '@vicons/ionicons5'
@@ -28,21 +28,22 @@ const columns = ref<DataTableColumns<ExportOrder.DataTable>>([
     sorter: true,
     sortOrder: sortDefault('id'),
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => {
             router.push({
               name: 'export-order-management.export-order',
               params: { exportOrderId: row.id },
             })
-          }}
-        >
-          {row.id}
-        </NButton>
+          },
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.id
+        }
       )
     },
   },
@@ -222,6 +223,7 @@ const referenceData = ref<ReferenceData.ExportOrder>({
   warehouses: [],
   customers: [],
   categories: [],
+  company: {}
 })
 
 function optionWarehouses() {

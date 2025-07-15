@@ -16,6 +16,7 @@ import vubq.warehouse_management.VT_EcoStorage.configs.securities.auths.CustomUs
 import vubq.warehouse_management.VT_EcoStorage.configs.securities.auths.JwtUtil;
 import vubq.warehouse_management.VT_EcoStorage.dtos.requests.AuthRequest;
 import vubq.warehouse_management.VT_EcoStorage.dtos.responses.AuthResponse;
+import vubq.warehouse_management.VT_EcoStorage.entities.User;
 import vubq.warehouse_management.VT_EcoStorage.utils.https.Response;
 
 import java.util.List;
@@ -38,6 +39,9 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
             CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(request.getUsername());
+            if (userDetails.getUser().getStatus() != User.Status.ACTIVE) {
+                return Response.unauthorized("Tài khoản đã bị khóa");
+            }
             List<String> permissions = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .toList();
@@ -45,7 +49,7 @@ public class AuthController {
             return Response.success(new AuthResponse(userDetails.getUser().getId(), permissions, token, ""));
         } catch (AuthenticationException e) {
             log.error(e.getMessage());
-            return Response.unauthorized("Invalid username or password");
+            return Response.unauthorized("Tài khoản hoặc mật khẩu không đúng");
         }
     }
 }

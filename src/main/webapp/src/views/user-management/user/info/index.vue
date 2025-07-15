@@ -22,6 +22,11 @@ const user = ref<User.Data>({
   permissions: [],
 })
 
+const statusOptions = [
+  { label: 'Hoạt động', value: 'ACTIVE' },
+  { label: 'Khóa', value: 'INACTIVE' },
+]
+
 const formUserRef = ref()
 
 const rules: FormRules = {
@@ -29,7 +34,16 @@ const rules: FormRules = {
     { required: true, message: 'Không được để trống', trigger: 'blur' }
   ],
   password: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    {
+      required: true,
+      validator: (rule, value) => {
+        if (userId === 'new' && !value) {
+          return Promise.reject('Không được để trống')
+        }
+        return Promise.resolve()
+      },
+      trigger: 'blur'
+    }
   ],
   email: [
     { required: true, message: 'Không được để trống', trigger: 'blur' }
@@ -121,7 +135,7 @@ onMounted(async () => {
 
 <template>
   <NSpace vertical size="large">
-    <n-card title="Info">
+    <n-card title="Thông tin">
       <template #header-extra>
         <NButton secondary type="primary" @click="createOrUpdateUser()">
           <NIcon size="18" :component="Save" style="margin-right: 5px;" />
@@ -144,7 +158,7 @@ onMounted(async () => {
           </NGi>
           <NGi :span="1">
             <n-form-item label="Mật khẩu" path="password">
-              <n-input v-model:value="user.password" placeholder="" />
+              <n-input type="password" v-model:value="user.password" placeholder="" />
             </n-form-item>
           </NGi>
           <NGi :span="1">
@@ -177,6 +191,15 @@ onMounted(async () => {
                   minRows: 3,
                   maxRows: 5,
                 }"
+              />
+            </n-form-item>
+          </NGi>
+          <NGi :span="3" v-if="userId !== 'new'">
+            <n-form-item label="Trạng thái">
+              <n-select
+                v-model:value="user.status"
+                placeholder=""
+                :options="statusOptions"
               />
             </n-form-item>
           </NGi>

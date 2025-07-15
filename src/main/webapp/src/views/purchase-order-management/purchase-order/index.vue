@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
-import { NButton, NGi, NGrid, NIcon, NInputNumber, NSelect, NSpace } from 'naive-ui'
+import { NA, NButton, NGi, NGrid, NIcon, NInputNumber, NSelect, NSpace } from 'naive-ui'
 import { Add, CheckboxOutline, Save, TrashSharp } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { useBoolean } from '@/hooks'
@@ -80,11 +80,25 @@ const columns = computed(() => {
       title: 'Barcode',
       align: 'center',
       key: 'productBarcode',
-      render: row => (
-        <NButton style="width: 100%" secondary type="primary" strong>
-          {row.productBarcode}
-        </NButton>
-      ),
+      render: (row) => {
+        return h(
+          NA,
+          {
+            href: '#',
+            onClick: () => {
+              router.push({
+                name: 'product-management.product',
+                params: { productId: row.productId },
+              })
+            },
+            class: 'underline-on-hover',
+            internal: true
+          },
+          {
+            default: () => row.productBarcode
+          }
+        )
+      },
     },
     {
       title: 'Tên sản phẩm',
@@ -196,16 +210,17 @@ const columnsProduct = ref<DataTableColumns<PurchaseOrder.Product>>([
     align: 'center',
     key: 'barcode',
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => addProduct(row)}
-        >
-          {row.barcode}
-        </NButton>
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => addProduct(row),
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.barcode
+        }
       )
     },
   },

@@ -18,6 +18,10 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
 
+    boolean existsByNameAndProductCategoryId(String name, String productCategoryId);
+
+    boolean existsByNameAndProductCategoryIdAndIdNot(String name, String productCategoryId, String id);
+
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
 
     List<Product> findByIdIn(List<String> ids);

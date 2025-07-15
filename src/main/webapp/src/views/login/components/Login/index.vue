@@ -66,14 +66,14 @@ function checkUserAccount() {
 <template>
   <div>
     <n-h2 depth="3" class="text-center">
-      {{ $t('login.signInTitle') }}
+      Đăng nhập
     </n-h2>
     <n-form ref="formRef" :rules="rules" :model="formValue" :show-label="false" size="large">
       <n-form-item path="account">
-        <n-input v-model:value="formValue.account" clearable :placeholder="$t('login.accountPlaceholder')" />
+        <n-input v-model:value="formValue.account" clearable :placeholder="'Tài khoản'" />
       </n-form-item>
       <n-form-item path="pwd">
-        <n-input v-model:value="formValue.pwd" type="password" :placeholder="$t('login.passwordPlaceholder')" clearable show-password-on="click">
+        <n-input v-model:value="formValue.pwd" type="password" :placeholder="'Mật khẩu'" clearable show-password-on="click">
           <template #password-invisible-icon>
             <icon-park-outline-preview-close-one />
           </template>
@@ -85,14 +85,14 @@ function checkUserAccount() {
       <n-space vertical :size="20">
         <div class="flex-y-center justify-between">
           <n-checkbox v-model:checked="isRemember">
-            {{ $t('login.rememberMe') }}
+            Nhớ mật khẩu
           </n-checkbox>
           <n-button type="primary" text @click="toOtherForm('resetPwd')">
-            {{ $t('login.forgotPassword') }}
+            Quên mật khẩu
           </n-button>
         </div>
         <n-button block type="primary" size="large" :loading="isLoading" :disabled="isLoading" @click="handleLogin">
-          {{ $t('login.signIn') }}
+          Đăng nhập
         </n-button>
         <!-- <n-flex>
           <n-text>{{ $t('login.noAccountText') }}</n-text>
@@ -102,7 +102,7 @@ function checkUserAccount() {
         </n-flex> -->
       </n-space>
     </n-form>
-    <n-divider>
+    <!-- <n-divider>
       <span op-80>{{ $t('login.or') }}</span>
     </n-divider>
     <n-space justify="center">
@@ -121,7 +121,7 @@ function checkUserAccount() {
           <n-icon><icon-park-outline-github-one /></n-icon>
         </template>
       </n-button>
-    </n-space>
+    </n-space> -->
   </div>
 </template>
 

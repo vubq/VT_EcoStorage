@@ -11,5 +11,5 @@ public interface UserService {
 
     UserDto getUser(String userId);
 
-    Page<User> getListUser(DataTableRequest dataTableRequest);
+    Page<User> getListUser(DataTableRequest dataTableRequest, String status);
 }

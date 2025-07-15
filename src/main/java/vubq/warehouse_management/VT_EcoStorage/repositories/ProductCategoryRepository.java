@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, String> {
 
+    boolean existsByName(String name);
+
+    boolean existsByNameAndIdNot(String name, String id);
+
     List<ProductCategory> findByStatus(ProductCategory.Status status);
 
     Page<ProductCategory> findAll(Specification<ProductCategory> spec, Pageable pageable);

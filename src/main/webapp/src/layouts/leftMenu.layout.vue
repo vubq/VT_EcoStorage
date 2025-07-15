@@ -52,10 +52,10 @@ const appStore = useAppStore()
           </div>
           <div class="flex-y-center gap-1 h-full p-x-xl">
             <Search />
-            <Notices />
-            <FullScreen />
-            <DarkModeSwitch />
-            <LangsSwitch />
+            <!-- <Notices /> -->
+            <!-- <FullScreen /> -->
+            <!-- <DarkModeSwitch /> -->
+            <!-- <LangsSwitch /> -->
             <Setting />
             <UserCenter />
           </div>

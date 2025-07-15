@@ -14,7 +14,7 @@ export const routes: RouteRecordRaw[] = [
     name: 'login',
     component: () => import('@/views/login/index.vue'), // 注意这里要带上 文件后缀.vue
     meta: {
-      title: '登录',
+      title: 'Đăng nhập',
       withoutTab: true,
     },
   },

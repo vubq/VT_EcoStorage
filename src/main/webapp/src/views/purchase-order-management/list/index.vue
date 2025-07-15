@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-import { NButton, NSpace, NTag } from 'naive-ui'
+import { NA, NButton, NSpace, NTag } from 'naive-ui'
 import { router } from '@/router'
 import { PurchaseOrderService } from '@/service/api/purchase-order-service'
 import moment from 'moment'
@@ -29,21 +29,22 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     sorter: true,
     sortOrder: sortDefault('id'),
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => {
             router.push({
               name: 'purchase-order-management.purchase-order',
               params: { purchaseOrderId: row.id },
             })
-          }}
-        >
-          {row.id}
-        </NButton>
+          },
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.id
+        }
       )
     },
   },

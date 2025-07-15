@@ -32,8 +32,8 @@ public class UserController {
     }
 
     @GetMapping("/list")
-    public Response getListUser(@NonNull DataTableRequest dataTableRequest) {
-        Page<User> results = userService.getListUser(dataTableRequest);
+    public Response getListUser(@NonNull DataTableRequest dataTableRequest, @RequestParam String status) {
+        Page<User> results = userService.getListUser(dataTableRequest, status);
         return Response.success(
                 DataTableResponse.builder()
                         .list(results.getContent().stream().map(UserDto::toDto).toList())

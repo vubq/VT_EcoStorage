@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-import { NButton, NSpace } from 'naive-ui'
+import { NA, NButton, NSpace, NTag } from 'naive-ui'
 import { UserService } from '@/service/api/user'
 import { router } from '@/router'
 import { Add } from '@vicons/ionicons5'
@@ -22,16 +22,17 @@ const columns = ref<DataTableColumns<User.Data>>([
     sorter: true,
     sortOrder: sortDefault('username'),
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => getUser(row.id!)}
-        >
-          {row.username}
-        </NButton>
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => getUser(row.id!),
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.username
+        }
       )
     },
   },
@@ -68,7 +69,24 @@ const columns = ref<DataTableColumns<User.Data>>([
     align: 'center',
     key: 'note',
   },
+  {
+    title: 'Trạng thái',
+    align: 'center',
+    key: 'status',
+    render: (row) => {
+      return (
+        <NTag type={statusTypeMap[row.status!] || 'default'}>
+          {row.status === 'ACTIVE' && <span>HOẠT ĐỘNG</span>}
+          {row.status === 'INACTIVE' && <span>KHÓA</span>}
+        </NTag>
+      )
+    },
+  },
 ])
+const statusTypeMap: Record<string, any> = {
+  ACTIVE: 'success',
+  INACTIVE: 'error',
+}
 const columnsRef = ref<DataTableColumns<User.Data>>(columns.value)
 const listUser = ref<User.Data[]>([])
 const totalRecords = ref<number>(0)
@@ -96,6 +114,13 @@ async function getListUser() {
 
 async function reloadTableFirst() {
   dataTableRequest.value.currentPage = 1
+  await getListUser()
+}
+
+async function reloadFirst() {
+  dataTableRequest.value.currentPage = 1
+  dataTableRequest.value.status = 'ALL'
+  dataTableRequest.value.filter = ''
   await getListUser()
 }
 
@@ -135,7 +160,14 @@ function sortData(sorter: DataTableSortState) {
   reloadTable()
 }
 
+const statusOptions = [
+  { label: 'Tất cả', value: 'ALL' },
+  { label: 'Hoạt động', value: 'ACTIVE' },
+  { label: 'Khóa', value: 'INACTIVE' },
+]
+
 onMounted(() => {
+  dataTableRequest.value.status = 'ALL'
   getListUser()
 })
 </script>
@@ -145,6 +177,14 @@ onMounted(() => {
     <n-card>
       <n-form ref="formRef" :model="dataTableRequest" label-placement="left" inline :show-feedback="false">
         <n-flex>
+          <n-form-item label="Trạng thái">
+            <n-select
+              v-model:value="dataTableRequest.status"
+              placeholder=""
+              :options="statusOptions"
+              style="width: 150px;"
+            />
+          </n-form-item>
           <n-form-item label="Tìm kiếm" path="filter">
             <n-input v-model:value="dataTableRequest.filter" placeholder="Từ khóa..." />
           </n-form-item>
@@ -155,7 +195,7 @@ onMounted(() => {
               </template>
               Tìm kiếm
             </NButton>
-            <NButton strong secondary @click="reloadTableFirst()">
+            <NButton strong secondary @click="reloadFirst()">
               <template #icon>
                 <icon-park-outline-redo />
               </template>

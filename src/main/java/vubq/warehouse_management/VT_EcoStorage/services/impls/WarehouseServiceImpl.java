@@ -83,6 +83,9 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public ZoneDto createOrUpdateZone(ZoneDto zoneDto) {
+        if (zoneRepository.existsByNameAndWarehouseId(zoneDto.getName(), zoneDto.getWarehouseId())) {
+            throw new IllegalArgumentException("Khu vực đã tồn tại");
+        }
         Zone zone = new Zone();
         zone.setName(zoneDto.getName());
         zone.setStatus(zoneDto.getStatus());
@@ -93,6 +96,9 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public ShelfDto createOrUpdateShelf(ShelfDto shelfDto) {
+        if (shelfRepository.existsByNameAndZoneId(shelfDto.getName(), shelfDto.getZoneId())) {
+            throw new IllegalArgumentException("Kệ đã tồn tại");
+        }
         Shelf shelf = new Shelf();
         shelf.setName(shelfDto.getName());
         shelf.setStatus(shelfDto.getStatus());
@@ -178,10 +184,16 @@ public class WarehouseServiceImpl implements WarehouseService {
         if (StringUtils.isEmpty(warehouseDto.getId())) {
             warehouse = new Warehouse();
             warehouse.setStatus(Warehouse.Status.ACTIVE);
+            if (warehouseRepository.existsByName(warehouseDto.getName())) {
+                throw new IllegalArgumentException("Kho đã tồn tại");
+            }
         } else {
             warehouse = warehouseRepository.findById(warehouseDto.getId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy kho có ID: " + warehouseDto.getId()));
+                    .orElseThrow(() -> new RuntimeException("Kho không tồn tại ID: " + warehouseDto.getId()));
             warehouse.setStatus(warehouseDto.getStatus());
+            if (warehouseRepository.existsByNameAndIdNot(warehouseDto.getName(), warehouse.getId())) {
+                throw new IllegalArgumentException("Kho đã tồn tại");
+            }
         }
         warehouse.setName(warehouseDto.getName());
         warehouse.setAddress(warehouseDto.getAddress());

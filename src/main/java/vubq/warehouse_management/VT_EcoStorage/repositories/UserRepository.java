@@ -15,4 +15,16 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByUsername(String username);
 
     Page<User> findAll(Specification<User> spec, Pageable pageable);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByPhoneNumber(String phoneNumber);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByUsernameAndIdNot(String username, String id);
+
+    boolean existsByPhoneNumberAndIdNot(String phoneNumber, String id);
+
+    boolean existsByEmailAndIdNot(String email, String id);
 }

@@ -58,9 +58,28 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.isEmpty(userDto.getId())) {
             user = new User();
             user.setStatus(User.Status.ACTIVE);
+            if (userRepository.existsByUsername(userDto.getUsername())) {
+                throw new IllegalArgumentException("Tài khoản đã tồn tại");
+            }
+            if (userRepository.existsByPhoneNumber(userDto.getPhoneNumber())) {
+                throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+            }
+            if (userRepository.existsByEmail(userDto.getEmail())) {
+                throw new IllegalArgumentException("Email đã tồn tại");
+            }
         } else {
             user = userRepository.findById(userDto.getId())
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + userDto.getId()));
+            user.setStatus(userDto.getStatus());
+            if (userRepository.existsByUsernameAndIdNot(userDto.getUsername(), user.getId())) {
+                throw new IllegalArgumentException("Tài khoản đã tồn tại");
+            }
+            if (userRepository.existsByPhoneNumberAndIdNot(userDto.getPhoneNumber(), user.getId())) {
+                throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+            }
+            if (userRepository.existsByEmailAndIdNot(userDto.getEmail(), user.getId())) {
+                throw new IllegalArgumentException("Email đã tồn tại");
+            }
         }
         user.setUsername(userDto.getUsername());
         user.setPassword(StringUtils.isEmpty(userDto.getPassword()) ? user.getPassword() : passwordEncoder.encode(userDto.getPassword()));
@@ -106,7 +125,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<User> getListUser(DataTableRequest dataTableRequest) {
+    public Page<User> getListUser(DataTableRequest dataTableRequest, String status) {
         PageRequest pageable = dataTableRequest.toPageable();
         BaseSpecification<User> specUsernameContains = new BaseSpecification<>(
                 SearchCriteria.builder()
@@ -115,6 +134,13 @@ public class UserServiceImpl implements UserService {
                         .value(dataTableRequest.getFilter().trim().toUpperCase())
                         .build()
         );
-        return userRepository.findAll(Specification.where(specUsernameContains), pageable);
+        BaseSpecification<User> specStatusEqual = new BaseSpecification<>(
+                SearchCriteria.builder()
+                        .keys(new String[]{User.Fields.status})
+                        .operation(SearchOperation.EQUALITY)
+                        .value(status)
+                        .build()
+        );
+        return userRepository.findAll(Specification.where(specUsernameContains).and(status.equals("ALL") ? null : specStatusEqual), pageable);
     }
 }

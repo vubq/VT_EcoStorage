@@ -112,10 +112,10 @@ function updateTopMenu(key: string) {
           />
           <div class="flex-y-center gap-1 h-full p-x-xl">
             <Search />
-            <Notices />
+            <!-- <Notices />
             <FullScreen />
             <DarkModeSwitch />
-            <LangsSwitch />
+            <LangsSwitch /> -->
             <Setting />
             <UserCenter />
           </div>

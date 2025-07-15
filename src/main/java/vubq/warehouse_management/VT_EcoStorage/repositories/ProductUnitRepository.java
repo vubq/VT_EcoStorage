@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface ProductUnitRepository extends JpaRepository<ProductUnit, String> {
 
+    boolean existsByName(String name);
+
+    boolean existsByNameAndIdNot(String name, String id);
+
     List<ProductUnit> findByStatus(ProductUnit.Status status);
 
     Page<ProductUnit> findAll(Specification<ProductUnit> spec, Pageable pageable);

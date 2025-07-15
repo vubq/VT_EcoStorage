@@ -14,4 +14,8 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, String> {
     List<Warehouse> findByCompanyIdAndStatus(String companyId, Warehouse.Status status);
 
     Warehouse findByIdAndStatus(String warehouseId, Warehouse.Status status);
+
+    boolean existsByName(String name);
+
+    boolean existsByNameAndIdNot(String name, String id);
 }

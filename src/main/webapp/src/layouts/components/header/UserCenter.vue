@@ -14,7 +14,7 @@ const router = useRouter()
 const options = computed(() => {
   return [
     {
-      label: t('app.userCenter'),
+      label: 'Thông tin',
       key: 'userCenter',
       icon: () => h(IconUser),
     },
@@ -22,27 +22,27 @@ const options = computed(() => {
       type: 'divider',
       key: 'd1',
     },
+    // {
+    //   label: 'Github',
+    //   key: 'guthub',
+    //   icon: () => h(IconGithub),
+    // },
+    // {
+    //   label: 'Gitee',
+    //   key: 'gitee',
+    //   icon: renderIcon('simple-icons:gitee'),
+    // },
+    // {
+    //   label: 'Docs',
+    //   key: 'docs',
+    //   icon: () => h(IconBookOpen),
+    // },
+    // {
+    //   type: 'divider',
+    //   key: 'd1',
+    // },
     {
-      label: 'Github',
-      key: 'guthub',
-      icon: () => h(IconGithub),
-    },
-    {
-      label: 'Gitee',
-      key: 'gitee',
-      icon: renderIcon('simple-icons:gitee'),
-    },
-    {
-      label: 'Docs',
-      key: 'docs',
-      icon: () => h(IconBookOpen),
-    },
-    {
-      type: 'divider',
-      key: 'd1',
-    },
-    {
-      label: t('app.loginOut'),
+      label: 'Đăng xuất',
       key: 'loginOut',
       icon: () => h(IconLogout),
     },
@@ -51,10 +51,10 @@ const options = computed(() => {
 function handleSelect(key: string | number) {
   if (key === 'loginOut') {
     window.$dialog?.info({
-      title: t('app.loginOutTitle'),
-      content: t('app.loginOutContent'),
-      positiveText: t('common.confirm'),
-      negativeText: t('common.cancel'),
+      title: 'Đăng xuất',
+      content: 'Xác nhận đăng xuất khỏi tài khoản hiện tại?',
+      positiveText: 'Xác nhận',
+      negativeText: 'Hủy',
       onPositiveClick: () => {
         logout()
       },

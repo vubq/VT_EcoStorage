@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-import { NButton, NSpace } from 'naive-ui'
+import { NA, NButton, NSpace } from 'naive-ui'
 import { router } from '@/router'
 import { Add } from '@vicons/ionicons5'
 import { ProductService } from '@/service/api/product-service'
@@ -31,21 +31,22 @@ const columns = ref<DataTableColumns<Product.DataTable>>([
     sorter: true,
     sortOrder: sortDefault('barcode'),
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => {
             router.push({
               name: 'product-management.product',
               params: { productId: row.id },
             })
-          }}
-        >
-          {row.barcode}
-        </NButton>
+          },
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.barcode
+        }
       )
     },
   },

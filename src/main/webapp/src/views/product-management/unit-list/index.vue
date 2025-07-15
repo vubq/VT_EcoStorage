@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState, FormRules } from 'naive-ui'
-import { NButton, NSpace } from 'naive-ui'
+import { NA, NButton, NSpace } from 'naive-ui'
 import { Add } from '@vicons/ionicons5'
 import { ProductService } from '@/service/api/product-service'
 import { useBoolean } from '@/hooks'
@@ -28,15 +28,17 @@ const columns = ref<DataTableColumns<Unit.Data>>([
     key: 'id',
     width: '300',
     render: (row) => {
-      return (
-        <NButton
-          secondary
-          type="primary"
-          strong
-          onClick={() => getUnit(row.id!)}
-        >
-          {row.id}
-        </NButton>
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => getUnit(row.id!),
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.id
+        }
       )
     },
   },

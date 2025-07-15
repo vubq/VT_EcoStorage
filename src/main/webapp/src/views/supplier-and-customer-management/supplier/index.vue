@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, DataTableSortState } from 'naive-ui'
-import { NButton, NSpace } from 'naive-ui'
+import { NA, NButton, NSpace } from 'naive-ui'
 import { Add } from '@vicons/ionicons5'
 import { router } from '@/router'
 import { SupplierService } from '@/service/api/supplier-service'
@@ -20,21 +20,22 @@ const columns = ref<DataTableColumns<Supplier.Data>>([
     align: 'center',
     key: 'id',
     render: (row) => {
-      return (
-        <NButton
-          secondary
-          type="primary"
-          strong
-          style={{ width: '100%' }}
-          onClick={() => {
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => {
             router.push({
               name: 'supplier-and-customer-management.supplier.detail',
               params: { supplierId: row.id },
             })
-          }}
-        >
-          {row.id}
-        </NButton>
+          },
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.id
+        }
       )
     },
   },

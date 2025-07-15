@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
-import { NButton, NGi, NGrid, NIcon, NSpace, NTag } from 'naive-ui'
+import { NA, NButton, NGi, NGrid, NIcon, NSpace, NTag } from 'naive-ui'
 import { Save } from '@vicons/ionicons5'
 import { useRoute } from 'vue-router'
 import { router } from '@/router'
@@ -70,21 +70,22 @@ const columns = ref<DataTableColumns<PurchaseOrder.DataTable>>([
     align: 'center',
     key: 'id',
     render: (row) => {
-      return (
-        <NButton
-          style="width: 100%"
-          secondary
-          type="primary"
-          strong
-          onClick={() => {
+      return h(
+        NA,
+        {
+          href: '#',
+          onClick: () => {
             router.push({
               name: 'purchase-order-management.purchase-order',
               params: { purchaseOrderId: row.id },
             })
-          }}
-        >
-          {row.id}
-        </NButton>
+          },
+          class: 'underline-on-hover',
+          internal: true
+        },
+        {
+          default: () => row.id
+        }
       )
     },
   },

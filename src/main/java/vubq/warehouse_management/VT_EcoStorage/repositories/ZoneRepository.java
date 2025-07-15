@@ -12,4 +12,8 @@ public interface ZoneRepository extends JpaRepository<Zone, String> {
     List<Zone> findByWarehouseIdAndStatus(String warehouseId, Zone.Status status);
 
     List<Zone> findByWarehouseIdInAndStatus(List<String> warehouseIds, Zone.Status status);
+
+    boolean existsByNameAndWarehouseId(String name, String warehouseId);
+
+    boolean existsByNameAndWarehouseIdAndIdNot(String name, String warehouseId, String id);
 }
