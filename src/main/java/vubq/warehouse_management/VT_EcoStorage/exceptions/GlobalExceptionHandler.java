@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     public Response handleAllExceptions(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error occurred at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         if (ex.getMessage().equalsIgnoreCase("Access Denied")) {
-            return Response.badRequest("Access Denied");
+            return Response.badRequest("Không có quyền");
         }
         return Response.internalError();
     }

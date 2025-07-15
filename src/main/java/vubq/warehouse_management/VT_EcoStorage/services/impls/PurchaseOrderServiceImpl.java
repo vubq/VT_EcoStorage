@@ -7,6 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vubq.warehouse_management.VT_EcoStorage.dtos.*;
@@ -135,6 +138,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }
 
         if (purchaseOrder.getStatus() == PurchaseOrder.Status.NEW && purchaseOrderDto.getStatus() == PurchaseOrder.Status.CONFIRMED) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            boolean hasConfirm = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("PURCHASE_ORDER.CONFIRM"));
+
+            if (!hasConfirm) {
+                throw new IllegalArgumentException("Không có quyền");
+            }
+
             purchaseOrder.setStatus(PurchaseOrder.Status.CONFIRMED);
             purchaseOrder.setSupplierId(purchaseOrderDto.getSupplierId());
             purchaseOrder.setWarehouseId(purchaseOrderDto.getWarehouseId());
@@ -237,6 +250,19 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 //        }
 
         if (purchaseOrder.getStatus() == PurchaseOrder.Status.CONFIRMED && purchaseOrderDto.getStatus() == PurchaseOrder.Status.RECEIVED) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            boolean isSuperAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
+
+            boolean hasConfirm = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("PURCHASE_ORDER.CONFIRM"));
+
+            if (!hasConfirm && !isSuperAdmin) {
+                throw new IllegalArgumentException("Không có quyền");
+            }
+
             if (!StringUtils.isEmpty(purchaseOrder.getExportOrderId())) {
                 ExportOrder exportOrder = exportOrderRepository.findById(purchaseOrder.getExportOrderId()).orElse(null);
                 if (exportOrder != null) {

@@ -1,6 +1,7 @@
 package vubq.warehouse_management.VT_EcoStorage.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    @PreAuthorize("hasAuthority('ADMIN.SUPER') or hasAuthority('INVENTORY.VIEW')")
     @GetMapping()
     public Response getInventory(
             @RequestParam String warehouseId,
@@ -26,6 +28,7 @@ public class InventoryController {
         );
     }
 
+    @PreAuthorize("hasAuthority('ADMIN.SUPER') or hasAuthority('INVENTORY.VIEW')")
     @GetMapping("/reference-data")
     public Response getReferenceData() {
         return Response.success(

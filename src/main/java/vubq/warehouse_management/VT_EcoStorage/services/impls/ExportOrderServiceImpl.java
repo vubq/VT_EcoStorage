@@ -7,6 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vubq.warehouse_management.VT_EcoStorage.dtos.*;
@@ -162,6 +165,16 @@ public class ExportOrderServiceImpl implements ExportOrderService {
         }
 
         if (exportOrder.getStatus() == ExportOrder.Status.NEW && exportOrderDto.getStatus() == ExportOrder.Status.CONFIRMED) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            boolean hasConfirm = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("EXPORT_ORDER.CONFIRM"));
+
+            if (!hasConfirm) {
+                throw new IllegalArgumentException("Không có quyền");
+            }
+
             exportOrder.setStatus(ExportOrder.Status.CONFIRMED);
             exportOrder.setWarehouseId(exportOrderDto.getWarehouseId());
             exportOrder.setExpectedDate(exportOrderDto.getExpectedDate());
@@ -242,6 +255,19 @@ public class ExportOrderServiceImpl implements ExportOrderService {
         }
 
         if (exportOrder.getStatus() == ExportOrder.Status.CONFIRMED && exportOrderDto.getStatus() == ExportOrder.Status.DELIVERED) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            boolean isSuperAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
+
+            boolean hasConfirm = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("EXPORT_ORDER.CONFIRM"));
+
+            if (!hasConfirm && !isSuperAdmin) {
+                throw new IllegalArgumentException("Không có quyền");
+            }
+
             exportOrder.setStatus(ExportOrder.Status.DELIVERED);
             exportOrder.setDeliveredDate(DateUtils.getCurrentTime());
 

@@ -2,6 +2,7 @@ package vubq.warehouse_management.VT_EcoStorage.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +20,7 @@ public class StatisticalController {
 
     private final StatisticalService statisticalService;
 
+    @PreAuthorize("hasAuthority('ADMIN.SUPER') or hasAuthority('STATISTICAL.VIEW')")
     @GetMapping
     public Response getStatistical(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
