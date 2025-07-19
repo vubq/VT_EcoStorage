@@ -535,12 +535,11 @@ async function createOrUpdateExportOrder(status: string) {
           window.$message.error('Vui lòng chọn sản phẩm cần xuất')
           return
         }
-        if (status === 'DELIVERED') {
-          for (const p of exportOrder.value.details) {
-            const sl = listProduct.value.find(p1 => p1.locationId === p.locationId)?.inventoryQuantity
-            if (Number(p.quantity) > Number(sl)) {
-              window.$message.error(`Vui lòng xác nhận lại số lượng ${p.productName} [Barcode: ${p.productBarcode}]`)
-            }
+        for (const p of exportOrder.value.details) {
+          const sl = listProduct.value.find(p1 => p1.locationId === p.locationId)?.inventoryQuantity
+          if (Number(p.quantity) > Number(sl)) {
+            window.$message.error(`Vui lòng xác nhận lại số lượng ${p.productName} [Barcode: ${p.productBarcode}]`)
+            return
           }
         }
       }

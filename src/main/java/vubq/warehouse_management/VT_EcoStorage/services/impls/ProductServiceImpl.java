@@ -206,6 +206,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         productCategory.setName(productCategoryDto.getName());
+        productCategory.setDescription(productCategoryDto.getDescription());
         productCategory = productCategoryRepository.saveAndFlush(productCategory);
         return ProductCategoryDto.toDto(productCategory);
     }
@@ -228,6 +229,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         productUnit.setName(productUnitDto.getName());
+        productUnit.setDescription(productUnitDto.getDescription());
         productUnit = productUnitRepository.saveAndFlush(productUnit);
         return ProductUnitDto.toDto(productUnit);
     }
@@ -250,6 +252,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         productOrigin.setName(productOriginDto.getName());
+        productOrigin.setDescription(productOrigin.getDescription());
         productOrigin = productOriginRepository.saveAndFlush(productOrigin);
         return ProductOriginDto.toDto(productOrigin);
     }

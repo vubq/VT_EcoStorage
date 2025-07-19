@@ -15,6 +15,7 @@ import lombok.experimental.FieldNameConstants;
 public class ProductCategory extends Base {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
     @Enumerated(EnumType.STRING)

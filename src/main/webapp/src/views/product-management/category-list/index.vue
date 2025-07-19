@@ -8,7 +8,7 @@ import { useBoolean } from '@/hooks'
 const formRef = ref()
 const rules: FormRules = {
   name: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
 }
 const { bool: visible, setTrue: openModal, setFalse: hideModal } = useBoolean(false)
@@ -34,11 +34,11 @@ const columns = ref<DataTableColumns<Category.Data>>([
           href: '#',
           onClick: () => getCategory(row.id!),
           class: 'underline-on-hover',
-          internal: true
+          internal: true,
         },
         {
-          default: () => row.id
-        }
+          default: () => row.id,
+        },
       )
     },
   },
@@ -111,6 +111,10 @@ async function createOrUpdateCategory() {
       await ProductService.createOrUpdateCategory(category.value)
         .then((res: any) => {
           if (res.isSuccess) {
+            category.value = {
+              name: '',
+              status: 'ACTIVE',
+            }
             hideModal()
             reloadTableFirst()
           }

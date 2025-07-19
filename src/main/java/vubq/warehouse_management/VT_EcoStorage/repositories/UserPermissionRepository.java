@@ -12,4 +12,6 @@ public interface UserPermissionRepository extends JpaRepository<UserPermission, 
     void deleteByUserId(String userId);
 
     List<UserPermission> findAllById_UserId(String userId);
+
+    List<UserPermission> findByUserId(String userId);
 }

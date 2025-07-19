@@ -20,6 +20,7 @@ import vubq.warehouse_management.VT_EcoStorage.utils.specifications.BaseSpecific
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchCriteria;
 import vubq.warehouse_management.VT_EcoStorage.utils.specifications.SearchOperation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -55,9 +56,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createOrUpdateUser(UserDto userDto) {
         User user;
+
+        // Tạo mới user
         if (StringUtils.isEmpty(userDto.getId())) {
             user = new User();
             user.setStatus(User.Status.ACTIVE);
+
             if (userRepository.existsByUsername(userDto.getUsername())) {
                 throw new IllegalArgumentException("Tài khoản đã tồn tại");
             }
@@ -68,9 +72,12 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalArgumentException("Email đã tồn tại");
             }
         } else {
+            // Cập nhật user
             user = userRepository.findById(userDto.getId())
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + userDto.getId()));
+
             user.setStatus(userDto.getStatus());
+
             if (userRepository.existsByUsernameAndIdNot(userDto.getUsername(), user.getId())) {
                 throw new IllegalArgumentException("Tài khoản đã tồn tại");
             }
@@ -81,8 +88,11 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalArgumentException("Email đã tồn tại");
             }
         }
+
         user.setUsername(userDto.getUsername());
-        user.setPassword(StringUtils.isEmpty(userDto.getPassword()) ? user.getPassword() : passwordEncoder.encode(userDto.getPassword()));
+        user.setPassword(StringUtils.isEmpty(userDto.getPassword())
+                ? user.getPassword()
+                : passwordEncoder.encode(userDto.getPassword()));
         user.setEmail(userDto.getEmail());
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
@@ -91,11 +101,24 @@ public class UserServiceImpl implements UserService {
 
         user = userRepository.saveAndFlush(user);
 
-        userPermissionRepository.deleteByUserId(user.getId());
+        // ============================
+        // Xử lý quyền chi tiết (UserPermission)
+        // ============================
+
+        List<UserPermission> currentPermissions = userPermissionRepository.findByUserId(user.getId());
+
+        // Giữ lại ADMIN.SUPER
+        List<UserPermission> toDelete = currentPermissions.stream()
+                .filter(p -> !"ADMIN.SUPER".equals(p.getSystemPermission().getId()))
+                .toList();
+
+        userPermissionRepository.deleteAll(toDelete);
         userPermissionRepository.flush();
 
         User finalUser = user;
+
         List<UserPermission> userPermissions = userDto.getPermissions().stream()
+                .filter(permission -> !"ADMIN.SUPER".equals(permission)) // Không chèn trùng
                 .map(permission -> UserPermission.builder()
                         .id(new UserPermissionId(finalUser.getId(), permission))
                         .user(finalUser)
@@ -103,24 +126,32 @@ public class UserServiceImpl implements UserService {
                         .build())
                 .toList();
 
-        this.userPermissionRepository.saveAllAndFlush(userPermissions);
+        userPermissionRepository.saveAllAndFlush(userPermissions);
+
+        // ============================
+        // Xử lý nhóm quyền (UserPermissionGroup)
+        // ============================
 
         userPermissionGroupRepository.deleteAllByUserId(userDto.getId());
-        List<UserPermissionGroup> newGroups = userDto.getPermissionGroups().stream()
-                .map(groupId -> {
-                    SystemPermissionGroup group = systemPermissionGroupRepository.findById(groupId)
-                            .orElseThrow(() -> new RuntimeException("Nhom quyen khong ton tai"));
 
-                    return UserPermissionGroup.builder()
-                            .id(new UserPermissionGroupId(userDto.getId(), groupId))
-                            .user(finalUser)
-                            .systemPermissionGroup(group)
-                            .build();
-                }).toList();
+        List<UserPermissionGroup> newGroups = new ArrayList<>();
+        if (userDto.getPermissionGroups() != null) {
+            for (String groupId : userDto.getPermissionGroups()) {
+                SystemPermissionGroup group = systemPermissionGroupRepository.findById(groupId)
+                        .orElseThrow(() -> new RuntimeException("Nhóm quyền không tồn tại"));
+
+                newGroups.add(UserPermissionGroup.builder()
+                        .id(new UserPermissionGroupId(user.getId(), groupId))
+                        .user(finalUser)
+                        .systemPermissionGroup(group)
+                        .build());
+            }
+        }
 
         if (!newGroups.isEmpty()) {
             userPermissionGroupRepository.saveAll(newGroups);
         }
+
         return UserDto.toDto(user);
     }
 

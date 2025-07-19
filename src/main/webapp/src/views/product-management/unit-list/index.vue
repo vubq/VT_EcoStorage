@@ -8,7 +8,7 @@ import { useBoolean } from '@/hooks'
 const formRef = ref()
 const rules: FormRules = {
   name: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
 }
 const { bool: visible, setTrue: openModal, setFalse: hideModal } = useBoolean(false)
@@ -34,11 +34,11 @@ const columns = ref<DataTableColumns<Unit.Data>>([
           href: '#',
           onClick: () => getUnit(row.id!),
           class: 'underline-on-hover',
-          internal: true
+          internal: true,
         },
         {
-          default: () => row.id
-        }
+          default: () => row.id,
+        },
       )
     },
   },
@@ -111,6 +111,10 @@ async function createOrUpdateUnit() {
       await ProductService.createOrUpdateUnit(unit.value)
         .then((res: any) => {
           if (res.isSuccess) {
+            unit.value = {
+              name: '',
+              status: 'ACTIVE',
+            }
             hideModal()
             reloadTableFirst()
           }
@@ -205,7 +209,7 @@ onMounted(() => {
         action: true,
       }"
     >
-      <n-form label-placement="left" :model="unit" label-align="left" :label-width="80">
+      <n-form label-placement="left" :model="unit" :rules="rules" label-align="left" :label-width="80">
         <n-form-item label="Tên" path="name">
           <n-input v-model:value="unit.name" placeholder="" />
         </n-form-item>
