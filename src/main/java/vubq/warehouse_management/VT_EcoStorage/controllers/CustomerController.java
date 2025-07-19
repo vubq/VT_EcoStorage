@@ -72,13 +72,15 @@ public class CustomerController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(customerDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(customerDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         return Response.success(customerService.createOrUpdateCustomer(customerDto));

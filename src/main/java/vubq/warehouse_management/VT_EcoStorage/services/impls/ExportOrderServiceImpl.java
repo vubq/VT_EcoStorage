@@ -168,11 +168,16 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
+            boolean isSuperAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
+
             boolean hasConfirm = authorities.stream()
                     .anyMatch(auth -> auth.getAuthority().equals("EXPORT_ORDER.CONFIRM"));
 
-            if (!hasConfirm) {
-                throw new IllegalArgumentException("Không có quyền");
+            if (!isSuperAdmin) {
+                if (!hasConfirm) {
+                    throw new IllegalArgumentException("Không có quyền");
+                }
             }
 
             exportOrder.setStatus(ExportOrder.Status.CONFIRMED);
@@ -264,8 +269,10 @@ public class ExportOrderServiceImpl implements ExportOrderService {
             boolean hasConfirm = authorities.stream()
                     .anyMatch(auth -> auth.getAuthority().equals("EXPORT_ORDER.CONFIRM"));
 
-            if (!hasConfirm && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+            if (!isSuperAdmin) {
+                if (!hasConfirm) {
+                    throw new IllegalArgumentException("Không có quyền");
+                }
             }
 
             exportOrder.setStatus(ExportOrder.Status.DELIVERED);

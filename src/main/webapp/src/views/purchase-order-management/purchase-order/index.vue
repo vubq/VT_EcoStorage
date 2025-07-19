@@ -58,7 +58,8 @@ const rules = computed<FormRules>(() => {
               if (selectedDate.isBefore(today)) {
                 return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
               }
-            } else {
+            }
+            else {
               if (selectedDate !== selectedDatePurchaseOrder) {
                 if (selectedDate.isBefore(today)) {
                   return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
@@ -92,11 +93,11 @@ const columns = computed(() => {
               })
             },
             class: 'underline-on-hover',
-            internal: true
+            internal: true,
           },
           {
-            default: () => row.productBarcode
-          }
+            default: () => row.productBarcode,
+          },
         )
       },
     },
@@ -180,7 +181,7 @@ const columns = computed(() => {
             <NSpace vertical size="large">
               {(row.locations || []).map((l: any, index: number) => (
                 <NGrid key={index} cols={5} y-gap={12} x-gap={24}>
-                  <NGi span={1}><NSelect options={optionZones()} placeholder="Khu vực" v-model:value={l.zoneId} onChange={() => {l.shelfId = null; l.locationId = null }} /></NGi>
+                  <NGi span={1}><NSelect options={optionZones()} placeholder="Khu vực" v-model:value={l.zoneId} onChange={() => { l.shelfId = null; l.locationId = null }} /></NGi>
                   <NGi span={1}><NSelect options={optionShelf(l.zoneId)} placeholder="Kệ" v-model:value={l.shelfId} onChange={() => l.locationId = null} /></NGi>
                   <NGi span={1}><NSelect options={optionFloor(l.zoneId, l.shelfId, row.productId!)} placeholder="Tầng" v-model:value={l.locationId} /></NGi>
                   <NGi span={1}><NInputNumber v-model:value={l.quantity} placeholder="Số lượng" min={1} /></NGi>
@@ -216,11 +217,11 @@ const columnsProduct = ref<DataTableColumns<PurchaseOrder.Product>>([
           href: '#',
           onClick: () => addProduct(row),
           class: 'underline-on-hover',
-          internal: true
+          internal: true,
         },
         {
-          default: () => row.barcode
-        }
+          default: () => row.barcode,
+        },
       )
     },
   },
@@ -290,7 +291,7 @@ const referenceData = ref<ReferenceData.PurchaseOrder>({
   warehouses: [],
   suppliers: [],
   categories: [],
-  company: {}
+  company: {},
 })
 
 async function getReferenceData() {
@@ -464,6 +465,7 @@ async function createOrUpdatePurchaseOrder(status: string) {
             }
             if (Number(p.quantity) !== Number(p.locations.reduce((sum, item) => sum + (item.quantity || 0), 0))) {
               window.$message.error(`Vui lòng xác nhận lại số lượng ${p.productName} [Barcode: ${p.productBarcode}]`)
+              return
             }
           }
         }
@@ -520,14 +522,15 @@ function optionWarehousesFrom() {
 
 function printInvoice() {
   const el = invoiceRef.value?.invoiceContent
-  if (!el) return
+  if (!el)
+    return
 
   html2pdf()
     .set({
       margin: 0,
       filename: 'phieu-xuat-hang.pdf',
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     })
     .from(el)
     .toPdf()
@@ -747,15 +750,19 @@ onMounted(async () => {
       </NSpace>
     </n-card>
     <div class="flex gap-4">
-      <n-button type="primary" class="ml-a" strong secondary @click="showModalInvoice">Hóa đơn</n-button>
+      <NButton type="primary" class="ml-a" strong secondary @click="showModalInvoice">
+        Hóa đơn
+      </NButton>
     </div>
-    <n-modal style="width: 794px; max-width: 100%;" v-model:show="isModalInvoice" preset="card" title="Hóa đơn xuất hàng">
+    <n-modal v-model:show="isModalInvoice" style="width: 794px; max-width: 100%;" preset="card" title="Hóa đơn xuất hàng">
       <div>
-        <invoice-print ref="invoiceRef" :order="purchaseOrder" :referenceData="referenceData" />
+        <InvoicePrint ref="invoiceRef" :order="purchaseOrder" :reference-data="referenceData" />
       </div>
       <template #action>
         <div class="flex gap-4">
-          <n-button type="primary" class="ml-a" strong secondary @click="printInvoice">In hóa đơn</n-button>
+          <NButton type="primary" class="ml-a" strong secondary @click="printInvoice">
+            In hóa đơn
+          </NButton>
         </div>
       </template>
     </n-modal>

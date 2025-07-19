@@ -141,11 +141,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
+            boolean isSuperAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
+
             boolean hasConfirm = authorities.stream()
                     .anyMatch(auth -> auth.getAuthority().equals("PURCHASE_ORDER.CONFIRM"));
 
-            if (!hasConfirm) {
-                throw new IllegalArgumentException("Không có quyền");
+            if (!isSuperAdmin) {
+                if (!hasConfirm) {
+                    throw new IllegalArgumentException("Không có quyền");
+                }
             }
 
             purchaseOrder.setStatus(PurchaseOrder.Status.CONFIRMED);
@@ -259,8 +264,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             boolean hasConfirm = authorities.stream()
                     .anyMatch(auth -> auth.getAuthority().equals("PURCHASE_ORDER.CONFIRM"));
 
-            if (!hasConfirm && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+            if (!isSuperAdmin) {
+                if (!hasConfirm) {
+                    throw new IllegalArgumentException("Không có quyền");
+                }
             }
 
             if (!StringUtils.isEmpty(purchaseOrder.getExportOrderId())) {

@@ -58,7 +58,8 @@ const rules = computed<FormRules>(() => {
               if (selectedDate.isBefore(today)) {
                 return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
               }
-            } else {
+            }
+            else {
               if (selectedDate !== selectedDateExportOrder) {
                 if (selectedDate.isBefore(today)) {
                   return Promise.reject(new Error('Ngày phải từ hôm nay trở đi'))
@@ -93,11 +94,11 @@ const columns = computed(() => {
               })
             },
             class: 'underline-on-hover',
-            internal: true
+            internal: true,
           },
           {
-            default: () => row.productBarcode
-          }
+            default: () => row.productBarcode,
+          },
         )
       },
     },
@@ -224,11 +225,11 @@ const columnsProduct = ref<DataTableColumns<Product.ProductByLocation>>([
             addProduct(row)
           },
           class: 'underline-on-hover',
-          internal: true
+          internal: true,
         },
         {
-          default: () => row.productBarcode
-        }
+          default: () => row.productBarcode,
+        },
       )
     },
   },
@@ -310,7 +311,7 @@ const referenceData = ref<ReferenceData.ExportOrder>({
   warehouses: [],
   customers: [],
   categories: [],
-  company: {}
+  company: {},
 })
 
 function optionCategories() {
@@ -529,10 +530,21 @@ function addProduct(product: Product.ProductByLocation) {
 async function createOrUpdateExportOrder(status: string) {
   formRef.value?.validate(async (errors) => {
     if (!errors) {
-      if (!exportOrder.value.details || exportOrder.value.details.length < 1) {
-        window.$message.error('Vui lòng chọn sản phẩm cần xuất')
-        return
+      if (status !== 'CANCELED') {
+        if (!exportOrder.value.details || exportOrder.value.details.length < 1) {
+          window.$message.error('Vui lòng chọn sản phẩm cần xuất')
+          return
+        }
+        if (status === 'DELIVERED') {
+          for (const p of exportOrder.value.details) {
+            const sl = listProduct.value.find(p1 => p1.locationId === p.locationId)?.inventoryQuantity
+            if (Number(p.quantity) > Number(sl)) {
+              window.$message.error(`Vui lòng xác nhận lại số lượng ${p.productName} [Barcode: ${p.productBarcode}]`)
+            }
+          }
+        }
       }
+
       exportOrder.value.expectedDate = moment(expectedDate.value).toDate()
       exportOrder.value.details = exportOrder.value.details!.filter(
         detail => detail.productId && detail.delete !== true,
@@ -612,14 +624,15 @@ async function showListProduct() {
 
 function printInvoice() {
   const el = invoiceRef.value?.invoiceContent
-  if (!el) return
+  if (!el)
+    return
 
   html2pdf()
     .set({
       margin: 0,
       filename: 'phieu-xuat-hang.pdf',
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     })
     .from(el)
     .toPdf()
@@ -896,15 +909,19 @@ onMounted(async () => {
       </NSpace>
     </n-card>
     <div class="flex gap-4">
-      <n-button type="primary" class="ml-a" strong secondary @click="showModalInvoice">Hóa đơn</n-button>
+      <NButton type="primary" class="ml-a" strong secondary @click="showModalInvoice">
+        Hóa đơn
+      </NButton>
     </div>
-    <n-modal style="width: 794px; max-width: 100%;" v-model:show="isModalInvoice" preset="card" title="Hóa đơn xuất hàng">
+    <n-modal v-model:show="isModalInvoice" style="width: 794px; max-width: 100%;" preset="card" title="Hóa đơn xuất hàng">
       <div>
-        <invoice-print ref="invoiceRef" :order="exportOrder" :referenceData="referenceData" />
+        <InvoicePrint ref="invoiceRef" :order="exportOrder" :reference-data="referenceData" />
       </div>
       <template #action>
         <div class="flex gap-4">
-          <n-button type="primary" class="ml-a" strong secondary @click="printInvoice">In hóa đơn</n-button>
+          <NButton type="primary" class="ml-a" strong secondary @click="printInvoice">
+            In hóa đơn
+          </NButton>
         </div>
       </template>
     </n-modal>

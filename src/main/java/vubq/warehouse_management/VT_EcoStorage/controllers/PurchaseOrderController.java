@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -62,13 +63,15 @@ public class PurchaseOrderController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(purchaseOrderDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(purchaseOrderDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         boolean success = purchaseOrderService.createOrUpdatePurchaseOrder(purchaseOrderDto);

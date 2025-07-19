@@ -2,6 +2,7 @@ package vubq.warehouse_management.VT_EcoStorage.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -48,13 +49,15 @@ public class WarehouseController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(warehouseDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(warehouseDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         return Response.success(warehouseService.createOrUpdateWarehouse(warehouseDto));
@@ -72,13 +75,15 @@ public class WarehouseController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(zoneDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(zoneDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         return Response.success(warehouseService.createOrUpdateZone(zoneDto));
@@ -96,13 +101,15 @@ public class WarehouseController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(shelfDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(shelfDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         return Response.success(warehouseService.createOrUpdateShelf(shelfDto));
@@ -120,13 +127,15 @@ public class WarehouseController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(floorDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd && !isSuperAdmin) {
-                throw new IllegalArgumentException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(floorDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         return Response.success(warehouseService.createOrUpdateFloor(floorDto));

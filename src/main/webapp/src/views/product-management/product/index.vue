@@ -38,40 +38,40 @@ const product = ref<Product.Data>({
 
 const rules: FormRules = {
   name: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
   costPrice: [
     {
       required: true,
       validator: (_rule, value) => {
         if (value < 0) {
-          return Promise.reject('Giá vốn phải lớn hơn hoặc bằng 0');
+          return Promise.reject('Giá vốn phải lớn hơn hoặc bằng 0')
         }
-        return Promise.resolve();
+        return Promise.resolve()
       },
-      trigger: 'blur'
-    }
+      trigger: 'blur',
+    },
   ],
   salePrice: [
     {
       required: true,
       validator: (_rule, value) => {
         if (value < 0) {
-          return Promise.reject('Giá bán phải lớn hơn hoặc bằng 0');
+          return Promise.reject('Giá bán phải lớn hơn hoặc bằng 0')
         }
-        return Promise.resolve();
+        return Promise.resolve()
       },
-      trigger: 'blur'
-    }
+      trigger: 'blur',
+    },
   ],
   productCategoryId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
   productUnitId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
   productOriginId: [
-    { required: true, message: 'Không được để trống', trigger: 'blur' }
+    { required: true, message: 'Không được để trống', trigger: 'blur' },
   ],
 }
 
@@ -103,16 +103,16 @@ const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
           href: '#',
           onClick: handleClick,
           class: 'underline-on-hover',
-          internal: true
+          internal: true,
         },
         {
           default: () =>
             row.type === 'PURCHASE_ORDER'
               ? row.purchaseOrderId
               : row.type === 'EXPORT_ORDER'
-              ? row.exportOrderId
-              : ''
-        }
+                ? row.exportOrderId
+                : '',
+        },
       )
     },
   },
@@ -129,16 +129,17 @@ const columnsHistoryInventory = ref<DataTableColumns<ProductInventory.Data>>([
       return (
         <div>
           { row.type === 'PURCHASE_ORDER'
-            ? <NTag type='success'>NHẬP</NTag>
-            : '' 
-          }
+            ? <NTag type="success">NHẬP</NTag>
+            : ''}
           { row.type === 'EXPORT_ORDER'
-            ? <NTag type='error'>XUẤT</NTag>
-            : '' 
-          }
+            ? <NTag type="error">XUẤT</NTag>
+            : ''}
+          { row.type === 'MOVE_LOCATION'
+            ? <NTag type="error">DI CHUYỂN VỊ TRÍ</NTag>
+            : ''}
         </div>
       )
-    }
+    },
   },
   {
     title: 'Ngày',
@@ -241,7 +242,7 @@ async function createOrUpdateProduct(status: string) {
 
 onMounted(async () => {
   await getReferenceData()
-  
+
   if (productId.toString() !== ':productId' && productId.toString() !== 'new') {
     await getProduct()
     await getListProductInventory()
@@ -284,8 +285,8 @@ onMounted(async () => {
           <NGi NGi :span="1">
             <n-form-item label="Giá nhập" path="costPrice">
               <n-input-number
-                style="width: 100%;"
                 v-model:value="product.costPrice"
+                style="width: 100%;"
                 placeholder=""
                 min="0"
               />
@@ -295,8 +296,8 @@ onMounted(async () => {
           <NGi NGi :span="1">
             <n-form-item label="Giá bán" path="salePrice">
               <n-input-number
-                style="width: 100%;"
                 v-model:value="product.salePrice"
+                style="width: 100%;"
                 placeholder=""
                 min="0"
               />
@@ -363,7 +364,7 @@ onMounted(async () => {
         </NGrid>
       </n-form>
     </n-card>
-    <n-card title="Lịch sử" v-if="listProductInventory.length > 0">
+    <n-card v-if="listProductInventory.length > 0" title="Lịch sử">
       <template #header-extra>
         <NButton v-if="listProductInventory.length > 0" secondary type="primary" strong>
           Tồn kho: {{ product.inventoryQuantity }}

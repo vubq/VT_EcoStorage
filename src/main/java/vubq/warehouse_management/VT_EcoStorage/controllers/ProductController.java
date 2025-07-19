@@ -81,13 +81,15 @@ public class ProductController {
         boolean isSuperAdmin = authorities.stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
-        if (!StringUtils.isEmpty(productDto.getId())) {
-            if (!hasEdit || !isSuperAdmin) {
-                throw new AccessDeniedException("Không có quyền");
-            }
-        } else {
-            if (!hasAdd || !isSuperAdmin) {
-                throw new AccessDeniedException("Không có quyền");
+        if(!isSuperAdmin) {
+            if (!StringUtils.isEmpty(productDto.getId())) {
+                if (!hasEdit) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
+            } else {
+                if (!hasAdd) {
+                    throw new AccessDeniedException("Không có quyền");
+                }
             }
         }
         return Response.success(productService.createOrUpdateProduct(productDto));
@@ -224,11 +226,11 @@ public class ProductController {
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN.SUPER"));
 
         if (!StringUtils.isEmpty(productOriginDto.getId())) {
-            if (!hasEdit && !isSuperAdmin) {
+            if (!hasEdit || !isSuperAdmin) {
                 throw new IllegalArgumentException("Không có quyền");
             }
         } else {
-            if (!hasAdd && !isSuperAdmin) {
+            if (!hasAdd || !isSuperAdmin) {
                 throw new IllegalArgumentException("Không có quyền");
             }
         }
